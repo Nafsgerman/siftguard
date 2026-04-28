@@ -12,7 +12,7 @@ async def vol_pslist(*, memory_image: str) -> ForensicResult:
     try:
         result = await safe_exec(
             VOL3, ["-f", memory_image, "-r", "jsonl", "windows.psscan"],
-            timeout_s=300,
+            timeout_s=900,
         )
     except SafeExecError as e:
         return ForensicResult(tool="vol_pslist", outcome=ToolOutcome.FAIL,
@@ -43,7 +43,7 @@ async def vol_netscan(*, memory_image: str) -> ForensicResult:
     try:
         result = await safe_exec(
             VOL3, ["-f", memory_image, "-r", "jsonl", "windows.netscan"],
-            timeout_s=300,
+            timeout_s=900,
         )
     except SafeExecError as e:
         return ForensicResult(tool="vol_netscan", outcome=ToolOutcome.FAIL,
@@ -72,7 +72,7 @@ async def vol_malfind(*, memory_image: str) -> ForensicResult:
     try:
         result = await safe_exec(
             VOL3, ["-f", memory_image, "-r", "jsonl", "windows.malfind"],
-            timeout_s=600,
+            timeout_s=1200,
         )
     except SafeExecError as e:
         return ForensicResult(tool="vol_malfind", outcome=ToolOutcome.FAIL,
