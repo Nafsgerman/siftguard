@@ -11,7 +11,7 @@ async def vol_pslist(*, memory_image: str) -> ForensicResult:
     """List all processes from a memory image. Flags orphans and suspicious names."""
     try:
         result = await safe_exec(
-            VOL3, ["-f", memory_image, "windows.psscan", "--output=jsonl"],
+            VOL3, ["-f", memory_image, "-r", "jsonl", "windows.psscan"],
             timeout_s=300,
         )
     except SafeExecError as e:
@@ -42,7 +42,7 @@ async def vol_netscan(*, memory_image: str) -> ForensicResult:
     """Scan memory image for network connections and listening ports."""
     try:
         result = await safe_exec(
-            VOL3, ["-f", memory_image, "windows.netscan", "--output=jsonl"],
+            VOL3, ["-f", memory_image, "-r", "jsonl", "windows.netscan"],
             timeout_s=300,
         )
     except SafeExecError as e:
@@ -71,7 +71,7 @@ async def vol_malfind(*, memory_image: str) -> ForensicResult:
     """Find injected code and suspicious memory regions."""
     try:
         result = await safe_exec(
-            VOL3, ["-f", memory_image, "windows.malfind", "--output=jsonl"],
+            VOL3, ["-f", memory_image, "-r", "jsonl", "windows.malfind"],
             timeout_s=600,
         )
     except SafeExecError as e:
