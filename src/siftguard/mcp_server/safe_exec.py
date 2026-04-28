@@ -59,7 +59,7 @@ async def safe_exec(binary: str, args: list[str], *,
         if a.startswith("/") or a.startswith("./"):
             try:
                 resolved = Path(a).resolve()
-                safe_prefixes = ("/usr/", "/opt/", "/home/sansforensics/")
+                safe_prefixes = ("/usr/", "/opt/", "/home/sansforensics/", "/tmp/", "/cases/")
                 if (evidence_root not in resolved.parents
                         and resolved != evidence_root
                         and not any(str(resolved).startswith(p)
