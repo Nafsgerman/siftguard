@@ -7,9 +7,20 @@ from dataclasses import dataclass
 from pathlib import Path
 
 ALLOWED_BINARIES: set[str] = {
-    "analyzeMFT.py", "mft_dump", "log2timeline.py", "psort.py",
-    "vol.py", "vol", "bulk_extractor", "regripper", "rip.pl",
-    "fls", "icat", "mmls", "fsstat", "tsk_recover", "evtxexport",
+    "analyzeMFT.py",
+    "mft_dump",
+    "log2timeline.py",
+    "psort.py",
+    "/opt/volatility3/bin/vol",
+    "bulk_extractor",
+    "regripper",
+    "rip.pl",
+    "fls",
+    "icat",
+    "mmls",
+    "fsstat",
+    "tsk_recover",
+    "evtxexport",
 }
 
 DENY_PATTERNS: set[str] = {
