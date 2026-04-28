@@ -4,12 +4,14 @@ from siftguard.models.forensic import ForensicResult, ToolOutcome, VolatilityPro
 from siftguard.mcp_server.safe_exec import safe_exec, SafeExecError
 from siftguard.parsers.volatility_parser import parse_pslist, parse_netscan, parse_malfind
 
+VOL3 = "/opt/volatility3/bin/vol"
+
 
 async def vol_pslist(*, memory_image: str) -> ForensicResult:
     """List all processes from a memory image. Flags orphans and suspicious names."""
     try:
         result = await safe_exec(
-            "vol", ["-f", memory_image, "windows.pslist.PsList", "--output=json"],
+            VOL3, ["-f", memory_image, "windows.psscan", "--output=jsonl"],
             timeout_s=300,
         )
     except SafeExecError as e:
@@ -18,7 +20,7 @@ async def vol_pslist(*, memory_image: str) -> ForensicResult:
 
     if result.returncode != 0:
         return ForensicResult(tool="vol_pslist", outcome=ToolOutcome.FAIL,
-                              summary="volatility pslist failed",
+                              summary="volatility psscan failed",
                               raw_excerpt=result.stderr[:1500],
                               duration_ms=result.duration_ms,
                               error=result.stderr[:500])
@@ -40,7 +42,7 @@ async def vol_netscan(*, memory_image: str) -> ForensicResult:
     """Scan memory image for network connections and listening ports."""
     try:
         result = await safe_exec(
-            "vol", ["-f", memory_image, "windows.netstat.NetStat", "--output=json"],
+            VOL3, ["-f", memory_image, "windows.netscan", "--output=jsonl"],
             timeout_s=300,
         )
     except SafeExecError as e:
@@ -69,7 +71,7 @@ async def vol_malfind(*, memory_image: str) -> ForensicResult:
     """Find injected code and suspicious memory regions."""
     try:
         result = await safe_exec(
-            "vol", ["-f", memory_image, "windows.malfind.Malfind", "--output=json"],
+            VOL3, ["-f", memory_image, "windows.malfind", "--output=jsonl"],
             timeout_s=600,
         )
     except SafeExecError as e:
