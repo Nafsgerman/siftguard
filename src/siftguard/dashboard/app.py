@@ -82,7 +82,7 @@ async def _run_investigation(session_id: str, case_id: str, briefing: str, memor
     for iteration in range(max_iterations):
         await push_event(session_id, {"type": "iteration", "iteration": iteration + 1, "max": max_iterations})
         response = client.messages.create(
-            model="claude-sonnet-4-5-20251022",
+            model="claude-sonnet-4-6",
             max_tokens=4096,
             system=SYSTEM_PROMPT,
             tools=TOOL_SCHEMAS,
