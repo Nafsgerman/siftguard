@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SIFTGuard — Live Investigation Dashboard</title>
+<style>
+:root{--bg:#f8fafc;--surface:#ffffff;--surface2:#f1f5f9;--border:#e2e8f0;--accent:#2563eb;--accent2:#7c3aed;--green:#059669;--red:#dc2626;--yellow:#d97706;--text:#0f172a;--muted:#64748b;--font:'Inter',-apple-system,sans-serif}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:13px}
+header{background:var(--surface);border-bottom:1px solid var(--border);padding:12px 24px;display:flex;align-items:center;gap:12px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.logo{font-size:17px;font-weight:800;color:var(--accent);letter-spacing:1px}
+.tagline{color:var(--muted);font-size:11px}
+.status{margin-left:auto;display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);background:var(--surface2);padding:4px 10px;border-radius:20px;border:1px solid var(--border)}
+.dot{width:7px;height:7px;border-radius:50%;background:#94a3b8}
+.dot.running{background:var(--green);animation:blink 1s infinite}
+.dot.done{background:var(--accent)}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.layout{display:grid;grid-template-columns:300px 1fr 280px;height:calc(100vh - 53px)}
+.col{display:flex;flex-direction:column;overflow:hidden}
+.col-border-r{border-right:1px solid var(--border)}
+.section{border-bottom:1px solid var(--border);padding:14px 16px}
+.label{font-size:10px;color:var(--muted);letter-spacing:.5px;font-weight:600;text-transform:uppercase;margin-bottom:10px}
+input,textarea{width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:6px;font-family:var(--font);font-size:12px;margin-bottom:8px;resize:vertical}
+input:focus,textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+button{width:100%;padding:10px;background:var(--accent);border:none;color:white;border-radius:6px;cursor:pointer;font-family:var(--font);font-size:13px;font-weight:600;transition:.15s}
+button:hover{background:#1d4ed8}
+button:disabled{background:#94a3b8;cursor:not-allowed}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.stat{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px}
+.stat-v{font-size:24px;font-weight:700;color:var(--accent)}
+.stat-l{font-size:10px;color:var(--muted);font-weight:500;margin-top:2px}
+.ioc-scroll{overflow-y:auto;flex:1;padding:8px 12px}
+.ioc{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:8px 10px;margin-bottom:6px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.ioc-t{color:var(--yellow);font-size:10px;font-weight:600;letter-spacing:.5px}
+.ioc-v{color:var(--accent);font-size:11px;word-break:break-all;margin-top:2px;font-weight:500}
+.feed-header{padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;background:var(--surface)}
+.iter-bar{flex:1;height:4px;background:var(--surface2);border-radius:2px;overflow:hidden}
+.iter-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .4s;border-radius:2px}
+.feed{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:8px;background:var(--bg)}
+.ev{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 14px;animation:fadein .2s;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+@keyframes fadein{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:none}}
+.ev.tc{border-left:3px solid var(--yellow)}
+.ev.tok{border-left:3px solid var(--green)}
+.ev.tf{border-left:3px solid var(--red)}
+.ev.ag{border-left:3px solid var(--accent2)}
+.ev.rp{border-left:3px solid var(--accent);background:#eff6ff}
+.ev.st{border-left:3px solid var(--accent)}
+.ev-h{display:flex;align-items:center;gap:6px;margin-bottom:4px}
+.ev-title{font-weight:600;color:var(--text);font-size:12px}
+.ev-time{margin-left:auto;color:var(--muted);font-size:10px}
+.ev-body{color:var(--muted);font-size:12px;line-height:1.5}
+.ev-body b{color:var(--text)}
+.pill{background:var(--accent2);color:#fff;border-radius:4px;padding:1px 6px;font-size:10px;margin-left:4px;font-weight:600}
+.dur{color:var(--muted);font-size:10px}
+.rp-text{white-space:pre-wrap;font-size:11px;line-height:1.6;color:var(--text)}
+.empty{color:var(--muted);font-size:11px;text-align:center;padding:20px 0}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">SIFTGuard</div>
+  <div class="tagline">Autonomous DFIR · Find Evil at Machine Speed</div>
+  <div class="status"><div class="dot" id="dot"></div><span id="statusTxt">Ready</span></div>
+</header>
+<div class="layout">
+  <div class="col col-border-r">
+    <div class="section">
+      <div class="label">Investigation Parameters</div>
+      <input id="caseId" placeholder="Case ID" value="CASE-2026-001">
+      <input id="memImg" placeholder="Memory image path" value="/cases/TEST-001/base-hunt-memory.img">
+      <textarea id="brief" rows="3">Windows 10 x64 memory image from SRL-2018 APT hunt scenario. Suspected compromise. Find evil.</textarea>
+      <button id="btn" onclick="go()">▶ Start Investigation</button>
+    </div>
+    <div class="section">
+      <div class="label">Live Statistics</div>
+      <div class="stats">
+        <div class="stat"><div class="stat-v" id="sIter">0</div><div class="stat-l">Iterations</div></div>
+        <div class="stat"><div class="stat-v" id="sTools">0</div><div class="stat-l">Tools Run</div></div>
+        <div class="stat"><div class="stat-v" id="sFind">0</div><div class="stat-l">Findings</div></div>
+        <div class="stat"><div class="stat-v" id="sIOC">0</div><div class="stat-l">IOCs</div></div>
+      </div>
+    </div>
+    <div class="label" style="padding:12px 16px 4px">Indicators of Compromise</div>
+    <div class="ioc-scroll" id="iocList"><div class="empty">No IOCs detected yet</div></div>
+  </div>
+  <div class="col col-border-r">
+    <div class="feed-header">
+      <span style="color:var(--muted);font-size:10px;font-weight:600">LIVE INVESTIGATION FEED</span>
+      <span style="color:var(--muted);font-size:10px;margin-left:6px" id="iterLbl">—</span>
+      <div class="iter-bar"><div class="iter-fill" id="iterFill" style="width:0"></div></div>
+    </div>
+    <div class="feed" id="feed"><div class="empty" style="margin-top:60px">Start an investigation to see live agent reasoning</div></div>
+  </div>
+  <div class="col" style="overflow-y:auto;background:var(--surface)">
+    <div class="section">
+      <div class="label">Process Analysis</div>
+      <div id="procPanel"><div class="empty">Awaiting scan</div></div>
+    </div>
+    <div class="section">
+      <div class="label">Network Connections</div>
+      <div id="netPanel"><div class="empty">Awaiting scan</div></div>
+    </div>
+    <div class="section" id="rpSection" style="display:none">
+      <div class="label">Incident Report</div>
+      <div class="rp-text" id="rpContent"></div>
+    </div>
+  </div>
+</div>
+<script>
+let st={i:0,t:0,f:0},iocs=[];
+function go(){
+  const btn=document.getElementById('btn');
+  btn.disabled=true;btn.textContent='⏳ Investigating...';
+  document.getElementById('feed').innerHTML='';
+  document.getElementById('iocList').innerHTML='<div class="empty">No IOCs detected yet</div>';
+  document.getElementById('procPanel').innerHTML='<div class="empty">Awaiting scan</div>';
+  document.getElementById('netPanel').innerHTML='<div class="empty">Awaiting scan</div>';
+  document.getElementById('rpSection').style.display='none';
+  st={i:0,t:0,f:0};iocs=[];upStats();setStatus('running','Investigating');
+  fetch('/api/investigate',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({case_id:document.getElementById('caseId').value,
+      briefing:document.getElementById('brief').value,
+      memory_image:document.getElementById('memImg').value})})
+  .then(r=>r.json()).then(d=>sse(d.session_id));
+}
+function sse(sid){
+  const es=new EventSource('/api/stream/'+sid);
+  es.onmessage=e=>handle(JSON.parse(e.data));
+}
+function handle(ev){
+  const feed=document.getElementById('feed');
+  const t=ev.timestamp?new Date(ev.timestamp).toLocaleTimeString():'';
+  if(ev.type==='start') addEv('st','🔍','Investigation Started',`Case: <b>${ev.case_id}</b> — ${ev.briefing.substring(0,80)}...`,t);
+  else if(ev.type==='iteration'){
+    st.i=ev.iteration;
+    document.getElementById('iterFill').style.width=(ev.iteration/ev.max*100)+'%';
+    document.getElementById('iterLbl').textContent=`Iteration ${ev.iteration}/${ev.max}`;
+    upStats();
+  } else if(ev.type==='agent_text'){
+    addEv('ag','🧠','Agent Reasoning',ev.text.substring(0,280)+(ev.text.length>280?'...':''),t);
+    scanIOC(ev.text);
+  } else if(ev.type==='tool_call'){
+    addEv('tc','⚡',`Tool: ${ev.tool}`,`<b>${JSON.stringify(ev.args).substring(0,80)}</b>`,t);
+  } else if(ev.type==='tool_result'){
+    st.t++;st.f+=ev.findings_count||0;upStats();
+    const cls=ev.outcome==='ok'?'tok':'tf';
+    const ic=ev.outcome==='ok'?'✅':'❌';
+    const pill=ev.findings_count>0?`<span class="pill">${ev.findings_count} findings</span>`:'';
+    addEv(cls,ic,ev.tool+pill,`${ev.summary} <span class="dur">${ev.duration_ms}ms</span>`,t);
+    if(ev.tool==='vol_pslist')document.getElementById('procPanel').innerHTML=`<div style="color:var(--muted);font-size:11px;padding:4px">${ev.summary}</div>`;
+    if(ev.tool==='vol_netscan')document.getElementById('netPanel').innerHTML=`<div style="color:var(--muted);font-size:11px;padding:4px">${ev.summary}</div>`;
+  } else if(ev.type==='report'){
+    document.getElementById('rpSection').style.display='block';
+    document.getElementById('rpContent').textContent=ev.content;
+    addEv('rp','📋','Incident Report Generated','Full report available in right panel →',t);
+  } else if(ev.type==='complete'){
+    setStatus('done','Complete');
+    document.getElementById('btn').disabled=false;
+    document.getElementById('btn').textContent='▶ New Investigation';
+    addEv('st','🏁','Investigation Complete',`${st.t} tools executed · ${st.f} findings · ${iocs.length} IOCs detected`,t);
+  }
+  feed.scrollTop=feed.scrollHeight;
+}
+function addEv(cls,icon,title,body,time){
+  const d=document.createElement('div');d.className='ev '+cls;
+  d.innerHTML=`<div class="ev-h"><span>${icon}</span><span class="ev-title">${title}</span><span class="ev-time">${time}</span></div><div class="ev-body">${body}</div>`;
+  document.getElementById('feed').appendChild(d);
+}
+function scanIOC(txt){
+  (txt.match(/\b(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\b/g)||[]).forEach(ip=>{
+    if(!iocs.includes(ip)&&!ip.startsWith('127.')&&!ip.startsWith('0.')){iocs.push(ip);addIOC('IP ADDRESS',ip);}
+  });
+  (txt.match(/port\s+(\d{2,5})/gi)||[]).forEach(p=>{
+    const port=p.replace(/port\s+/i,'Port ');
+    if(!iocs.includes(port)){iocs.push(port);addIOC('PORT',port);}
+  });
+  upStats();
+}
+function addIOC(type,val){
+  const list=document.getElementById('iocList');
+  if(list.querySelector('.empty'))list.innerHTML='';
+  const d=document.createElement('div');d.className='ioc';
+  d.innerHTML=`<div class="ioc-t">${type}</div><div class="ioc-v">${val}</div>`;
+  list.appendChild(d);
+}
+function upStats(){
+  document.getElementById('sIter').textContent=st.i;
+  document.getElementById('sTools').textContent=st.t;
+  document.getElementById('sFind').textContent=st.f;
+  document.getElementById('sIOC').textContent=iocs.length;
+}
+function setStatus(state,txt){
+  document.getElementById('dot').className='dot '+state;
+  document.getElementById('statusTxt').textContent=txt;
+}
+</script>
+</body>
+</html>
