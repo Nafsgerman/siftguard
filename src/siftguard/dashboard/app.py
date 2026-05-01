@@ -17,6 +17,7 @@ app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], all
 
 _sessions: dict[str, list[dict]] = {}
 _queues: dict[str, asyncio.Queue] = {}
+_stream_gen: dict[str, str] = {}
 
 def get_or_create_session(session_id: str):
     if session_id not in _sessions:
@@ -38,14 +39,20 @@ async def dashboard():
 
 @app.get("/api/stream/{session_id}")
 async def stream(session_id: str, request: Request):
+    gen_id = str(uuid.uuid4())
+    _stream_gen[session_id] = gen_id
     fresh_queue: asyncio.Queue = asyncio.Queue()
     _queues[session_id] = fresh_queue
     async def event_generator() -> AsyncGenerator[str, None]:
         queue = fresh_queue
         get_or_create_session(session_id)
         for event in _sessions.get(session_id, []):
+            if _stream_gen.get(session_id) != gen_id:
+                return
             yield f"data: {json.dumps(event)}\n\n"
         while True:
+            if _stream_gen.get(session_id) != gen_id:
+                return
             if await request.is_disconnected():
                 break
             try:
