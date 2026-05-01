@@ -1,0 +1,25 @@
+{
+  "case_id": "TEST-003",
+  "description": "Credential harvesting via process injection into lsass.exe. Attacker used mimikatz to dump credentials then created a new local admin account.",
+  "threat_type": "credential_theft",
+  "expected_iocs": [
+    {"type": "process", "value": "lsass.exe", "confidence": "high"},
+    {"type": "process", "value": "mimikatz", "confidence": "high"},
+    {"type": "technique", "value": "T1003.001", "confidence": "high"},
+    {"type": "technique", "value": "T1136.001", "confidence": "high"},
+    {"type": "technique", "value": "T1055", "confidence": "high"}
+  ],
+  "expected_persistence": true,
+  "expected_lateral_movement": false,
+  "expected_timestomp": false,
+  "expected_code_injection": true,
+  "expected_verdict_keywords": ["lsass", "credential", "mimikatz", "injection", "admin account", "dump"],
+  "required_sections": [
+    "Executive Summary",
+    "Timeline of Events",
+    "Indicators of Compromise",
+    "Persistence Mechanisms",
+    "Recommendations",
+    "Evidence References"
+  ]
+}

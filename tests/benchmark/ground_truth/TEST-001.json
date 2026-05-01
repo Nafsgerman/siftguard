@@ -1,0 +1,28 @@
+{
+  "case_id": "TEST-001",
+  "description": "Ransomware infection via phishing email attachment. Victim executed invoice.exe which dropped a second stage, established persistence via Run key, and began encrypting files.",
+  "threat_type": "ransomware",
+  "expected_iocs": [
+    {"type": "process", "value": "invoice.exe", "confidence": "high"},
+    {"type": "process", "value": "powershell.exe", "confidence": "high"},
+    {"type": "process", "value": "cmd.exe", "confidence": "medium"},
+    {"type": "file", "value": "invoice.exe", "confidence": "high"},
+    {"type": "registry_key", "value": "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run", "confidence": "high"},
+    {"type": "technique", "value": "T1547.001", "confidence": "high"},
+    {"type": "technique", "value": "T1059.001", "confidence": "high"},
+    {"type": "technique", "value": "T1486", "confidence": "high"}
+  ],
+  "expected_persistence": true,
+  "expected_lateral_movement": false,
+  "expected_timestomp": true,
+  "expected_code_injection": true,
+  "expected_verdict_keywords": ["ransomware", "invoice", "powershell", "persistence", "run key", "encrypt"],
+  "required_sections": [
+    "Executive Summary",
+    "Timeline of Events",
+    "Indicators of Compromise",
+    "Persistence Mechanisms",
+    "Recommendations",
+    "Evidence References"
+  ]
+}

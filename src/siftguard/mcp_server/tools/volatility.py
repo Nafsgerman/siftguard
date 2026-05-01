@@ -1,16 +1,27 @@
 from __future__ import annotations
 import json
+import os
 from pathlib import Path
 from siftguard.models.forensic import ForensicResult, ToolOutcome, VolatilityProcess
 from siftguard.mcp_server.safe_exec import safe_exec, SafeExecError
 from siftguard.parsers.volatility_parser import parse_pslist, parse_netscan, parse_malfind
 
 VOL3 = "/opt/volatility3/bin/vol"
-_CACHE_DIR = Path("/cases/TEST-001/siftguard_cache")
 
 
-def _cache_path(tool_name: str) -> Path:
-    return _CACHE_DIR / f"{tool_name}.jsonl"
+def _cache_dir(memory_image: str) -> Path:
+    """Case-scoped cache: derives from the image path, not hardcoded."""
+    image_path = Path(memory_image)
+    # /cases/TEST-001/memory.mem  → /cases/TEST-001/siftguard_cache
+    # /tmp/anything.mem           → /tmp/siftguard_cache_anything
+    parent = image_path.parent
+    cache = parent / "siftguard_cache"
+    cache.mkdir(parents=True, exist_ok=True)
+    return cache
+
+
+def _cache_path(tool_name: str, memory_image: str) -> Path:
+    return _cache_dir(memory_image) / f"{tool_name}.jsonl"
 
 
 def _load_cache(tool_name: str, path: Path) -> ForensicResult | None:
@@ -43,7 +54,7 @@ def _save_cache(path: Path, result: ForensicResult) -> None:
 
 async def vol_pslist(*, memory_image: str) -> ForensicResult:
     """List all processes from a memory image. Flags orphans and suspicious names."""
-    cache = _cache_path("vol_pslist")
+    cache = _cache_path("vol_pslist", memory_image)
     if cached := _load_cache("vol_pslist", cache):
         return cached
 
@@ -77,7 +88,7 @@ async def vol_pslist(*, memory_image: str) -> ForensicResult:
 
 async def vol_netscan(*, memory_image: str) -> ForensicResult:
     """Scan memory image for network connections and listening ports."""
-    cache = _cache_path("vol_netscan")
+    cache = _cache_path("vol_netscan", memory_image)
     if cached := _load_cache("vol_netscan", cache):
         return cached
 
@@ -110,7 +121,7 @@ async def vol_netscan(*, memory_image: str) -> ForensicResult:
 
 async def vol_malfind(*, memory_image: str) -> ForensicResult:
     """Find injected code and suspicious memory regions."""
-    cache = _cache_path("vol_malfind")
+    cache = _cache_path("vol_malfind", memory_image)
     if cached := _load_cache("vol_malfind", cache):
         return cached
 
