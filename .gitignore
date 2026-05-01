@@ -6,3 +6,4 @@ audit/*.db
 __pycache__/
 *.pyc
 audit/*.db
+audit/*.db
