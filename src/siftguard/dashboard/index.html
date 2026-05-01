@@ -126,9 +126,8 @@ function go(){
   .then(r=>r.json()).then(d=>sse(d.session_id));
 }
 function sse(sid){
-  if(window._es){window._es.close();}
-  window._es=new EventSource('/api/stream/'+sid);
-  window._es.onmessage=e=>handle(JSON.parse(e.data));
+  const es=new EventSource('/api/stream/'+sid);
+  es.onmessage=e=>handle(JSON.parse(e.data));
 }
 function handle(ev){
   const feed=document.getElementById('feed');
