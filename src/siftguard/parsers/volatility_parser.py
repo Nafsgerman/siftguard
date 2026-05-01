@@ -1,6 +1,7 @@
 from __future__ import annotations
 import json
 from siftguard.models.forensic import VolatilityProcess
+from datetime import datetime
 
 SUSPICIOUS_PROCESS_NAMES = {
     "cmd.exe", "powershell.exe", "wscript.exe", "cscript.exe",
@@ -29,62 +30,40 @@ def _flag_process(name: str, ppid: int, all_procs: dict[int, str]) -> list[str]:
 
 def parse_pslist(raw: str) -> list[VolatilityProcess]:
     processes: list[VolatilityProcess] = []
-    pid_name_map: dict[int, str] = {}
-
-    for line in raw.splitlines():
-        line = line.strip()
-        if not line or line.startswith("Volatility") or line.startswith("Progress"):
-            continue
-        try:
-            row = json.loads(line)
-            pid = int(row.get("PID", 0))
-            name = row.get("ImageFileName", "")
-            pid_name_map[pid] = name
-        except (json.JSONDecodeError, ValueError):
-            continue
-
-    for line in raw.splitlines():
-        line = line.strip()
-        if not line or line.startswith("Volatility") or line.startswith("Progress"):
-            continue
-        try:
-            row = json.loads(line)
-            pid = int(row.get("PID", 0))
-            ppid = int(row.get("PPID", 0))
-            name = row.get("ImageFileName", "")
-            processes.append(VolatilityProcess(
-                pid=pid, ppid=ppid, name=name,
-                create_time=None, exit_time=None,
-                threads=int(row.get("Threads", 0) or 0),
-                handles=None,
-                suspicious_indicators=_flag_process(name, ppid, pid_name_map),
-            ))
-        except (json.JSONDecodeError, ValueError):
-            continue
+    try:
+        data = json.loads(raw)
+        rows = data.get("rows", [])
+        pid_name_map = {int(r.get("PID", 0)): r.get("ImageFileName", "") for r in rows}
+        for row in rows:
+            try:
+                pid = int(row.get("PID", 0))
+                ppid = int(row.get("PPID", 0))
+                name = row.get("ImageFileName", "")
+                processes.append(VolatilityProcess(
+                    pid=pid, ppid=ppid, name=name,
+                    create_time=None, exit_time=None,
+                    threads=int(row.get("Threads", 0)),
+                    handles=None,
+                    suspicious_indicators=_flag_process(name, ppid, pid_name_map),
+                ))
+            except (ValueError, TypeError):
+                continue
+    except (json.JSONDecodeError, AttributeError):
+        pass
     return processes
 
 
 def parse_netscan(raw: str) -> list[dict]:
-    results = []
-    for line in raw.splitlines():
-        line = line.strip()
-        if not line or line.startswith("Volatility") or line.startswith("Progress"):
-            continue
-        try:
-            results.append(json.loads(line))
-        except json.JSONDecodeError:
-            continue
-    return results
+    try:
+        data = json.loads(raw)
+        return data.get("rows", [])
+    except (json.JSONDecodeError, AttributeError):
+        return []
 
 
 def parse_malfind(raw: str) -> list[dict]:
-    results = []
-    for line in raw.splitlines():
-        line = line.strip()
-        if not line or line.startswith("Volatility") or line.startswith("Progress"):
-            continue
-        try:
-            results.append(json.loads(line))
-        except json.JSONDecodeError:
-            continue
-    return results
+    try:
+        data = json.loads(raw)
+        return data.get("rows", [])
+    except (json.JSONDecodeError, AttributeError):
+        return []
