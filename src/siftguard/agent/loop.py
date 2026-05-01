@@ -158,7 +158,7 @@ async def run_case(
         console.print(f"\n[dim]── Iteration {iteration + 1}/{MAX_ITERATIONS} ──[/dim]")
 
         response = client.messages.create(
-            model="claude-sonnet-4-5-20251022",
+            model="claude-sonnet-4-20250514",
             max_tokens=4096,
             system=SYSTEM_PROMPT,
             tools=TOOL_SCHEMAS,
