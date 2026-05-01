@@ -1,16 +1,31 @@
 from __future__ import annotations
+import shutil
 from siftguard.models.forensic import ForensicResult, ToolOutcome
 from siftguard.mcp_server.safe_exec import safe_exec, SafeExecError
 from siftguard.parsers.mft_parser import parse_analyze_mft_csv
+
+_ANALYZERMFT_CANDIDATES = [
+    "/usr/local/bin/analyzeMFT.py",
+    "/usr/bin/analyzeMFT.py",
+    shutil.which("analyzeMFT.py") or "",
+    shutil.which("analyzeMFT") or "",
+]
+
+def _get_analyzeMFT_cmd() -> list[str]:
+    for c in _ANALYZERMFT_CANDIDATES:
+        if c and __import__("pathlib").Path(c).exists():
+            return ["python3", c]
+    return ["python3", "-m", "analyzeMFT"]
 
 
 async def analyze_mft(*, mft_path: str,
                       output_csv: str = "/tmp/siftguard_mft.csv",
                       timestomp_only: bool = False) -> ForensicResult:
     try:
+        cmd_prefix = _get_analyzeMFT_cmd()
         result = await safe_exec(
-            "analyzeMFT.py",
-            ["-f", mft_path, "-o", output_csv,
+            cmd_prefix[0],
+            cmd_prefix[1:] + ["-f", mft_path, "-o", output_csv,
              "--bodyfile", "/tmp/siftguard_bodyfile.txt"],
             timeout_s=900,
         )
