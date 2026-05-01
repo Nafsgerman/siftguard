@@ -15,7 +15,14 @@ def _cache_path(tool_name: str) -> Path:
 
 def _load_cache(tool_name: str, path: Path) -> ForensicResult | None:
     try:
-        findings = [json.loads(line) for line in path.read_text().splitlines() if line.strip()]
+        findings = []
+        for line in path.read_text().splitlines():
+            if not line.strip():
+                continue
+            try:
+                findings.append(json.loads(line))
+            except json.JSONDecodeError:
+                pass
         return ForensicResult(
             tool=tool_name, outcome=ToolOutcome.OK,
             summary=f"(cached) {len(findings)} records",
