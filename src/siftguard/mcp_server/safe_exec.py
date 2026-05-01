@@ -43,7 +43,7 @@ class SafeExecError(Exception):
 
 
 async def safe_exec(binary: str, args: list[str], *,
-                    cwd: str | None = None, timeout_s: int = 600,
+                    cwd: str | None = None, timeout_s: int = 120,
                     env: dict[str, str] | None = None) -> ExecResult:
     if binary not in ALLOWED_BINARIES:
         raise SafeExecError(f"binary not in allowlist: {binary}")
