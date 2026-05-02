@@ -71,9 +71,11 @@ async def run_benchmark_case(
         console.print(f"[dim]Scoring saved report: {report_file}[/dim]")
     else:
         evidence = _get_evidence_files(case_id, evidence_dir)
-        if not evidence:
-            console.print(f"[yellow]Warning: No evidence files found for {case_id} in {evidence_dir}/{case_id}/[/yellow]")
-            console.print("[dim]Using empty evidence dict — agent will work with what it can find[/dim]")
+    if not evidence:
+        console.print(f"[red]No evidence files found for {case_id}. Cannot run agent without evidence.[/red]")
+        console.print(f"[dim]Expected files in {evidence_dir}/{case_id}/ — e.g. memory.mem, disk.dd, $MFT[/dim]")
+        console.print("[yellow]Use --dry-run to score a saved report instead.[/yellow]")
+        sys.exit(1)
 
         console.print(Panel(
             f"Case: [yellow]{case_id}[/yellow]\nThreat: [cyan]{gt['threat_type']}[/cyan]\nEvidence: {list(evidence.keys()) or 'none found'}",
