@@ -66,6 +66,7 @@ async def run_benchmark_case(
     dry_run: bool = False,
 ) -> BenchmarkScore:
     gt = load_ground_truth(case_id)
+    report_text = ""  # ensure always bound
 
     if dry_run:
         # Load saved report
