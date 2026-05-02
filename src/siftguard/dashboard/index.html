@@ -824,7 +824,7 @@ function handleEvent(ev) {
       addAudit('info', `→ ${ev.tool}`);
       break;
 
-    case 'tool_result': {
+  case 'tool_result': {
       const rows = document.getElementById('toolLog').querySelectorAll('.tool-row');
       const last = rows[rows.length - 1];
       if (last) {
@@ -832,8 +832,28 @@ function handleEvent(ev) {
         st.className = `tool-status ${ev.outcome === 'ok' ? 'ok' : 'fail'}`;
         st.textContent = ev.outcome === 'ok' ? '✓' : '✗';
         last.querySelector('.tool-summary').textContent = ev.summary;
-        last.insertAdjacentHTML('beforeend', `<span class="tool-duration">${ev.duration_ms}ms</span>`);
+        if (!last.querySelector('.tool-duration')) {
+          last.insertAdjacentHTML('beforeend',
+            `<span class="tool-duration">${ev.duration_ms > 0 ? ev.duration_ms + 'ms' : 'cached'}</span>`);
+        }
       }
+
+      state.totalFindings += ev.findings_count || 0;
+      setMetric('mvFindings', 'mcFindings', state.totalFindings, state.totalFindings > 0 ? 'yellow' : '');
+
+      if (ev.duration_ms >= 0) {
+        if (ev.duration_ms > 0) state.durations.push(ev.duration_ms);
+        if (state.durations.length > 0) {
+          const avg = Math.round(state.durations.reduce((a,b)=>a+b,0)/state.durations.length);
+          document.getElementById('mvAvg').textContent = avg;
+          bump('mvAvg');
+        }
+      }
+
+      extractIOCs(ev.tool, ev.summary);
+      addAudit('ok', `${ev.tool}: ${ev.summary}`);
+      break;
+    }
 
       state.totalFindings += ev.findings_count || 0;
       setMetric('mvFindings', 'mcFindings', state.totalFindings, state.totalFindings > 0 ? 'yellow' : '');
