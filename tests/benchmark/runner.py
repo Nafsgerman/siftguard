@@ -34,12 +34,12 @@ SCORES_DIR = Path(__file__).parent / "scores"
 
 
 def _get_evidence_files(case_id: str, evidence_dir: str) -> dict[str, str]:
-    """Map available evidence files for a case."""
     base = Path(evidence_dir) / case_id
     evidence = {}
     candidates = {
-        "memory_image": ["memory.mem", "memory.raw", "memory.vmem", "mem.dmp"],
-        "disk_image": ["disk.dd", "disk.img", "disk.e01", "disk.raw"],
+        "memory_image": ["memory.mem", "memory.raw", "memory.vmem", "mem.dmp",
+                         "base-hunt-memory.img", "*.img", "*.mem", "*.raw", "*.vmem"],
+        "disk_image": ["disk.dd", "disk.img", "disk.e01", "disk.raw", "*.dd", "*.E01"],
         "mft": ["$MFT", "MFT", "mft.bin"],
         "system_hive": ["SYSTEM", "system.hiv"],
         "software_hive": ["SOFTWARE", "software.hiv"],
@@ -47,10 +47,16 @@ def _get_evidence_files(case_id: str, evidence_dir: str) -> dict[str, str]:
     }
     for label, filenames in candidates.items():
         for fn in filenames:
-            candidate = base / fn
-            if candidate.exists():
-                evidence[label] = str(candidate)
-                break
+            if "*" in fn:
+                matches = list(base.glob(fn))
+                if matches:
+                    evidence[label] = str(matches[0])
+                    break
+            else:
+                candidate = base / fn
+                if candidate.exists():
+                    evidence[label] = str(candidate)
+                    break
     return evidence
 
 
