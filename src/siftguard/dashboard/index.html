@@ -4,63 +4,55 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SIFTGuard — DFIR Operations</title>
-<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #080c0f;
-    --bg2: #0d1318;
-    --bg3: #111920;
-    --border: #1a2830;
-    --green: #00ff88;
-    --green-dim: #00cc6a;
-    --green-dark: #003d20;
-    --red: #ff3b3b;
-    --red-dim: #cc2020;
-    --yellow: #ffd700;
-    --cyan: #00d4ff;
-    --white: #e8f0f0;
-    --dim: #4a6070;
-    --font-mono: 'Share Tech Mono', monospace;
-    --font-ui: 'Rajdhani', sans-serif;
+    --blue: #1a73e8;
+    --blue-light: #e8f0fe;
+    --blue-dark: #1557b0;
+    --green: #1e8e3e;
+    --green-light: #e6f4ea;
+    --red: #d93025;
+    --red-light: #fce8e6;
+    --yellow: #f9ab00;
+    --yellow-light: #fef7e0;
+    --grey-50: #f8f9fa;
+    --grey-100: #f1f3f4;
+    --grey-200: #e8eaed;
+    --grey-400: #bdc1c6;
+    --grey-600: #80868b;
+    --grey-800: #3c4043;
+    --grey-900: #202124;
+    --white: #ffffff;
+    --shadow-1: 0 1px 2px rgba(60,64,67,.3), 0 1px 3px rgba(60,64,67,.15);
+    --shadow-2: 0 1px 3px rgba(60,64,67,.3), 0 4px 8px rgba(60,64,67,.15);
+    --font: 'Google Sans', 'Segoe UI', sans-serif;
+    --font-mono: 'Roboto Mono', monospace;
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
   body {
-    background: var(--bg);
-    color: var(--white);
-    font-family: var(--font-mono);
+    background: var(--grey-100);
+    color: var(--grey-900);
+    font-family: var(--font);
     min-height: 100vh;
-    overflow-x: hidden;
-  }
-
-  /* Scanline overlay */
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background: repeating-linear-gradient(
-      0deg,
-      transparent,
-      transparent 2px,
-      rgba(0,0,0,0.08) 2px,
-      rgba(0,0,0,0.08) 4px
-    );
-    pointer-events: none;
-    z-index: 1000;
+    font-size: 14px;
   }
 
   /* Header */
   .header {
+    background: var(--white);
+    border-bottom: 1px solid var(--grey-200);
+    padding: 0 24px;
+    height: 64px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 12px 24px;
-    border-bottom: 1px solid var(--border);
-    background: var(--bg2);
     position: sticky;
     top: 0;
     z-index: 100;
+    box-shadow: var(--shadow-1);
   }
 
   .logo {
@@ -70,54 +62,63 @@
   }
 
   .logo-icon {
-    width: 32px;
-    height: 32px;
-    border: 2px solid var(--green);
+    width: 36px;
+    height: 36px;
+    background: var(--blue);
+    border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--green);
-    font-size: 16px;
-    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
-    background: var(--green-dark);
+    color: white;
+    font-size: 18px;
   }
 
   .logo-text {
-    font-family: var(--font-ui);
-    font-size: 20px;
-    font-weight: 700;
-    letter-spacing: 3px;
-    color: var(--green);
-    text-transform: uppercase;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--grey-900);
   }
 
   .logo-sub {
-    font-size: 10px;
-    color: var(--dim);
-    letter-spacing: 2px;
+    font-size: 11px;
+    color: var(--grey-600);
+    margin-top: 1px;
   }
 
-  .status-bar {
+  .header-right {
     display: flex;
     align-items: center;
-    gap: 20px;
-    font-size: 11px;
-    color: var(--dim);
-    letter-spacing: 1px;
+    gap: 16px;
+  }
+
+  .status-chip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 16px;
+    background: var(--grey-100);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--grey-600);
+    border: 1px solid var(--grey-200);
+  }
+
+  .status-chip.active {
+    background: var(--green-light);
+    color: var(--green);
+    border-color: #a8d5b5;
   }
 
   .status-dot {
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background: var(--dim);
-    display: inline-block;
-    margin-right: 6px;
+    background: var(--grey-400);
   }
 
-  .status-dot.active {
+  .status-chip.active .status-dot {
     background: var(--green);
-    box-shadow: 0 0 8px var(--green);
     animation: pulse 1.5s infinite;
   }
 
@@ -126,419 +127,466 @@
     50% { opacity: 0.4; }
   }
 
-  /* Main layout */
-  .main {
-    display: grid;
-    grid-template-columns: 340px 1fr;
-    grid-template-rows: auto 1fr;
-    gap: 0;
-    height: calc(100vh - 57px);
+  .elapsed {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--grey-600);
   }
 
-  /* Input panel */
-  .input-panel {
-    grid-column: 1;
-    grid-row: 1 / 3;
-    border-right: 1px solid var(--border);
-    background: var(--bg2);
+  /* Progress bar */
+  .progress-bar {
+    height: 3px;
+    background: var(--grey-200);
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: var(--blue);
+    width: 0%;
+    transition: width 0.5s ease;
+  }
+
+  /* Layout */
+  .main {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 16px;
+    padding: 16px 24px;
+    height: calc(100vh - 67px);
+  }
+
+  /* Sidebar */
+  .sidebar {
     display: flex;
     flex-direction: column;
+    gap: 16px;
     overflow-y: auto;
   }
 
-  .panel-header {
-    padding: 12px 16px;
-    border-bottom: 1px solid var(--border);
-    font-family: var(--font-ui);
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 2px;
-    color: var(--dim);
-    text-transform: uppercase;
+  .card {
+    background: var(--white);
+    border-radius: 8px;
+    box-shadow: var(--shadow-1);
+    overflow: hidden;
   }
 
-  .form-section {
-    padding: 16px;
+  .card-header {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--grey-200);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--grey-800);
     display: flex;
-    flex-direction: column;
-    gap: 12px;
+    justify-content: space-between;
+    align-items: center;
   }
+
+  .card-body { padding: 16px; }
 
   label {
-    font-size: 10px;
-    color: var(--dim);
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
     display: block;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--grey-600);
     margin-bottom: 4px;
+    margin-top: 12px;
   }
+
+  label:first-child { margin-top: 0; }
 
   input, textarea {
     width: 100%;
-    background: var(--bg3);
-    border: 1px solid var(--border);
-    color: var(--white);
+    border: 1px solid var(--grey-200);
+    border-radius: 4px;
+    padding: 8px 12px;
     font-family: var(--font-mono);
     font-size: 12px;
-    padding: 8px 10px;
+    color: var(--grey-900);
+    background: var(--white);
     outline: none;
-    transition: border-color 0.2s;
+    transition: border-color 0.15s, box-shadow 0.15s;
   }
 
   input:focus, textarea:focus {
-    border-color: var(--green-dim);
+    border-color: var(--blue);
+    box-shadow: 0 0 0 2px rgba(26,115,232,0.15);
   }
 
   textarea { resize: vertical; min-height: 80px; }
 
-  .btn-investigate {
+  .btn-primary {
     width: 100%;
-    padding: 12px;
-    background: var(--green-dark);
-    border: 1px solid var(--green);
-    color: var(--green);
-    font-family: var(--font-ui);
+    margin-top: 16px;
+    padding: 10px;
+    background: var(--blue);
+    border: none;
+    border-radius: 4px;
+    color: white;
+    font-family: var(--font);
     font-size: 14px;
-    font-weight: 700;
-    letter-spacing: 3px;
-    text-transform: uppercase;
+    font-weight: 500;
     cursor: pointer;
-    transition: all 0.2s;
-    margin-top: 4px;
+    transition: background 0.15s, box-shadow 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
   }
 
-  .btn-investigate:hover {
-    background: var(--green);
-    color: var(--bg);
-    box-shadow: 0 0 20px rgba(0,255,136,0.3);
+  .btn-primary:hover { background: var(--blue-dark); box-shadow: var(--shadow-1); }
+  .btn-primary:disabled { background: var(--grey-400); cursor: not-allowed; }
+
+  /* Audit log in sidebar */
+  .audit-list {
+    padding: 8px 0;
+    max-height: 200px;
+    overflow-y: auto;
   }
 
-  .btn-investigate:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
+  .audit-row {
+    padding: 5px 16px;
+    font-size: 11px;
+    font-family: var(--font-mono);
+    color: var(--grey-600);
+    border-left: 3px solid transparent;
+    display: flex;
+    gap: 8px;
   }
 
-  /* Metrics grid */
-  .metrics-grid {
-    grid-column: 2;
-    grid-row: 1;
+  .audit-row.ok { border-left-color: var(--green); }
+  .audit-row.err { border-left-color: var(--red); color: var(--red); }
+  .audit-row.info { border-left-color: var(--blue); }
+
+  .audit-prefix { color: var(--grey-400); flex-shrink: 0; }
+
+  /* Metrics row */
+  .metrics-row {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
-    border-bottom: 1px solid var(--border);
+    gap: 12px;
+    margin-bottom: 0;
   }
 
   .metric-card {
-    padding: 16px 20px;
-    border-right: 1px solid var(--border);
+    background: var(--white);
+    border-radius: 8px;
+    box-shadow: var(--shadow-1);
+    padding: 16px;
     display: flex;
     flex-direction: column;
-    gap: 4px;
-    position: relative;
-    overflow: hidden;
+    gap: 2px;
+    border-top: 3px solid var(--grey-200);
+    transition: border-color 0.3s;
   }
 
-  .metric-card::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 2px;
-    background: var(--border);
-    transition: background 0.3s;
-  }
-
-  .metric-card.active::after { background: var(--green); }
-  .metric-card.alert::after { background: var(--red); }
-  .metric-card.warn::after { background: var(--yellow); }
+  .metric-card.blue { border-top-color: var(--blue); }
+  .metric-card.green { border-top-color: var(--green); }
+  .metric-card.red { border-top-color: var(--red); }
+  .metric-card.yellow { border-top-color: var(--yellow); }
 
   .metric-label {
-    font-size: 9px;
-    color: var(--dim);
-    letter-spacing: 2px;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--grey-600);
     text-transform: uppercase;
+    letter-spacing: 0.5px;
   }
 
   .metric-value {
-    font-family: var(--font-ui);
-    font-size: 32px;
-    font-weight: 700;
-    color: var(--white);
-    line-height: 1;
+    font-size: 28px;
+    font-weight: 600;
+    color: var(--grey-900);
+    line-height: 1.2;
+    font-family: var(--font-mono);
     transition: color 0.3s;
   }
 
-  .metric-card.active .metric-value { color: var(--green); }
-  .metric-card.alert .metric-value { color: var(--red); }
-  .metric-card.warn .metric-value { color: var(--yellow); }
+  .metric-card.blue .metric-value { color: var(--blue); }
+  .metric-card.green .metric-value { color: var(--green); }
+  .metric-card.red .metric-value { color: var(--red); }
+  .metric-card.yellow .metric-value { color: var(--yellow); }
 
   .metric-sub {
-    font-size: 10px;
-    color: var(--dim);
+    font-size: 11px;
+    color: var(--grey-600);
   }
 
-  /* Tick animation */
-  @keyframes tick {
-    0% { transform: scale(1.4); color: var(--green); }
+  @keyframes bump {
+    0% { transform: scale(1.15); }
     100% { transform: scale(1); }
   }
 
-  .metric-value.ticked {
-    animation: tick 0.3s ease-out forwards;
-  }
+  .metric-value.bump { animation: bump 0.25s ease-out; }
 
-  /* Operations panel */
-  .ops-panel {
-    grid-column: 2;
-    grid-row: 2;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: 1fr 1fr;
-    gap: 0;
+  /* Content area */
+  .content {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
     overflow: hidden;
   }
 
-  .ops-cell {
-    border-right: 1px solid var(--border);
-    border-bottom: 1px solid var(--border);
+  .panels-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 12px;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  .panel-card {
+    background: var(--white);
+    border-radius: 8px;
+    box-shadow: var(--shadow-1);
     display: flex;
     flex-direction: column;
     overflow: hidden;
   }
 
-  .ops-cell:nth-child(2n) { border-right: none; }
-  .ops-cell:nth-child(n+3) { border-bottom: none; }
-
-  .ops-header {
-    padding: 8px 14px;
-    border-bottom: 1px solid var(--border);
-    font-size: 9px;
-    color: var(--dim);
-    letter-spacing: 2px;
-    text-transform: uppercase;
+  .panel-header {
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--grey-200);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--grey-800);
     display: flex;
     justify-content: space-between;
     align-items: center;
     flex-shrink: 0;
+    background: var(--grey-50);
   }
 
-  .ops-count {
-    color: var(--cyan);
-    font-family: var(--font-ui);
-    font-weight: 700;
+  .badge {
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 500;
+    background: var(--blue-light);
+    color: var(--blue);
   }
 
-  .ops-body {
+  .badge.red { background: var(--red-light); color: var(--red); }
+  .badge.green { background: var(--green-light); color: var(--green); }
+
+  .panel-body {
     flex: 1;
     overflow-y: auto;
-    padding: 8px;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    scrollbar-width: thin;
-    scrollbar-color: var(--border) transparent;
+    padding: 8px 0;
   }
 
-  /* Tool call entries */
-  .tool-entry {
+  /* Tool entries */
+  .tool-row {
+    padding: 6px 16px;
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 6px 8px;
-    background: var(--bg3);
-    border-left: 2px solid var(--border);
+    gap: 10px;
+    font-size: 12px;
+    border-bottom: 1px solid var(--grey-100);
+    animation: fadeIn 0.2s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .tool-status {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    flex-shrink: 0;
+  }
+
+  .tool-status.ok { background: var(--green-light); color: var(--green); }
+  .tool-status.running { background: var(--blue-light); color: var(--blue); }
+  .tool-status.fail { background: var(--red-light); color: var(--red); }
+
+  .tool-name {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--blue);
+    font-weight: 500;
+    flex-shrink: 0;
+  }
+
+  .tool-summary {
+    color: var(--grey-600);
     font-size: 11px;
-    animation: slideIn 0.2s ease-out;
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
-  @keyframes slideIn {
-    from { opacity: 0; transform: translateX(-8px); }
-    to { opacity: 1; transform: translateX(0); }
+  .tool-duration {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--grey-400);
+    flex-shrink: 0;
   }
-
-  .tool-entry.ok { border-left-color: var(--green); }
-  .tool-entry.fail { border-left-color: var(--red); }
-  .tool-entry.running { border-left-color: var(--yellow); }
-
-  .tool-name { color: var(--cyan); flex-shrink: 0; }
-  .tool-summary { color: var(--dim); font-size: 10px; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .tool-duration { color: var(--dim); font-size: 10px; flex-shrink: 0; }
 
   /* IOC entries */
-  .ioc-entry {
-    padding: 5px 8px;
-    background: var(--bg3);
-    border-left: 2px solid var(--red-dim);
-    font-size: 11px;
-    animation: slideIn 0.2s ease-out;
+  .ioc-row {
+    padding: 6px 16px;
+    border-bottom: 1px solid var(--grey-100);
+    animation: fadeIn 0.2s ease;
   }
 
   .ioc-type {
-    font-size: 9px;
-    color: var(--dim);
-    letter-spacing: 1px;
-    text-transform: uppercase;
-  }
-
-  .ioc-value { color: var(--red); }
-
-  /* Agent log */
-  .agent-entry {
-    padding: 4px 8px;
     font-size: 10px;
-    color: var(--dim);
-    border-left: 1px solid var(--border);
-    animation: slideIn 0.2s ease-out;
-    line-height: 1.5;
+    font-weight: 500;
+    color: var(--grey-600);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
   }
 
-  .agent-entry .prefix { color: var(--green-dim); margin-right: 6px; }
+  .ioc-value {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--red);
+    font-weight: 500;
+    margin-top: 1px;
+  }
+
+  /* Agent reasoning */
+  .agent-row {
+    padding: 5px 16px;
+    font-size: 11px;
+    color: var(--grey-600);
+    border-bottom: 1px solid var(--grey-100);
+    line-height: 1.5;
+    animation: fadeIn 0.2s ease;
+  }
 
   /* Hypothesis */
-  .hyp-entry {
-    padding: 6px 8px;
-    background: var(--bg3);
-    border-left: 2px solid var(--cyan);
-    font-size: 11px;
-    color: var(--white);
-    animation: slideIn 0.2s ease-out;
+  .hyp-row {
+    padding: 8px 16px;
+    border-bottom: 1px solid var(--grey-100);
+    animation: fadeIn 0.2s ease;
+  }
+
+  .hyp-row .hyp-label {
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--blue);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .hyp-row .hyp-text {
+    font-size: 12px;
+    color: var(--grey-800);
+    margin-top: 2px;
     line-height: 1.5;
   }
 
   /* Report modal */
-  .report-overlay {
+  .modal-overlay {
     display: none;
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.85);
+    background: rgba(32,33,36,0.6);
     z-index: 500;
     align-items: center;
     justify-content: center;
   }
 
-  .report-overlay.show { display: flex; }
+  .modal-overlay.show { display: flex; }
 
-  .report-modal {
-    background: var(--bg2);
-    border: 1px solid var(--green);
+  .modal {
+    background: var(--white);
+    border-radius: 8px;
+    box-shadow: 0 8px 40px rgba(60,64,67,0.3);
     width: 90%;
-    max-width: 900px;
+    max-width: 860px;
     max-height: 85vh;
     display: flex;
     flex-direction: column;
-    box-shadow: 0 0 60px rgba(0,255,136,0.15);
   }
 
-  .report-modal-header {
+  .modal-header {
     padding: 16px 20px;
-    border-bottom: 1px solid var(--border);
+    border-bottom: 1px solid var(--grey-200);
     display: flex;
     justify-content: space-between;
     align-items: center;
   }
 
-  .report-modal-title {
-    font-family: var(--font-ui);
+  .modal-title {
     font-size: 16px;
-    font-weight: 700;
-    letter-spacing: 2px;
-    color: var(--green);
-    text-transform: uppercase;
+    font-weight: 600;
+    color: var(--grey-900);
   }
 
-  .btn-close {
-    background: none;
-    border: 1px solid var(--border);
-    color: var(--dim);
-    padding: 4px 12px;
-    font-family: var(--font-mono);
-    font-size: 11px;
-    cursor: pointer;
-  }
-
-  .btn-close:hover { color: var(--white); border-color: var(--white); }
-
-  .report-body {
+  .modal-body {
     flex: 1;
     overflow-y: auto;
     padding: 20px;
+    font-family: var(--font-mono);
     font-size: 12px;
-    line-height: 1.7;
+    line-height: 1.8;
     white-space: pre-wrap;
-    color: var(--white);
+    color: var(--grey-800);
   }
 
-  .report-footer {
+  .modal-footer {
     padding: 12px 20px;
-    border-top: 1px solid var(--border);
+    border-top: 1px solid var(--grey-200);
     display: flex;
-    gap: 10px;
+    gap: 8px;
+    background: var(--grey-50);
   }
 
-  .btn-export {
+  .btn-outlined {
     padding: 8px 16px;
-    background: none;
-    border: 1px solid var(--cyan);
-    color: var(--cyan);
-    font-family: var(--font-ui);
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 1px;
+    border: 1px solid var(--blue);
+    background: white;
+    color: var(--blue);
+    border-radius: 4px;
+    font-family: var(--font);
+    font-size: 13px;
+    font-weight: 500;
     cursor: pointer;
-    text-transform: uppercase;
-    transition: all 0.2s;
+    transition: background 0.15s;
   }
 
-  .btn-export:hover { background: var(--cyan); color: var(--bg); }
+  .btn-outlined:hover { background: var(--blue-light); }
 
-  /* Progress bar */
-  .progress-bar {
-    height: 2px;
-    background: var(--border);
-    margin: 0;
+  .btn-icon {
+    padding: 6px 12px;
+    border: 1px solid var(--grey-200);
+    background: white;
+    color: var(--grey-600);
+    border-radius: 4px;
+    font-size: 13px;
+    cursor: pointer;
   }
 
-  .progress-fill {
-    height: 100%;
-    background: var(--green);
-    width: 0%;
-    transition: width 0.5s ease;
-    box-shadow: 0 0 8px var(--green);
-  }
-
-  /* Iteration badge */
-  .iter-badge {
-    font-size: 9px;
-    padding: 2px 6px;
-    background: var(--green-dark);
-    border: 1px solid var(--green-dim);
-    color: var(--green);
-    letter-spacing: 1px;
-  }
-
-  /* Complete flash */
-  @keyframes completeFlash {
-    0%, 100% { box-shadow: none; }
-    50% { box-shadow: inset 0 0 40px rgba(0,255,136,0.1); }
-  }
-
-  .complete { animation: completeFlash 1s ease 3; }
+  .btn-icon:hover { background: var(--grey-100); }
 </style>
 </head>
 <body>
 
 <div class="header">
   <div class="logo">
-    <div class="logo-icon">⬡</div>
+    <div class="logo-icon">🛡</div>
     <div>
       <div class="logo-text">SIFTGuard</div>
-      <div class="logo-sub">AUTONOMOUS DFIR · SANS SIFT WORKSTATION</div>
+      <div class="logo-sub">Autonomous DFIR · SANS SIFT Workstation</div>
     </div>
   </div>
-  <div class="status-bar">
-    <span><span class="status-dot" id="statusDot"></span><span id="statusText">STANDBY</span></span>
-    <span id="caseLabel">—</span>
-    <span id="elapsedLabel">00:00</span>
+  <div class="header-right">
+    <span id="caseLabel" style="font-size:13px;color:var(--grey-600)">No active case</span>
+    <span class="elapsed" id="elapsedLabel">00:00</span>
+    <div class="status-chip" id="statusChip">
+      <div class="status-dot"></div>
+      <span id="statusText">Standby</span>
+    </div>
   </div>
 </div>
 
@@ -546,146 +594,146 @@
 
 <div class="main">
 
-  <!-- Input panel -->
-  <div class="input-panel">
-    <div class="panel-header">Case Configuration</div>
-    <div class="form-section">
-      <div>
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="card">
+      <div class="card-header">New Investigation</div>
+      <div class="card-body">
         <label>Case ID</label>
-        <input type="text" id="caseId" value="CASE-001" placeholder="CASE-001">
-      </div>
-      <div>
+        <input type="text" id="caseId" value="CASE-001">
+
         <label>Memory Image Path</label>
         <input type="text" id="memoryImage" value="/cases/TEST-001/base-hunt-memory.img">
-      </div>
-      <div>
+
         <label>Briefing</label>
-        <textarea id="briefing" rows="4">Windows 10 x64 memory image. APT hunt scenario. Suspected compromise. Find evil.</textarea>
+        <textarea id="briefing">Windows 10 x64 memory image. APT hunt scenario. Suspected compromise. Find evil.</textarea>
+
+        <button class="btn-primary" id="btnInvestigate" onclick="startInvestigation()">
+          ▶ Launch Investigation
+        </button>
       </div>
-      <button class="btn-investigate" id="btnInvestigate" onclick="startInvestigation()">
-        ▶ LAUNCH INVESTIGATION
-      </button>
     </div>
 
-    <div class="panel-header" style="margin-top:8px">Audit Trail</div>
-    <div class="ops-body" id="auditLog" style="flex:1; max-height:300px">
-      <div class="agent-entry" style="color:var(--dim)">Waiting for investigation...</div>
+    <div class="card" style="flex:1;min-height:0">
+      <div class="card-header">Audit Trail</div>
+      <div class="audit-list" id="auditLog">
+        <div class="audit-row"><span class="audit-prefix">—</span>Waiting...</div>
+      </div>
     </div>
   </div>
 
-  <!-- Metrics -->
-  <div class="metrics-grid">
-    <div class="metric-card" id="mcIterations">
-      <div class="metric-label">Iterations</div>
-      <div class="metric-value" id="mvIterations">0</div>
-      <div class="metric-sub">/ <span id="mvMaxIter">15</span> max</div>
+  <!-- Content -->
+  <div class="content">
+
+    <!-- Metrics -->
+    <div class="metrics-row">
+      <div class="metric-card" id="mcIter">
+        <div class="metric-label">Iterations</div>
+        <div class="metric-value" id="mvIter">0</div>
+        <div class="metric-sub">of <span id="mvMaxIter">15</span> max</div>
+      </div>
+      <div class="metric-card" id="mcTools">
+        <div class="metric-label">Tools Fired</div>
+        <div class="metric-value" id="mvTools">0</div>
+        <div class="metric-sub">forensic calls</div>
+      </div>
+      <div class="metric-card" id="mcFindings">
+        <div class="metric-label">Findings</div>
+        <div class="metric-value" id="mvFindings">0</div>
+        <div class="metric-sub">artifacts</div>
+      </div>
+      <div class="metric-card" id="mcIOCs">
+        <div class="metric-label">IOCs</div>
+        <div class="metric-value" id="mvIOCs">0</div>
+        <div class="metric-sub">indicators</div>
+      </div>
+      <div class="metric-card" id="mcAvg">
+        <div class="metric-label">Avg Tool Time</div>
+        <div class="metric-value" id="mvAvg">—</div>
+        <div class="metric-sub">milliseconds</div>
+      </div>
     </div>
-    <div class="metric-card" id="mcTools">
-      <div class="metric-label">Tools Fired</div>
-      <div class="metric-value" id="mvTools">0</div>
-      <div class="metric-sub">forensic calls</div>
-    </div>
-    <div class="metric-card" id="mcFindings">
-      <div class="metric-label">Findings</div>
-      <div class="metric-value" id="mvFindings">0</div>
-      <div class="metric-sub">artifacts</div>
-    </div>
-    <div class="metric-card" id="mcIOCs">
-      <div class="metric-label">IOCs</div>
-      <div class="metric-value" id="mvIOCs">0</div>
-      <div class="metric-sub">indicators</div>
-    </div>
-    <div class="metric-card" id="mcDuration">
-      <div class="metric-label">Avg Tool Time</div>
-      <div class="metric-value" id="mvDuration">—</div>
-      <div class="metric-sub">milliseconds</div>
+
+    <!-- Panels -->
+    <div class="panels-grid">
+
+      <div class="panel-card">
+        <div class="panel-header">
+          Tool Execution
+          <span class="badge" id="toolBadge">0</span>
+        </div>
+        <div class="panel-body" id="toolLog"></div>
+      </div>
+
+      <div class="panel-card">
+        <div class="panel-header">
+          Indicators of Compromise
+          <span class="badge red" id="iocBadge">0</span>
+        </div>
+        <div class="panel-body" id="iocLog"></div>
+      </div>
+
+      <div class="panel-card">
+        <div class="panel-header">
+          Agent Reasoning
+          <span class="badge" id="iterBadge">Iter 0</span>
+        </div>
+        <div class="panel-body" id="agentLog"></div>
+      </div>
+
+      <div class="panel-card">
+        <div class="panel-header">
+          Hypothesis Tracker
+          <span class="badge green" id="hypBadge">0</span>
+        </div>
+        <div class="panel-body" id="hypLog"></div>
+      </div>
+
     </div>
   </div>
-
-  <!-- Operations -->
-  <div class="ops-panel">
-    <div class="ops-cell">
-      <div class="ops-header">
-        Tool Execution Log
-        <span class="ops-count" id="toolCount">0</span>
-      </div>
-      <div class="ops-body" id="toolLog"></div>
-    </div>
-
-    <div class="ops-cell">
-      <div class="ops-header">
-        Indicators of Compromise
-        <span class="ops-count" id="iocCount">0</span>
-      </div>
-      <div class="ops-body" id="iocLog"></div>
-    </div>
-
-    <div class="ops-cell">
-      <div class="ops-header">
-        Agent Reasoning
-        <span class="iter-badge" id="iterBadge">ITER 0</span>
-      </div>
-      <div class="ops-body" id="agentLog"></div>
-    </div>
-
-    <div class="ops-cell">
-      <div class="ops-header">
-        Hypothesis Tracker
-        <span class="ops-count" id="hypCount">0</span>
-      </div>
-      <div class="ops-body" id="hypLog"></div>
-    </div>
-  </div>
-
 </div>
 
 <!-- Report modal -->
-<div class="report-overlay" id="reportOverlay">
-  <div class="report-modal" id="reportModal">
-    <div class="report-modal-header">
-      <div class="report-modal-title">📋 Incident Report</div>
-      <button class="btn-close" onclick="closeReport()">✕ CLOSE</button>
+<div class="modal-overlay" id="reportOverlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Incident Report</div>
+      <button class="btn-icon" onclick="closeReport()">✕</button>
     </div>
-    <div class="report-body" id="reportBody"></div>
-    <div class="report-footer">
-      <button class="btn-export" onclick="exportMarkdown()">⬇ EXPORT .MD</button>
-      <button class="btn-export" onclick="exportText()">⬇ EXPORT .TXT</button>
+    <div class="modal-body" id="reportBody"></div>
+    <div class="modal-footer">
+      <button class="btn-outlined" onclick="exportMarkdown()">⬇ Export .md</button>
+      <button class="btn-outlined" onclick="exportText()">⬇ Export .txt</button>
     </div>
   </div>
 </div>
 
 <script>
 let state = {
-  sessionId: null,
-  startTime: null,
-  elapsedTimer: null,
-  iterations: 0,
-  maxIter: 15,
-  toolsFired: 0,
-  totalFindings: 0,
-  iocCount: 0,
-  durations: [],
+  startTime: null, elapsedTimer: null,
+  iterations: 0, maxIter: 15,
+  toolsFired: 0, totalFindings: 0,
+  iocCount: 0, durations: [],
   reportText: '',
-  activeToolCall: null,
 };
 
-function tick(elId) {
-  const el = document.getElementById(elId);
-  el.classList.remove('ticked');
+function bump(id) {
+  const el = document.getElementById(id);
+  el.classList.remove('bump');
   void el.offsetWidth;
-  el.classList.add('ticked');
+  el.classList.add('bump');
 }
 
-function setMetric(id, cardId, value, state_) {
-  document.getElementById(id).textContent = value;
-  tick(id);
-  if (state_ && cardId) {
-    document.getElementById(cardId).className = `metric-card ${state_}`;
+function setMetric(valId, cardId, value, color) {
+  document.getElementById(valId).textContent = value;
+  bump(valId);
+  if (color) {
+    document.getElementById(cardId).className = `metric-card ${color}`;
   }
 }
 
-function addToLog(containerId, html) {
-  const el = document.getElementById(containerId);
+function addToLog(id, html) {
+  const el = document.getElementById(id);
   el.insertAdjacentHTML('beforeend', html);
   el.scrollTop = el.scrollHeight;
 }
@@ -693,9 +741,8 @@ function addToLog(containerId, html) {
 function startInvestigation() {
   const btn = document.getElementById('btnInvestigate');
   btn.disabled = true;
-  btn.textContent = '⟳ INVESTIGATING...';
+  btn.textContent = '⟳ Investigating...';
 
-  // Reset state
   state = { ...state,
     startTime: Date.now(), iterations: 0, toolsFired: 0,
     totalFindings: 0, iocCount: 0, durations: [], reportText: '',
@@ -704,175 +751,156 @@ function startInvestigation() {
   ['toolLog','iocLog','agentLog','hypLog','auditLog'].forEach(id => {
     document.getElementById(id).innerHTML = '';
   });
-  setMetric('mvIterations', 'mcIterations', '0', '');
-  setMetric('mvTools', 'mcTools', '0', '');
-  setMetric('mvFindings', 'mcFindings', '0', '');
-  setMetric('mvIOCs', 'mcIOCs', '0', '');
-  document.getElementById('mvDuration').textContent = '—';
-  document.getElementById('progressFill').style.width = '0%';
 
-  document.getElementById('statusDot').classList.add('active');
-  document.getElementById('statusText').textContent = 'ACTIVE';
+  ['mvIter','mvTools','mvFindings','mvIOCs'].forEach(id => {
+    document.getElementById(id).textContent = '0';
+  });
+  document.getElementById('mvAvg').textContent = '—';
+  document.getElementById('progressFill').style.width = '0%';
+  ['toolBadge','iocBadge','hypBadge'].forEach(id => {
+    document.getElementById(id).textContent = '0';
+  });
+
+  const chip = document.getElementById('statusChip');
+  chip.classList.add('active');
+  document.getElementById('statusText').textContent = 'Investigating';
 
   const caseId = document.getElementById('caseId').value;
-  const briefing = document.getElementById('briefing').value;
-  const memoryImage = document.getElementById('memoryImage').value;
-
   document.getElementById('caseLabel').textContent = caseId;
 
   state.elapsedTimer = setInterval(() => {
     const s = Math.floor((Date.now() - state.startTime) / 1000);
-    const m = Math.floor(s / 60);
     document.getElementById('elapsedLabel').textContent =
-      `${String(m).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
+      `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
   }, 1000);
 
   fetch('/api/investigate', {
     method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({ case_id: caseId, briefing, memory_image: memoryImage })
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({
+      case_id: caseId,
+      briefing: document.getElementById('briefing').value,
+      memory_image: document.getElementById('memoryImage').value,
+    })
   })
   .then(r => r.json())
-  .then(data => {
-    state.sessionId = data.session_id;
-    connectSSE(data.session_id);
-  })
-  .catch(err => {
-    addToLog('auditLog', `<div class="agent-entry"><span class="prefix" style="color:var(--red)">ERR</span>${err}</div>`);
-    resetBtn();
-  });
+  .then(data => connectSSE(data.session_id))
+  .catch(err => { addAudit('err', err); resetBtn(); });
 }
 
 function connectSSE(sessionId) {
   const es = new EventSource(`/api/stream/${sessionId}`);
-
-  es.onmessage = (e) => {
-    const ev = JSON.parse(e.data);
-    handleEvent(ev);
-  };
-
-  es.onerror = () => {
-    es.close();
-    resetBtn();
-  };
+  es.onmessage = e => handleEvent(JSON.parse(e.data));
+  es.onerror = () => { es.close(); resetBtn(); };
 }
 
 function handleEvent(ev) {
   switch(ev.type) {
     case 'start':
-      addToLog('auditLog', `<div class="agent-entry"><span class="prefix">SYS</span>Investigation started · ${ev.case_id}</div>`);
-      addToLog('hypLog', `<div class="hyp-entry">Forming initial hypothesis based on briefing...</div>`);
-      document.getElementById('hypCount').textContent = '1';
+      addAudit('info', `Case ${ev.case_id} started`);
+      addToLog('hypLog', `<div class="hyp-row"><div class="hyp-label">Initial</div><div class="hyp-text">Forming hypothesis from briefing...</div></div>`);
+      document.getElementById('hypBadge').textContent = '1';
       break;
 
     case 'iteration':
       state.iterations = ev.iteration;
       state.maxIter = ev.max;
-      setMetric('mvIterations', 'mcIterations', ev.iteration, 'active');
+      setMetric('mvIter', 'mcIter', ev.iteration, 'blue');
       document.getElementById('mvMaxIter').textContent = ev.max;
-      document.getElementById('iterBadge').textContent = `ITER ${ev.iteration}`;
-      document.getElementById('progressFill').style.width = `${(ev.iteration / ev.max) * 100}%`;
-      addToLog('auditLog', `<div class="agent-entry"><span class="prefix">ITR</span>Iteration ${ev.iteration}/${ev.max}</div>`);
+      document.getElementById('iterBadge').textContent = `Iter ${ev.iteration}`;
+      document.getElementById('progressFill').style.width = `${(ev.iteration/ev.max)*100}%`;
+      addAudit('info', `Iteration ${ev.iteration}/${ev.max}`);
       break;
 
     case 'tool_call':
       state.toolsFired++;
-      setMetric('mvTools', 'mcTools', state.toolsFired, 'active');
-      document.getElementById('toolCount').textContent = state.toolsFired;
-      addToLog('toolLog', `<div class="tool-entry running">
+      setMetric('mvTools', 'mcTools', state.toolsFired, 'blue');
+      document.getElementById('toolBadge').textContent = state.toolsFired;
+      addToLog('toolLog', `<div class="tool-row" id="tc_${state.toolsFired}">
+        <div class="tool-status running">⟳</div>
         <span class="tool-name">${ev.tool}</span>
         <span class="tool-summary">running...</span>
       </div>`);
-      addToLog('auditLog', `<div class="agent-entry"><span class="prefix">→</span>${ev.tool}</div>`);
+      addAudit('info', `→ ${ev.tool}`);
       break;
 
     case 'tool_result': {
-      // Update last running entry
-      const toolLog = document.getElementById('toolLog');
-      const running = toolLog.querySelector('.tool-entry.running');
-      if (running) {
-        running.className = `tool-entry ${ev.outcome === 'ok' ? 'ok' : 'fail'}`;
-        running.querySelector('.tool-summary').textContent = ev.summary;
-        running.insertAdjacentHTML('beforeend',
-          `<span class="tool-duration">${ev.duration_ms}ms</span>`);
+      const rows = document.getElementById('toolLog').querySelectorAll('.tool-row');
+      const last = rows[rows.length - 1];
+      if (last) {
+        const st = last.querySelector('.tool-status');
+        st.className = `tool-status ${ev.outcome === 'ok' ? 'ok' : 'fail'}`;
+        st.textContent = ev.outcome === 'ok' ? '✓' : '✗';
+        last.querySelector('.tool-summary').textContent = ev.summary;
+        last.insertAdjacentHTML('beforeend', `<span class="tool-duration">${ev.duration_ms}ms</span>`);
       }
 
-      // Update findings
       state.totalFindings += ev.findings_count || 0;
-      setMetric('mvFindings', 'mcFindings', state.totalFindings, state.totalFindings > 0 ? 'warn' : '');
+      setMetric('mvFindings', 'mcFindings', state.totalFindings, state.totalFindings > 0 ? 'yellow' : '');
 
-      // Track durations
       if (ev.duration_ms > 0) {
         state.durations.push(ev.duration_ms);
-        const avg = Math.round(state.durations.reduce((a,b)=>a+b,0) / state.durations.length);
-        document.getElementById('mvDuration').textContent = avg;
-        tick('mvDuration');
+        const avg = Math.round(state.durations.reduce((a,b)=>a+b,0)/state.durations.length);
+        document.getElementById('mvAvg').textContent = avg;
+        bump('mvAvg');
       }
 
-      // Parse IOCs from summary
       extractIOCs(ev.tool, ev.summary);
-      addToLog('auditLog', `<div class="agent-entry"><span class="prefix" style="color:${ev.outcome==='ok'?'var(--green)':'var(--red)'}">✓</span>${ev.tool}: ${ev.summary}</div>`);
+      addAudit('ok', `${ev.tool}: ${ev.summary}`);
       break;
     }
 
     case 'agent_text': {
-      const text = ev.text || '';
-      // Extract hypothesis statements
+      const text = (ev.text || '').trim();
+      if (!text) break;
       if (text.toLowerCase().includes('hypothesis') || text.toLowerCase().includes('suspect')) {
-        const lines = text.split('\n').filter(l => l.trim() && l.length > 20).slice(0,2);
+        const lines = text.split('\n').filter(l => l.trim().length > 20).slice(0,2);
         lines.forEach(l => {
-          addToLog('hypLog', `<div class="hyp-entry">${l.trim().substring(0,200)}</div>`);
-          const c = parseInt(document.getElementById('hypCount').textContent) + 1;
-          document.getElementById('hypCount').textContent = c;
+          addToLog('hypLog', `<div class="hyp-row">
+            <div class="hyp-label">Iter ${state.iterations}</div>
+            <div class="hyp-text">${l.trim().substring(0,200)}</div>
+          </div>`);
+          const c = parseInt(document.getElementById('hypBadge').textContent) + 1;
+          document.getElementById('hypBadge').textContent = c;
         });
       }
-      // Show first 150 chars of reasoning
-      const preview = text.substring(0, 150).replace(/\n/g, ' ');
-      if (preview.trim()) {
-        addToLog('agentLog', `<div class="agent-entry"><span class="prefix">&gt;</span>${preview}${text.length > 150 ? '…' : ''}</div>`);
-      }
+      addToLog('agentLog', `<div class="agent-row">${text.substring(0,180).replace(/\n/g,' ')}${text.length>180?'…':''}</div>`);
       break;
     }
 
     case 'report':
       state.reportText = ev.content;
-      // Show view report button
-      document.getElementById('btnInvestigate').textContent = '📋 VIEW REPORT';
+      document.getElementById('btnInvestigate').textContent = '📋 View Report';
       document.getElementById('btnInvestigate').disabled = false;
       document.getElementById('btnInvestigate').onclick = showReport;
-      addToLog('agentLog', `<div class="agent-entry" style="color:var(--green)"><span class="prefix">✓</span>Final report generated</div>`);
+      addAudit('ok', 'Incident report generated');
       break;
 
     case 'complete':
       clearInterval(state.elapsedTimer);
-      document.getElementById('statusDot').classList.remove('active');
-      document.getElementById('statusText').textContent = 'COMPLETE';
+      document.getElementById('statusChip').classList.remove('active');
+      document.getElementById('statusText').textContent = 'Complete';
       document.getElementById('progressFill').style.width = '100%';
-      document.querySelector('.ops-panel').classList.add('complete');
       if (!state.reportText) resetBtn();
       break;
   }
 }
 
 function extractIOCs(tool, summary) {
-  const iocPatterns = [
-    { re: /(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})/g, type: 'IP' },
-    { re: /([A-Za-z0-9_-]+\.exe)/gi, type: 'PROCESS' },
-    { re: /port\s+(\d{4,5})/gi, type: 'PORT' },
-    { re: /(T\d{4}(?:\.\d{3})?)/g, type: 'MITRE' },
+  const patterns = [
+    { re: /(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})/g, type: 'IP Address' },
+    { re: /([A-Za-z0-9_-]+\.exe)/gi, type: 'Process' },
+    { re: /port\s+(\d{4,5})/gi, type: 'Port' },
+    { re: /(T\d{4}(?:\.\d{3})?)/g, type: 'MITRE ATT&CK' },
   ];
-
-  let found = false;
-  iocPatterns.forEach(({ re, type }) => {
-    const matches = [...(summary.matchAll(re))];
-    matches.forEach(m => {
+  patterns.forEach(({ re, type }) => {
+    [...(summary.matchAll(re))].forEach(m => {
       const val = m[1];
       if (['127.0.0.1','0.0.0.0'].includes(val)) return;
-      found = true;
       state.iocCount++;
-      setMetric('mvIOCs', 'mcIOCs', state.iocCount, 'alert');
-      document.getElementById('iocCount').textContent = state.iocCount;
-      addToLog('iocLog', `<div class="ioc-entry">
+      setMetric('mvIOCs', 'mcIOCs', state.iocCount, 'red');
+      document.getElementById('iocBadge').textContent = state.iocCount;
+      addToLog('iocLog', `<div class="ioc-row">
         <div class="ioc-type">${type} · ${tool}</div>
         <div class="ioc-value">${val}</div>
       </div>`);
@@ -880,10 +908,14 @@ function extractIOCs(tool, summary) {
   });
 }
 
+function addAudit(type, msg) {
+  addToLog('auditLog', `<div class="audit-row ${type}"><span class="audit-prefix">${type==='ok'?'✓':type==='err'?'✗':'→'}</span>${msg}</div>`);
+}
+
 function resetBtn() {
   const btn = document.getElementById('btnInvestigate');
   btn.disabled = false;
-  btn.textContent = '▶ LAUNCH INVESTIGATION';
+  btn.textContent = '▶ Launch Investigation';
   btn.onclick = startInvestigation;
   clearInterval(state.elapsedTimer);
 }
@@ -898,17 +930,15 @@ function closeReport() {
 }
 
 function exportMarkdown() {
-  const blob = new Blob([state.reportText], {type: 'text/markdown'});
   const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
+  a.href = URL.createObjectURL(new Blob([state.reportText], {type:'text/markdown'}));
   a.download = `${document.getElementById('caseId').value}_report.md`;
   a.click();
 }
 
 function exportText() {
-  const blob = new Blob([state.reportText], {type: 'text/plain'});
   const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
+  a.href = URL.createObjectURL(new Blob([state.reportText], {type:'text/plain'}));
   a.download = `${document.getElementById('caseId').value}_report.txt`;
   a.click();
 }
