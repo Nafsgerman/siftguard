@@ -574,7 +574,9 @@ function extractIOCs(tool, summary) {
     var re = new RegExp(p.re.source, p.re.flags);
     while ((m = re.exec(summary)) !== null) {
       var val = m[1];
+      var processWhitelist = ['explorer.exe','services.exe','svchost.exe','lsass.exe','csrss.exe','winlogon.exe','wininit.exe','smss.exe','taskhostw.exe','conhost.exe'];
       if (val === '127.0.0.1' || val === '0.0.0.0') continue;
+      if (p.type === 'Process' && processWhitelist.indexOf(val.toLowerCase()) !== -1) continue;
       var key = p.type + ':' + val.toLowerCase();
       if (state.seenIOCs[key]) continue;
       state.seenIOCs[key] = true;
