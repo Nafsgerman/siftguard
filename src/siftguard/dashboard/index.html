@@ -15,7 +15,6 @@
     --red: #d93025;
     --red-light: #fce8e6;
     --yellow: #f9ab00;
-    --yellow-light: #fef7e0;
     --grey-50: #f8f9fa;
     --grey-100: #f1f3f4;
     --grey-200: #e8eaed;
@@ -25,7 +24,6 @@
     --grey-900: #202124;
     --white: #ffffff;
     --shadow-1: 0 1px 2px rgba(60,64,67,.3), 0 1px 3px rgba(60,64,67,.15);
-    --shadow-2: 0 1px 3px rgba(60,64,67,.3), 0 4px 8px rgba(60,64,67,.15);
     --font: 'Google Sans', 'Segoe UI', sans-serif;
     --font-mono: 'Roboto Mono', monospace;
   }
@@ -40,7 +38,6 @@
     font-size: 14px;
   }
 
-  /* Header */
   .header {
     background: var(--white);
     border-bottom: 1px solid var(--grey-200);
@@ -55,98 +52,36 @@
     box-shadow: var(--shadow-1);
   }
 
-  .logo {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
+  .logo { display: flex; align-items: center; gap: 12px; }
 
   .logo-icon {
-    width: 36px;
-    height: 36px;
-    background: var(--blue);
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 18px;
+    width: 36px; height: 36px;
+    background: var(--blue); border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    color: white; font-size: 18px;
   }
 
-  .logo-text {
-    font-size: 18px;
-    font-weight: 600;
-    color: var(--grey-900);
-  }
-
-  .logo-sub {
-    font-size: 11px;
-    color: var(--grey-600);
-    margin-top: 1px;
-  }
-
-  .header-right {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-  }
+  .logo-text { font-size: 18px; font-weight: 600; color: var(--grey-900); }
+  .logo-sub { font-size: 11px; color: var(--grey-600); margin-top: 1px; }
+  .header-right { display: flex; align-items: center; gap: 16px; }
 
   .status-chip {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 6px 12px;
-    border-radius: 16px;
-    background: var(--grey-100);
-    font-size: 12px;
-    font-weight: 500;
-    color: var(--grey-600);
-    border: 1px solid var(--grey-200);
+    display: flex; align-items: center; gap: 6px;
+    padding: 6px 12px; border-radius: 16px;
+    background: var(--grey-100); font-size: 12px; font-weight: 500;
+    color: var(--grey-600); border: 1px solid var(--grey-200);
   }
+  .status-chip.active { background: var(--green-light); color: var(--green); border-color: #a8d5b5; }
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--grey-400); }
+  .status-chip.active .status-dot { background: var(--green); animation: pulse 1.5s infinite; }
 
-  .status-chip.active {
-    background: var(--green-light);
-    color: var(--green);
-    border-color: #a8d5b5;
-  }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
 
-  .status-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: var(--grey-400);
-  }
+  .elapsed { font-family: var(--font-mono); font-size: 13px; color: var(--grey-600); }
 
-  .status-chip.active .status-dot {
-    background: var(--green);
-    animation: pulse 1.5s infinite;
-  }
+  .progress-bar { height: 3px; background: var(--grey-200); }
+  .progress-fill { height: 100%; background: var(--blue); width: 0%; transition: width 0.5s ease; }
 
-  @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.4; }
-  }
-
-  .elapsed {
-    font-family: var(--font-mono);
-    font-size: 13px;
-    color: var(--grey-600);
-  }
-
-  /* Progress bar */
-  .progress-bar {
-    height: 3px;
-    background: var(--grey-200);
-  }
-
-  .progress-fill {
-    height: 100%;
-    background: var(--blue);
-    width: 0%;
-    transition: width 0.5s ease;
-  }
-
-  /* Layout */
   .main {
     display: grid;
     grid-template-columns: 320px 1fr;
@@ -155,418 +90,185 @@
     height: calc(100vh - 67px);
   }
 
-  /* Sidebar */
-  .sidebar {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    overflow-y: auto;
-  }
-
-  .card {
-    background: var(--white);
-    border-radius: 8px;
-    box-shadow: var(--shadow-1);
-    overflow: hidden;
-  }
+  .sidebar { display: flex; flex-direction: column; gap: 16px; overflow-y: auto; }
+  .card { background: var(--white); border-radius: 8px; box-shadow: var(--shadow-1); overflow: hidden; }
 
   .card-header {
-    padding: 14px 16px;
-    border-bottom: 1px solid var(--grey-200);
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--grey-800);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    padding: 14px 16px; border-bottom: 1px solid var(--grey-200);
+    font-size: 13px; font-weight: 600; color: var(--grey-800);
+    display: flex; justify-content: space-between; align-items: center;
   }
 
   .card-body { padding: 16px; }
 
   label {
-    display: block;
-    font-size: 12px;
-    font-weight: 500;
-    color: var(--grey-600);
-    margin-bottom: 4px;
-    margin-top: 12px;
+    display: block; font-size: 12px; font-weight: 500;
+    color: var(--grey-600); margin-bottom: 4px; margin-top: 12px;
   }
-
   label:first-child { margin-top: 0; }
 
   input, textarea {
-    width: 100%;
-    border: 1px solid var(--grey-200);
-    border-radius: 4px;
-    padding: 8px 12px;
-    font-family: var(--font-mono);
-    font-size: 12px;
-    color: var(--grey-900);
-    background: var(--white);
-    outline: none;
+    width: 100%; border: 1px solid var(--grey-200); border-radius: 4px;
+    padding: 8px 12px; font-family: var(--font-mono); font-size: 12px;
+    color: var(--grey-900); background: var(--white); outline: none;
     transition: border-color 0.15s, box-shadow 0.15s;
   }
-
   input:focus, textarea:focus {
     border-color: var(--blue);
     box-shadow: 0 0 0 2px rgba(26,115,232,0.15);
   }
-
   textarea { resize: vertical; min-height: 80px; }
 
   .btn-primary {
-    width: 100%;
-    margin-top: 16px;
-    padding: 10px;
-    background: var(--blue);
-    border: none;
-    border-radius: 4px;
-    color: white;
-    font-family: var(--font);
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background 0.15s, box-shadow 0.15s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
+    width: 100%; margin-top: 16px; padding: 10px;
+    background: var(--blue); border: none; border-radius: 4px;
+    color: white; font-family: var(--font); font-size: 14px; font-weight: 500;
+    cursor: pointer; transition: background 0.15s, box-shadow 0.15s;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
   }
-
   .btn-primary:hover { background: var(--blue-dark); box-shadow: var(--shadow-1); }
   .btn-primary:disabled { background: var(--grey-400); cursor: not-allowed; }
 
-  /* Audit log in sidebar */
-  .audit-list {
-    padding: 8px 0;
-    max-height: 200px;
-    overflow-y: auto;
-  }
+  .audit-list { padding: 8px 0; max-height: 200px; overflow-y: auto; }
 
   .audit-row {
-    padding: 5px 16px;
-    font-size: 11px;
-    font-family: var(--font-mono);
-    color: var(--grey-600);
-    border-left: 3px solid transparent;
-    display: flex;
-    gap: 8px;
+    padding: 5px 16px; font-size: 11px; font-family: var(--font-mono);
+    color: var(--grey-600); border-left: 3px solid transparent; display: flex; gap: 8px;
   }
-
   .audit-row.ok { border-left-color: var(--green); }
   .audit-row.err { border-left-color: var(--red); color: var(--red); }
   .audit-row.info { border-left-color: var(--blue); }
-
   .audit-prefix { color: var(--grey-400); flex-shrink: 0; }
 
-  /* Metrics row */
-  .metrics-row {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 12px;
-    margin-bottom: 0;
-  }
+  .metrics-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
 
   .metric-card {
-    background: var(--white);
-    border-radius: 8px;
-    box-shadow: var(--shadow-1);
-    padding: 16px;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    border-top: 3px solid var(--grey-200);
-    transition: border-color 0.3s;
+    background: var(--white); border-radius: 8px; box-shadow: var(--shadow-1);
+    padding: 16px; display: flex; flex-direction: column; gap: 2px;
+    border-top: 3px solid var(--grey-200); transition: border-color 0.3s;
   }
-
   .metric-card.blue { border-top-color: var(--blue); }
   .metric-card.green { border-top-color: var(--green); }
   .metric-card.red { border-top-color: var(--red); }
   .metric-card.yellow { border-top-color: var(--yellow); }
 
-  .metric-label {
-    font-size: 11px;
-    font-weight: 500;
-    color: var(--grey-600);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
+  .metric-label { font-size: 11px; font-weight: 500; color: var(--grey-600); text-transform: uppercase; letter-spacing: 0.5px; }
 
   .metric-value {
-    font-size: 28px;
-    font-weight: 600;
-    color: var(--grey-900);
-    line-height: 1.2;
-    font-family: var(--font-mono);
-    transition: color 0.3s;
+    font-size: 28px; font-weight: 600; color: var(--grey-900);
+    line-height: 1.2; font-family: var(--font-mono); transition: color 0.3s;
   }
-
   .metric-card.blue .metric-value { color: var(--blue); }
   .metric-card.green .metric-value { color: var(--green); }
   .metric-card.red .metric-value { color: var(--red); }
   .metric-card.yellow .metric-value { color: var(--yellow); }
+  .metric-sub { font-size: 11px; color: var(--grey-600); }
 
-  .metric-sub {
-    font-size: 11px;
-    color: var(--grey-600);
-  }
-
-  @keyframes bump {
-    0% { transform: scale(1.15); }
-    100% { transform: scale(1); }
-  }
-
+  @keyframes bump { 0% { transform: scale(1.15); } 100% { transform: scale(1); } }
   .metric-value.bump { animation: bump 0.25s ease-out; }
 
-  /* Content area */
-  .content {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    overflow: hidden;
-  }
+  .content { display: flex; flex-direction: column; gap: 12px; overflow: hidden; }
 
   .panels-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: 1fr 1fr;
-    gap: 12px;
-    flex: 1;
-    overflow: hidden;
+    display: grid; grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr; gap: 12px; flex: 1; overflow: hidden;
   }
 
   .panel-card {
-    background: var(--white);
-    border-radius: 8px;
-    box-shadow: var(--shadow-1);
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
+    background: var(--white); border-radius: 8px; box-shadow: var(--shadow-1);
+    display: flex; flex-direction: column; overflow: hidden;
   }
 
   .panel-header {
-    padding: 10px 16px;
-    border-bottom: 1px solid var(--grey-200);
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--grey-800);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-shrink: 0;
-    background: var(--grey-50);
+    padding: 10px 16px; border-bottom: 1px solid var(--grey-200);
+    font-size: 12px; font-weight: 600; color: var(--grey-800);
+    display: flex; justify-content: space-between; align-items: center;
+    flex-shrink: 0; background: var(--grey-50);
   }
 
-  .badge {
-    padding: 2px 8px;
-    border-radius: 10px;
-    font-size: 11px;
-    font-weight: 500;
-    background: var(--blue-light);
-    color: var(--blue);
-  }
-
+  .badge { padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 500; background: var(--blue-light); color: var(--blue); }
   .badge.red { background: var(--red-light); color: var(--red); }
   .badge.green { background: var(--green-light); color: var(--green); }
 
-  .panel-body {
-    flex: 1;
-    overflow-y: auto;
-    padding: 8px 0;
-  }
+  .panel-body { flex: 1; overflow-y: auto; padding: 8px 0; }
 
-  /* Tool entries */
   .tool-row {
-    padding: 6px 16px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 12px;
-    border-bottom: 1px solid var(--grey-100);
-    animation: fadeIn 0.2s ease;
+    padding: 6px 16px; display: flex; align-items: center; gap: 10px;
+    font-size: 12px; border-bottom: 1px solid var(--grey-100); animation: fadeIn 0.2s ease;
   }
 
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(4px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
 
   .tool-status {
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 10px;
-    flex-shrink: 0;
+    width: 20px; height: 20px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; flex-shrink: 0;
   }
-
   .tool-status.ok { background: var(--green-light); color: var(--green); }
   .tool-status.running { background: var(--blue-light); color: var(--blue); }
   .tool-status.fail { background: var(--red-light); color: var(--red); }
 
-  .tool-name {
-    font-family: var(--font-mono);
-    font-size: 12px;
-    color: var(--blue);
-    font-weight: 500;
-    flex-shrink: 0;
-  }
+  .tool-name { font-family: var(--font-mono); font-size: 12px; color: var(--blue); font-weight: 500; flex-shrink: 0; }
+  .tool-summary { color: var(--grey-600); font-size: 11px; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tool-duration { font-family: var(--font-mono); font-size: 10px; color: var(--grey-400); flex-shrink: 0; }
 
-  .tool-summary {
-    color: var(--grey-600);
-    font-size: 11px;
-    flex: 1;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
+  .ioc-row { padding: 6px 16px; border-bottom: 1px solid var(--grey-100); animation: fadeIn 0.2s ease; }
+  .ioc-type { font-size: 10px; font-weight: 500; color: var(--grey-600); text-transform: uppercase; letter-spacing: 0.5px; }
+  .ioc-value { font-family: var(--font-mono); font-size: 12px; color: var(--red); font-weight: 500; margin-top: 1px; }
 
-  .tool-duration {
-    font-family: var(--font-mono);
-    font-size: 10px;
-    color: var(--grey-400);
-    flex-shrink: 0;
-  }
-
-  /* IOC entries */
-  .ioc-row {
-    padding: 6px 16px;
-    border-bottom: 1px solid var(--grey-100);
-    animation: fadeIn 0.2s ease;
-  }
-
-  .ioc-type {
-    font-size: 10px;
-    font-weight: 500;
-    color: var(--grey-600);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-
-  .ioc-value {
-    font-family: var(--font-mono);
-    font-size: 12px;
-    color: var(--red);
-    font-weight: 500;
-    margin-top: 1px;
-  }
-
-  /* Agent reasoning */
   .agent-row {
-    padding: 5px 16px;
-    font-size: 11px;
-    color: var(--grey-600);
-    border-bottom: 1px solid var(--grey-100);
-    line-height: 1.5;
-    animation: fadeIn 0.2s ease;
+    padding: 5px 16px; font-size: 11px; color: var(--grey-600);
+    border-bottom: 1px solid var(--grey-100); line-height: 1.5; animation: fadeIn 0.2s ease;
   }
 
-  /* Hypothesis */
-  .hyp-row {
-    padding: 8px 16px;
-    border-bottom: 1px solid var(--grey-100);
-    animation: fadeIn 0.2s ease;
-  }
+  .hyp-row { padding: 8px 16px; border-bottom: 1px solid var(--grey-100); animation: fadeIn 0.2s ease; }
+  .hyp-row .hyp-label { font-size: 10px; font-weight: 500; color: var(--blue); text-transform: uppercase; letter-spacing: 0.5px; }
+  .hyp-row .hyp-text { font-size: 12px; color: var(--grey-800); margin-top: 2px; line-height: 1.5; }
 
-  .hyp-row .hyp-label {
-    font-size: 10px;
-    font-weight: 500;
-    color: var(--blue);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-
-  .hyp-row .hyp-text {
-    font-size: 12px;
-    color: var(--grey-800);
-    margin-top: 2px;
-    line-height: 1.5;
-  }
-
-  /* Report modal */
   .modal-overlay {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(32,33,36,0.6);
-    z-index: 500;
-    align-items: center;
-    justify-content: center;
+    display: none; position: fixed; inset: 0;
+    background: rgba(32,33,36,0.6); z-index: 500;
+    align-items: center; justify-content: center;
   }
-
   .modal-overlay.show { display: flex; }
 
   .modal {
-    background: var(--white);
-    border-radius: 8px;
+    background: var(--white); border-radius: 8px;
     box-shadow: 0 8px 40px rgba(60,64,67,0.3);
-    width: 90%;
-    max-width: 860px;
-    max-height: 85vh;
-    display: flex;
-    flex-direction: column;
+    width: 90%; max-width: 860px; max-height: 85vh;
+    display: flex; flex-direction: column;
   }
 
   .modal-header {
-    padding: 16px 20px;
-    border-bottom: 1px solid var(--grey-200);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    padding: 16px 20px; border-bottom: 1px solid var(--grey-200);
+    display: flex; justify-content: space-between; align-items: center;
   }
-
-  .modal-title {
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--grey-900);
-  }
+  .modal-title { font-size: 16px; font-weight: 600; color: var(--grey-900); }
 
   .modal-body {
-    flex: 1;
-    overflow-y: auto;
-    padding: 20px;
-    font-family: var(--font-mono);
-    font-size: 12px;
-    line-height: 1.8;
-    white-space: pre-wrap;
-    color: var(--grey-800);
+    flex: 1; overflow-y: auto; padding: 20px;
+    font-family: var(--font-mono); font-size: 12px;
+    line-height: 1.8; white-space: pre-wrap; color: var(--grey-800);
   }
 
   .modal-footer {
-    padding: 12px 20px;
-    border-top: 1px solid var(--grey-200);
-    display: flex;
-    gap: 8px;
-    background: var(--grey-50);
+    padding: 12px 20px; border-top: 1px solid var(--grey-200);
+    display: flex; gap: 8px; background: var(--grey-50);
   }
 
   .btn-outlined {
-    padding: 8px 16px;
-    border: 1px solid var(--blue);
-    background: white;
-    color: var(--blue);
-    border-radius: 4px;
-    font-family: var(--font);
-    font-size: 13px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background 0.15s;
+    padding: 8px 16px; border: 1px solid var(--blue);
+    background: white; color: var(--blue); border-radius: 4px;
+    font-family: var(--font); font-size: 13px; font-weight: 500;
+    cursor: pointer; transition: background 0.15s;
   }
-
   .btn-outlined:hover { background: var(--blue-light); }
 
   .btn-icon {
-    padding: 6px 12px;
-    border: 1px solid var(--grey-200);
-    background: white;
-    color: var(--grey-600);
-    border-radius: 4px;
-    font-size: 13px;
-    cursor: pointer;
+    padding: 6px 12px; border: 1px solid var(--grey-200);
+    background: white; color: var(--grey-600); border-radius: 4px;
+    font-size: 13px; cursor: pointer;
   }
-
   .btn-icon:hover { background: var(--grey-100); }
 </style>
 </head>
@@ -593,27 +295,21 @@
 <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
 
 <div class="main">
-
-  <!-- Sidebar -->
   <div class="sidebar">
     <div class="card">
       <div class="card-header">New Investigation</div>
       <div class="card-body">
         <label>Case ID</label>
         <input type="text" id="caseId" value="CASE-001">
-
         <label>Memory Image Path</label>
         <input type="text" id="memoryImage" value="/cases/TEST-001/base-hunt-memory.img">
-
         <label>Briefing</label>
         <textarea id="briefing">Windows 10 x64 memory image. APT hunt scenario. Suspected compromise. Find evil.</textarea>
-
         <button class="btn-primary" id="btnInvestigate" onclick="startInvestigation()">
           ▶ Launch Investigation
         </button>
       </div>
     </div>
-
     <div class="card" style="flex:1;min-height:0">
       <div class="card-header">Audit Trail</div>
       <div class="audit-list" id="auditLog">
@@ -622,10 +318,7 @@
     </div>
   </div>
 
-  <!-- Content -->
   <div class="content">
-
-    <!-- Metrics -->
     <div class="metrics-row">
       <div class="metric-card" id="mcIter">
         <div class="metric-label">Iterations</div>
@@ -654,46 +347,27 @@
       </div>
     </div>
 
-    <!-- Panels -->
     <div class="panels-grid">
-
       <div class="panel-card">
-        <div class="panel-header">
-          Tool Execution
-          <span class="badge" id="toolBadge">0</span>
-        </div>
+        <div class="panel-header">Tool Execution <span class="badge" id="toolBadge">0</span></div>
         <div class="panel-body" id="toolLog"></div>
       </div>
-
       <div class="panel-card">
-        <div class="panel-header">
-          Indicators of Compromise
-          <span class="badge red" id="iocBadge">0</span>
-        </div>
+        <div class="panel-header">Indicators of Compromise <span class="badge red" id="iocBadge">0</span></div>
         <div class="panel-body" id="iocLog"></div>
       </div>
-
       <div class="panel-card">
-        <div class="panel-header">
-          Agent Reasoning
-          <span class="badge" id="iterBadge">Iter 0</span>
-        </div>
+        <div class="panel-header">Agent Reasoning <span class="badge" id="iterBadge">Iter 0</span></div>
         <div class="panel-body" id="agentLog"></div>
       </div>
-
       <div class="panel-card">
-        <div class="panel-header">
-          Hypothesis Tracker
-          <span class="badge green" id="hypBadge">0</span>
-        </div>
+        <div class="panel-header">Hypothesis Tracker <span class="badge green" id="hypBadge">0</span></div>
         <div class="panel-body" id="hypLog"></div>
       </div>
-
     </div>
   </div>
 </div>
 
-<!-- Report modal -->
 <div class="modal-overlay" id="reportOverlay">
   <div class="modal">
     <div class="modal-header">
@@ -709,16 +383,16 @@
 </div>
 
 <script>
-let state = {
+var state = {
   startTime: null, elapsedTimer: null,
   iterations: 0, maxIter: 15,
   toolsFired: 0, totalFindings: 0,
   iocCount: 0, durations: [],
-  reportText: '',
+  reportText: ''
 };
 
 function bump(id) {
-  const el = document.getElementById(id);
+  var el = document.getElementById(id);
   el.classList.remove('bump');
   void el.offsetWidth;
   el.classList.add('bump');
@@ -727,213 +401,192 @@ function bump(id) {
 function setMetric(valId, cardId, value, color) {
   document.getElementById(valId).textContent = value;
   bump(valId);
-  if (color) {
-    document.getElementById(cardId).className = `metric-card ${color}`;
-  }
+  if (color) document.getElementById(cardId).className = 'metric-card ' + color;
 }
 
 function addToLog(id, html) {
-  const el = document.getElementById(id);
+  var el = document.getElementById(id);
   el.insertAdjacentHTML('beforeend', html);
   el.scrollTop = el.scrollHeight;
 }
 
+function addAudit(type, msg) {
+  var icon = type === 'ok' ? '✓' : type === 'err' ? '✗' : '→';
+  addToLog('auditLog', '<div class="audit-row ' + type + '"><span class="audit-prefix">' + icon + '</span>' + msg + '</div>');
+}
+
 function startInvestigation() {
-  const btn = document.getElementById('btnInvestigate');
+  var btn = document.getElementById('btnInvestigate');
   btn.disabled = true;
   btn.textContent = '⟳ Investigating...';
 
-  state = { ...state,
-    startTime: Date.now(), iterations: 0, toolsFired: 0,
-    totalFindings: 0, iocCount: 0, durations: [], reportText: '',
-  };
+  state.startTime = Date.now();
+  state.iterations = 0;
+  state.toolsFired = 0;
+  state.totalFindings = 0;
+  state.iocCount = 0;
+  state.durations = [];
+  state.reportText = '';
 
-  ['toolLog','iocLog','agentLog','hypLog','auditLog'].forEach(id => {
+  ['toolLog','iocLog','agentLog','hypLog','auditLog'].forEach(function(id) {
     document.getElementById(id).innerHTML = '';
   });
-
-  ['mvIter','mvTools','mvFindings','mvIOCs'].forEach(id => {
+  ['mvIter','mvTools','mvFindings','mvIOCs'].forEach(function(id) {
     document.getElementById(id).textContent = '0';
   });
   document.getElementById('mvAvg').textContent = '—';
   document.getElementById('progressFill').style.width = '0%';
-  ['toolBadge','iocBadge','hypBadge'].forEach(id => {
+  ['toolBadge','iocBadge','hypBadge'].forEach(function(id) {
     document.getElementById(id).textContent = '0';
   });
 
-  const chip = document.getElementById('statusChip');
-  chip.classList.add('active');
+  document.getElementById('statusChip').classList.add('active');
   document.getElementById('statusText').textContent = 'Investigating';
+  document.getElementById('caseLabel').textContent = document.getElementById('caseId').value;
 
-  const caseId = document.getElementById('caseId').value;
-  document.getElementById('caseLabel').textContent = caseId;
-
-  state.elapsedTimer = setInterval(() => {
-    const s = Math.floor((Date.now() - state.startTime) / 1000);
+  state.elapsedTimer = setInterval(function() {
+    var s = Math.floor((Date.now() - state.startTime) / 1000);
+    var m = Math.floor(s / 60);
     document.getElementById('elapsedLabel').textContent =
-      `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
+      (m < 10 ? '0' : '') + m + ':' + (s % 60 < 10 ? '0' : '') + (s % 60);
   }, 1000);
 
   fetch('/api/investigate', {
     method: 'POST',
-    headers: {'Content-Type':'application/json'},
+    headers: {'Content-Type': 'application/json'},
     body: JSON.stringify({
-      case_id: caseId,
+      case_id: document.getElementById('caseId').value,
       briefing: document.getElementById('briefing').value,
-      memory_image: document.getElementById('memoryImage').value,
+      memory_image: document.getElementById('memoryImage').value
     })
   })
-  .then(r => r.json())
-  .then(data => connectSSE(data.session_id))
-  .catch(err => { addAudit('err', err); resetBtn(); });
+  .then(function(r) { return r.json(); })
+  .then(function(data) { connectSSE(data.session_id); })
+  .catch(function(err) { addAudit('err', err); resetBtn(); });
 }
 
 function connectSSE(sessionId) {
-  const es = new EventSource(`/api/stream/${sessionId}`);
-  es.onmessage = e => handleEvent(JSON.parse(e.data));
-  es.onerror = () => { es.close(); resetBtn(); };
+  var es = new EventSource('/api/stream/' + sessionId);
+  es.onmessage = function(e) { handleEvent(JSON.parse(e.data)); };
+  es.onerror = function() { es.close(); resetBtn(); };
 }
 
 function handleEvent(ev) {
-  switch(ev.type) {
-    case 'start':
-      addAudit('info', `Case ${ev.case_id} started`);
-      addToLog('hypLog', `<div class="hyp-row"><div class="hyp-label">Initial</div><div class="hyp-text">Forming hypothesis from briefing...</div></div>`);
-      document.getElementById('hypBadge').textContent = '1';
-      break;
+  if (ev.type === 'start') {
+    addAudit('info', 'Case ' + ev.case_id + ' started');
+    addToLog('hypLog', '<div class="hyp-row"><div class="hyp-label">Initial</div><div class="hyp-text">Forming hypothesis from briefing...</div></div>');
+    document.getElementById('hypBadge').textContent = '1';
 
-    case 'iteration':
-      state.iterations = ev.iteration;
-      state.maxIter = ev.max;
-      setMetric('mvIter', 'mcIter', ev.iteration, 'blue');
-      document.getElementById('mvMaxIter').textContent = ev.max;
-      document.getElementById('iterBadge').textContent = `Iter ${ev.iteration}`;
-      document.getElementById('progressFill').style.width = `${(ev.iteration/ev.max)*100}%`;
-      addAudit('info', `Iteration ${ev.iteration}/${ev.max}`);
-      break;
+  } else if (ev.type === 'iteration') {
+    state.iterations = ev.iteration;
+    state.maxIter = ev.max;
+    setMetric('mvIter', 'mcIter', ev.iteration, 'blue');
+    document.getElementById('mvMaxIter').textContent = ev.max;
+    document.getElementById('iterBadge').textContent = 'Iter ' + ev.iteration;
+    document.getElementById('progressFill').style.width = ((ev.iteration / ev.max) * 100) + '%';
+    addAudit('info', 'Iteration ' + ev.iteration + '/' + ev.max);
 
-    case 'tool_call':
-      state.toolsFired++;
-      setMetric('mvTools', 'mcTools', state.toolsFired, 'blue');
-      document.getElementById('toolBadge').textContent = state.toolsFired;
-      addToLog('toolLog', `<div class="tool-row" id="tc_${state.toolsFired}">
-        <div class="tool-status running">⟳</div>
-        <span class="tool-name">${ev.tool}</span>
-        <span class="tool-summary">running...</span>
-      </div>`);
-      addAudit('info', `→ ${ev.tool}`);
-      break;
+  } else if (ev.type === 'tool_call') {
+    state.toolsFired++;
+    setMetric('mvTools', 'mcTools', state.toolsFired, 'blue');
+    document.getElementById('toolBadge').textContent = state.toolsFired;
+    addToLog('toolLog',
+      '<div class="tool-row">' +
+      '<div class="tool-status running">⟳</div>' +
+      '<span class="tool-name">' + ev.tool + '</span>' +
+      '<span class="tool-summary">running...</span>' +
+      '</div>');
+    addAudit('info', '→ ' + ev.tool);
 
-  case 'tool_result': {
-      const rows = document.getElementById('toolLog').querySelectorAll('.tool-row');
-      const last = rows[rows.length - 1];
-      if (last) {
-        const st = last.querySelector('.tool-status');
-        st.className = `tool-status ${ev.outcome === 'ok' ? 'ok' : 'fail'}`;
-        st.textContent = ev.outcome === 'ok' ? '✓' : '✗';
-        last.querySelector('.tool-summary').textContent = ev.summary;
-        if (!last.querySelector('.tool-duration')) {
-          last.insertAdjacentHTML('beforeend',
-            `<span class="tool-duration">${ev.duration_ms > 0 ? ev.duration_ms + 'ms' : 'cached'}</span>`);
-        }
+  } else if (ev.type === 'tool_result') {
+    var rows = document.getElementById('toolLog').querySelectorAll('.tool-row');
+    var last = rows[rows.length - 1];
+    if (last) {
+      var st = last.querySelector('.tool-status');
+      st.className = 'tool-status ' + (ev.outcome === 'ok' ? 'ok' : 'fail');
+      st.textContent = ev.outcome === 'ok' ? '✓' : '✗';
+      last.querySelector('.tool-summary').textContent = ev.summary;
+      if (!last.querySelector('.tool-duration')) {
+        last.insertAdjacentHTML('beforeend',
+          '<span class="tool-duration">' + (ev.duration_ms > 0 ? ev.duration_ms + 'ms' : 'cached') + '</span>');
       }
-
-      state.totalFindings += ev.findings_count || 0;
-      setMetric('mvFindings', 'mcFindings', state.totalFindings, state.totalFindings > 0 ? 'yellow' : '');
-
-      if (ev.duration_ms >= 0) {
-        if (ev.duration_ms > 0) state.durations.push(ev.duration_ms);
-        if (state.durations.length > 0) {
-          const avg = Math.round(state.durations.reduce((a,b)=>a+b,0)/state.durations.length);
-          document.getElementById('mvAvg').textContent = avg;
-          bump('mvAvg');
-        }
-      }
-
-      extractIOCs(ev.tool, ev.summary);
-      addAudit('ok', `${ev.tool}: ${ev.summary}`);
-      break;
     }
-
-      state.totalFindings += ev.findings_count || 0;
-      setMetric('mvFindings', 'mcFindings', state.totalFindings, state.totalFindings > 0 ? 'yellow' : '');
-
-      if (ev.duration_ms > 0) {
-        state.durations.push(ev.duration_ms);
-        const avg = Math.round(state.durations.reduce((a,b)=>a+b,0)/state.durations.length);
-        document.getElementById('mvAvg').textContent = avg;
-        bump('mvAvg');
-      }
-
-      extractIOCs(ev.tool, ev.summary);
-      addAudit('ok', `${ev.tool}: ${ev.summary}`);
-      break;
+    state.totalFindings += ev.findings_count || 0;
+    setMetric('mvFindings', 'mcFindings', state.totalFindings, state.totalFindings > 0 ? 'yellow' : '');
+    if (ev.duration_ms > 0) {
+      state.durations.push(ev.duration_ms);
+      var avg = Math.round(state.durations.reduce(function(a,b){return a+b;},0) / state.durations.length);
+      document.getElementById('mvAvg').textContent = avg;
+      bump('mvAvg');
     }
+    extractIOCs(ev.tool, ev.summary);
+    addAudit('ok', ev.tool + ': ' + ev.summary);
 
-    case 'agent_text': {
-      const text = (ev.text || '').trim();
-      if (!text) break;
-      if (text.toLowerCase().includes('hypothesis') || text.toLowerCase().includes('suspect')) {
-        const lines = text.split('\n').filter(l => l.trim().length > 20).slice(0,2);
-        lines.forEach(l => {
-          addToLog('hypLog', `<div class="hyp-row">
-            <div class="hyp-label">Iter ${state.iterations}</div>
-            <div class="hyp-text">${l.trim().substring(0,200)}</div>
-          </div>`);
-          const c = parseInt(document.getElementById('hypBadge').textContent) + 1;
-          document.getElementById('hypBadge').textContent = c;
+  } else if (ev.type === 'agent_text') {
+    var text = (ev.text || '').trim();
+    if (text) {
+      if (text.toLowerCase().indexOf('hypothesis') !== -1 || text.toLowerCase().indexOf('suspect') !== -1) {
+        var lines = text.split('\n').filter(function(l) { return l.trim().length > 20; }).slice(0,2);
+        lines.forEach(function(l) {
+          addToLog('hypLog',
+            '<div class="hyp-row">' +
+            '<div class="hyp-label">Iter ' + state.iterations + '</div>' +
+            '<div class="hyp-text">' + l.trim().substring(0,200) + '</div>' +
+            '</div>');
+          document.getElementById('hypBadge').textContent =
+            parseInt(document.getElementById('hypBadge').textContent) + 1;
         });
       }
-      addToLog('agentLog', `<div class="agent-row">${text.substring(0,180).replace(/\n/g,' ')}${text.length>180?'…':''}</div>`);
-      break;
+      addToLog('agentLog',
+        '<div class="agent-row">' +
+        text.substring(0,180).replace(/\n/g,' ') +
+        (text.length > 180 ? '…' : '') +
+        '</div>');
     }
 
-    case 'report':
-      state.reportText = ev.content;
-      document.getElementById('btnInvestigate').textContent = '📋 View Report';
-      document.getElementById('btnInvestigate').disabled = false;
-      document.getElementById('btnInvestigate').onclick = showReport;
-      addAudit('ok', 'Incident report generated');
-      break;
+  } else if (ev.type === 'report') {
+    state.reportText = ev.content;
+    document.getElementById('btnInvestigate').textContent = '📋 View Report';
+    document.getElementById('btnInvestigate').disabled = false;
+    document.getElementById('btnInvestigate').onclick = showReport;
+    addAudit('ok', 'Incident report generated');
 
-    case 'complete':
-      clearInterval(state.elapsedTimer);
-      document.getElementById('statusChip').classList.remove('active');
-      document.getElementById('statusText').textContent = 'Complete';
-      document.getElementById('progressFill').style.width = '100%';
-      if (!state.reportText) resetBtn();
-      break;
+  } else if (ev.type === 'complete') {
+    clearInterval(state.elapsedTimer);
+    document.getElementById('statusChip').classList.remove('active');
+    document.getElementById('statusText').textContent = 'Complete';
+    document.getElementById('progressFill').style.width = '100%';
+    if (!state.reportText) resetBtn();
   }
 }
 
 function extractIOCs(tool, summary) {
-  const patterns = [
+  var patterns = [
     { re: /(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})/g, type: 'IP Address' },
     { re: /([A-Za-z0-9_-]+\.exe)/gi, type: 'Process' },
     { re: /port\s+(\d{4,5})/gi, type: 'Port' },
-    { re: /(T\d{4}(?:\.\d{3})?)/g, type: 'MITRE ATT&CK' },
+    { re: /(T\d{4}(?:\.\d{3})?)/g, type: 'MITRE ATT&CK' }
   ];
-  patterns.forEach(({ re, type }) => {
-    [...(summary.matchAll(re))].forEach(m => {
-      const val = m[1];
-      if (['127.0.0.1','0.0.0.0'].includes(val)) return;
+  patterns.forEach(function(p) {
+    var m;
+    var re = new RegExp(p.re.source, p.re.flags);
+    while ((m = re.exec(summary)) !== null) {
+      var val = m[1];
+      if (val === '127.0.0.1' || val === '0.0.0.0') continue;
       state.iocCount++;
       setMetric('mvIOCs', 'mcIOCs', state.iocCount, 'red');
       document.getElementById('iocBadge').textContent = state.iocCount;
-      addToLog('iocLog', `<div class="ioc-row">
-        <div class="ioc-type">${type} · ${tool}</div>
-        <div class="ioc-value">${val}</div>
-      </div>`);
-    });
+      addToLog('iocLog',
+        '<div class="ioc-row">' +
+        '<div class="ioc-type">' + p.type + ' · ' + tool + '</div>' +
+        '<div class="ioc-value">' + val + '</div>' +
+        '</div>');
+    }
   });
 }
 
-function addAudit(type, msg) {
-  addToLog('auditLog', `<div class="audit-row ${type}"><span class="audit-prefix">${type==='ok'?'✓':type==='err'?'✗':'→'}</span>${msg}</div>`);
-}
-
 function resetBtn() {
-  const btn = document.getElementById('btnInvestigate');
+  var btn = document.getElementById('btnInvestigate');
   btn.disabled = false;
   btn.textContent = '▶ Launch Investigation';
   btn.onclick = startInvestigation;
@@ -950,16 +603,16 @@ function closeReport() {
 }
 
 function exportMarkdown() {
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([state.reportText], {type:'text/markdown'}));
-  a.download = `${document.getElementById('caseId').value}_report.md`;
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([state.reportText], {type: 'text/markdown'}));
+  a.download = document.getElementById('caseId').value + '_report.md';
   a.click();
 }
 
 function exportText() {
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([state.reportText], {type:'text/plain'}));
-  a.download = `${document.getElementById('caseId').value}_report.txt`;
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([state.reportText], {type: 'text/plain'}));
+  a.download = document.getElementById('caseId').value + '_report.txt';
   a.click();
 }
 </script>
