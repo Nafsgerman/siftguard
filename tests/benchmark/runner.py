@@ -66,10 +66,9 @@ async def run_benchmark_case(
     dry_run: bool = False,
 ) -> BenchmarkScore:
     gt = load_ground_truth(case_id)
-    report_text = ""  # ensure always bound
+    report_text = ""
 
     if dry_run:
-        # Load saved report
         report_file = REPORTS_DIR / f"{case_id}_report.txt"
         if not report_file.exists():
             console.print(f"[red]No saved report for {case_id}. Run without --dry-run first.[/red]")
@@ -78,14 +77,14 @@ async def run_benchmark_case(
         console.print(f"[dim]Scoring saved report: {report_file}[/dim]")
     else:
         evidence = _get_evidence_files(case_id, evidence_dir)
-    if not evidence:
-        console.print(f"[red]No evidence files found for {case_id}. Cannot run agent without evidence.[/red]")
-        console.print(f"[dim]Expected files in {evidence_dir}/{case_id}/ — e.g. memory.mem, disk.dd, $MFT[/dim]")
-        console.print("[yellow]Use --dry-run to score a saved report instead.[/yellow]")
-        sys.exit(1)
+        if not evidence:
+            console.print(f"[red]No evidence files found for {case_id}.[/red]")
+            console.print(f"[dim]Expected files in {evidence_dir}/{case_id}/[/dim]")
+            console.print("[yellow]Use --dry-run to score a saved report instead.[/yellow]")
+            sys.exit(1)
 
         console.print(Panel(
-            f"Case: [yellow]{case_id}[/yellow]\nThreat: [cyan]{gt['threat_type']}[/cyan]\nEvidence: {list(evidence.keys()) or 'none found'}",
+            f"Case: [yellow]{case_id}[/yellow]\nThreat: [cyan]{gt['threat_type']}[/cyan]\nEvidence: {list(evidence.keys())}",
             title="Running Benchmark Case"
         ))
 
@@ -95,23 +94,18 @@ async def run_benchmark_case(
             briefing=gt["description"],
         )
 
-        # Save report
         REPORTS_DIR.mkdir(exist_ok=True)
         ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
         report_file = REPORTS_DIR / f"{case_id}_{ts}_report.txt"
         report_file.write_text(report_text)
-        # Also overwrite the canonical one for dry-run
         (REPORTS_DIR / f"{case_id}_report.txt").write_text(report_text)
         console.print(f"[dim]Report saved: {report_file}[/dim]")
 
     score = score_report(report_text, gt)
-
-    # Save score
     SCORES_DIR.mkdir(exist_ok=True)
     ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
     score_file = SCORES_DIR / f"{case_id}_{ts}_score.json"
     score_file.write_text(json.dumps(score.to_dict(), indent=2))
-
     return score
 
 
@@ -144,14 +138,13 @@ def _print_score_table(scores: list[BenchmarkScore]) -> None:
         avg_f1 = sum(s.ioc_f1 for s in scores) / len(scores)
         table.add_section()
         table.add_row(
-            "[bold]AVERAGE[/bold]", "", "",  "",
+            "[bold]AVERAGE[/bold]", "", "", "",
             f"[bold]{avg_f1:.1%}[/bold]", "", "",
             f"[bold]{avg_overall:.1%}[/bold]",
         )
 
     console.print(table)
 
-    # Print IOC miss details
     for s in scores:
         missed = [i for i in s.ioc_scores if not i.found and i.expected_confidence == "high"]
         if missed:
@@ -189,7 +182,6 @@ async def main() -> None:
 
     _print_score_table(scores)
 
-    # Exit code: 0 if avg overall >= 0.6, else 1 (for CI)
     avg = sum(s.overall_score for s in scores) / len(scores) if scores else 0
     sys.exit(0 if avg >= 0.6 else 1)
 
