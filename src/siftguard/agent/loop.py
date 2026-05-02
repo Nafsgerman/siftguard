@@ -13,6 +13,8 @@ import anthropic
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
+from dotenv import load_dotenv
+load_dotenv()
 
 from siftguard.audit.log import AuditLog
 from siftguard.mcp_server.tools.mft import analyze_mft
