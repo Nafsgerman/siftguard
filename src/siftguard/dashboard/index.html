@@ -388,7 +388,8 @@ var state = {
   iterations: 0, maxIter: 15,
   toolsFired: 0, totalFindings: 0,
   iocCount: 0, durations: [],
-  reportText: ''
+  reportText: '',
+  seenIOCs: {}
 };
 
 function bump(id) {
@@ -427,6 +428,7 @@ function startInvestigation() {
   state.iocCount = 0;
   state.durations = [];
   state.reportText = '';
+  state.seenIOCs = {};
 
   ['toolLog','iocLog','agentLog','hypLog','auditLog'].forEach(function(id) {
     document.getElementById(id).innerHTML = '';
@@ -574,6 +576,9 @@ function extractIOCs(tool, summary) {
     while ((m = re.exec(summary)) !== null) {
       var val = m[1];
       if (val === '127.0.0.1' || val === '0.0.0.0') continue;
+      var key = p.type + ':' + val;
+      if (state.seenIOCs[key]) continue;
+      state.seenIOCs[key] = true;
       state.iocCount++;
       setMetric('mvIOCs', 'mcIOCs', state.iocCount, 'red');
       document.getElementById('iocBadge').textContent = state.iocCount;
