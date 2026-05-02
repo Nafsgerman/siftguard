@@ -525,6 +525,7 @@ function handleEvent(ev) {
   } else if (ev.type === 'agent_text') {
     var text = (ev.text || '').trim();
     if (text) {
+      extractIOCs('agent', text);
       if (text.toLowerCase().indexOf('hypothesis') !== -1 || text.toLowerCase().indexOf('suspect') !== -1) {
         var lines = text.split('\n').filter(function(l) { return l.trim().length > 20; }).slice(0,2);
         lines.forEach(function(l) {
