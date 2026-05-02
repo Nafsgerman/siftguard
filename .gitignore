@@ -8,3 +8,7 @@ __pycache__/
 audit/*.db
 audit/*.db
 .env
+tests/benchmark/reports/
+tests/benchmark/scores/
+audit/
+analysis/
