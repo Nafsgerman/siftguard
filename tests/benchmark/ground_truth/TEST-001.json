@@ -1,22 +1,20 @@
 {
   "case_id": "TEST-001",
-  "description": "Ransomware infection via phishing email attachment. Victim executed invoice.exe which dropped a second stage, established persistence via Run key, and began encrypting files.",
-  "threat_type": "ransomware",
+  "description": "Windows 10 x64 memory image from SRL-2018 APT hunt scenario. Suspected compromise. Find evil.",
+  "threat_type": "apt_c2",
   "expected_iocs": [
-    {"type": "process", "value": "invoice.exe", "confidence": "high"},
-    {"type": "process", "value": "powershell.exe", "confidence": "high"},
-    {"type": "process", "value": "cmd.exe", "confidence": "medium"},
-    {"type": "file", "value": "invoice.exe", "confidence": "high"},
-    {"type": "registry_key", "value": "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run", "confidence": "high"},
-    {"type": "technique", "value": "T1547.001", "confidence": "high"},
-    {"type": "technique", "value": "T1059.001", "confidence": "high"},
-    {"type": "technique", "value": "T1486", "confidence": "high"}
+    {"type": "process", "value": "usbclient.exe", "confidence": "high"},
+    {"type": "process", "value": "license_ctrl.e", "confidence": "high"},
+    {"type": "ip", "value": "172.16.4.10", "confidence": "high"},
+    {"type": "port", "value": "5682", "confidence": "medium"},
+    {"type": "technique", "value": "T1071", "confidence": "high"},
+    {"type": "technique", "value": "T1055", "confidence": "medium"}
   ],
   "expected_persistence": true,
   "expected_lateral_movement": false,
-  "expected_timestomp": true,
-  "expected_code_injection": true,
-  "expected_verdict_keywords": ["ransomware", "invoice", "powershell", "persistence", "run key", "encrypt"],
+  "expected_timestomp": false,
+  "expected_code_injection": false,
+  "expected_verdict_keywords": ["usbclient", "license_ctrl", "172.16.4.10", "c&c", "suspicious", "backdoor"],
   "required_sections": [
     "Executive Summary",
     "Timeline of Events",
