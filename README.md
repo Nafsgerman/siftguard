@@ -1,104 +1,337 @@
-# COBOL Compass 🧭
+# SIFTGuard 🛡️
 
-**AI-powered legacy code modernization agent for GitLab**
+> Autonomous DFIR agent for the SANS SIFT Workstation.  
+> Typed MCP server makes evidence spoliation architecturally impossible.  
+> Self-correcting loop. Full audit trail. Senior-analyst reasoning at machine speed.
 
-> 95% of ATM transactions still run on COBOL. COBOL Compass scans your GitLab repos for legacy COBOL programs, extracts business rules, assesses migration complexity, and generates actionable modernization tickets — all inside GitLab.
-
-Built for the [GitLab AI Hackathon 2026](https://gitlab.devpost.com/) by **Nafees Ahamed** — Mainframe Modernization Specialist with 22+ years of enterprise experience.
+**SANS FIND EVIL! Hackathon 2026** · [Devpost](https://devpost.com/software/siftguard) · Public June 10, 2026
 
 ---
 
-## The Problem
+## Why SIFTGuard
 
-Enterprises spend over **$100 billion annually** maintaining legacy mainframe systems. The biggest bottleneck in every modernization project: nobody on the team reads COBOL. Teams spend weeks manually analyzing programs, extracting business logic, and writing migration plans before a single line of modern code gets written.
+Most LLM-driven forensic agents pipe raw shell output into a prompt and hope. That's how you get hallucinated MFT entries, missed timestomps, and — worst — accidental spoliation.
 
-## The Solution
+SIFTGuard takes a different path:
 
-COBOL Compass automates the first 80% of legacy code assessment using three specialized AI agents and one orchestrated flow on the GitLab Duo Agent Platform.
+1. **Typed MCP tools.** Every SIFT tool is wrapped as a Pydantic-validated function. The agent never sees raw shell. It sees structured findings with provenance.
+2. **Architectural read-only.** Destructive commands physically don't exist in our MCP server. Proven by a spoliation test suite that tries to make the agent destroy evidence — and shows it cannot.
+3. **Self-correcting agent.** The loop tracks hypotheses, replans on failure, caps iterations, and persists every decision to an append-only SQLite audit log.
+4. **Reproducible accuracy.** Ships with a benchmark suite and ground-truth cases so you can measure performance — not just demo it.
 
-### Agents
+---
 
-| Agent | Purpose | Output |
-|-------|---------|--------|
-| **COBOL Scanner** | Scans repos for `.cbl`, `.cob`, `.cpy` files | Structured inventory with LOC, dependencies, complexity |
-| **COBOL Analyzer** | Deep analysis of individual programs | Business rules, risk flags, complexity rating, migration approach |
-| **Migration Planner** | Converts analysis into action items | GitLab epics and issues with labels, estimates, acceptance criteria |
+## Benchmark Results
 
-### Flow
+| Case | Threat Type | IOC F1 | Sections | Verdict | **Overall** |
+|------|------------|--------|----------|---------|-------------|
+| TEST-001 | APT C2 | 70.6% | 100% | 100% | **85.3%** |
 
-**Full Modernization Assessment** — Chains all three agents: Scan → Analyze → Plan. One command produces a complete migration roadmap with real GitLab issues.
+Scoring: IOC F1 (50%) + Section completeness (25%) + Verdict accuracy (25%)
+
+---
 
 ## Architecture
 
-```mermaid
-graph LR
-    A[COBOL Scanner] -->|File inventory| B[COBOL Analyzer]
-    B -->|Analysis report| C[Migration Planner]
-    C -->|Creates| D[GitLab Issues]
-    C -->|Creates| E[GitLab Epics]
-    
-    subgraph "GitLab Duo Agent Platform"
-        A
-        B
-        C
-    end
-    
-    F[Anthropic Claude] -.->|Powers| A
-    F -.->|Powers| B
-    F -.->|Powers| C
-    G[Google Cloud] -.->|Stores reports| C
+```
+┌─────────────────────────────────────────────────┐
+│                  SIFTGuard Agent                 │
+│                                                  │
+│  Case Briefing → Hypothesis → Tool Loop → Report │
+└──────────────────┬──────────────────────────────┘
+                   │ MCP Protocol
+┌──────────────────▼──────────────────────────────┐
+│              SIFTGuard MCP Server                │
+│                                                  │
+│  vol_pslist │ vol_netscan │ vol_malfind          │
+│  analyze_mft │ run_regripper │ create_timeline   │
+│  list_files │ extract_file │ sort_timeline       │
+└──────────────────┬──────────────────────────────┘
+                   │
+┌──────────────────▼──────────────────────────────┐
+│           SANS SIFT Workstation (x86_64)         │
+│                                                  │
+│  Volatility 3 │ log2timeline │ analyzeMFT        │
+│  RegRipper │ The Sleuth Kit (fls/icat)           │
+└─────────────────────────────────────────────────┘
 ```
 
-## Sample COBOL Programs
+**Architectural Pattern:** Custom MCP Server + Direct Agent Extension (Claude Code compatible)
 
-The `samples/` directory contains representative COBOL programs of varying complexity:
+**Security Boundaries:**
+- Architectural boundary: MCP server allowlist — destructive commands do not exist
+- Prompt boundary: SYSTEM_PROMPT instructs read-only operation (secondary, not primary)
+- OS boundary: Evidence files are read-only at filesystem level
+- Audit boundary: Every tool call logged to append-only SQLite before and after execution
 
-| Program | Complexity | Dependencies | Description |
-|---------|-----------|--------------|-------------|
-| `INTEREST-CALC.cbl` | Low | File I/O | Batch compound interest calculator with 3 loan types |
-| `ACCT-MGMT.cbl` | Medium | CICS, DB2 | Online account management (inquiry, update, close, transfer) |
-| `LOAN-PROCESS.cbl` | High | DB2 Cursors, VSAM, Subprograms | End-of-day loan processing with delinquency escalation |
+---
 
-Copybooks in `samples/copybooks/`:
-- `ACCTCPY.cpy` — Account record layout
-- `LOANCPY.cpy` — Loan master record layout  
-- `PYMTCPY.cpy` — Payment history record layout
-- `ERRMSGCP.cpy` — Error message table with REDEFINES
+## Quickstart
 
-## Technology Stack
+```bash
+git clone https://github.com/Nafsgerman/siftguard
+cd siftguard
+python3 -m venv .venv && source .venv/bin/activate
+pip install -e ".[dev]"
+pip install reportlab
+cp .env.example .env  # add your ANTHROPIC_API_KEY
+```
 
-- **GitLab Duo Agent Platform** — Custom agents and flows
-- **Anthropic Claude** — AI reasoning engine (default in GitLab Duo)
-- **Google Cloud** — Assessment report storage
-- **COBOL** — Legacy source code analysis target
+### Run an Investigation (CLI)
 
-## How It Uses Anthropic
+```bash
+siftguard investigate CASE-001 \
+  --briefing "Suspected ransomware. Victim executed invoice.exe." \
+  --memory /cases/CASE-001/memory.img
+```
 
-All agents run on Anthropic's Claude models via GitLab Duo's built-in integration. The system prompts encode deep COBOL domain expertise including:
-- COBOL-85/2002 dialect patterns
-- CICS transaction processing
-- DB2 embedded SQL and cursor handling
-- VSAM file organization
-- Packed decimal (COMP-3) arithmetic
-- Business rule extraction from EVALUATE/IF chains
-- Delinquency and compliance rule identification
+### Start the Live Dashboard
 
-## How It Uses Google Cloud
+```bash
+uvicorn siftguard.dashboard.app:app --host 0.0.0.0 --port 8080
+```
 
-Assessment reports are stored in Google Cloud Storage for cross-repo tracking and historical comparison.
+Open `http://localhost:8080` in browser. Enter case ID, memory image path, and briefing. Click Investigate. Export report as PDF, Markdown, or plain text when complete.
 
-## Getting Started
+### Run the Benchmark
 
-1. Enable GitLab Duo Agent Platform for your group
-2. Navigate to **Automate > Agents** in your project
-3. Enable the COBOL Compass agents from the AI Catalog
-4. Open GitLab Duo Chat and select a COBOL Compass agent
-5. Point it at your COBOL source files
+```bash
+python -m tests.benchmark.runner --case TEST-001 --evidence-dir /cases
+python -m tests.benchmark.runner --all --evidence-dir /cases
+```
 
-## About the Author
+### Run Spoliation Tests
 
-**Nafees Ahamed** — 22+ years in mainframe modernization, specializing in COBOL, PL/I, DB2, CICS, and VSAM migrations for tier-1 banking and insurance clients. Currently building AI-powered tools to accelerate legacy modernization at enterprise scale.
+```bash
+python -m pytest tests/spoliation/test_spoliation.py -v
+```
+
+Expected: **12/12 passed** — all destructive attacks blocked at MCP layer.
+
+---
+
+## Try-It-Out Instructions (For Judges)
+
+**Requirements:**
+- SANS SIFT Workstation (download from sans.org/tools/sift-workstation)
+- Python 3.11+
+- Anthropic API key
+- Sample case data in `/cases/TEST-001/` (Protocol SIFT starter dataset)
+
+**Step-by-step:**
+
+```bash
+# 1. Clone repo
+git clone https://github.com/Nafsgerman/siftguard
+cd siftguard
+
+# 2. Install
+python3 -m venv .venv && source .venv/bin/activate
+pip install -e ".[dev]"
+pip install reportlab
+
+# 3. Configure
+echo "ANTHROPIC_API_KEY=your_key_here" > .env
+
+# 4. Start dashboard
+uvicorn siftguard.dashboard.app:app --host 0.0.0.0 --port 8080
+
+# 5. Open browser → http://localhost:8080
+# 6. Enter: Case ID = TEST-001
+#           Memory Image = /cases/TEST-001/base-hunt-memory.img
+#           Briefing = "Windows 10 x64. APT hunt. Find evil."
+# 7. Click Investigate
+# 8. Watch live: tool execution, IOC panel, hypothesis tracker, audit trail
+# 9. Click "Export PDF" when Complete status appears
+```
+
+**Port forward from Mac to SIFT VM:**
+```bash
+ssh -f -N -L 8080:localhost:8080 sansforensics@<VM_IP>
+# Then open http://localhost:8080 on Mac browser
+```
+
+---
+
+## Forensic Tools (MCP Server)
+
+| Tool | Underlying Binary | Purpose |
+|------|------------------|---------|
+| `vol_pslist` | Volatility 3 `psscan` | Process enumeration, orphan detection |
+| `vol_netscan` | Volatility 3 `netscan` | Network connections, C2 identification |
+| `vol_malfind` | Volatility 3 `malfind` | Code injection, shellcode detection |
+| `analyze_mft` | analyzeMFT.py | MFT parsing, timestomp detection |
+| `run_regripper` | RegRipper `rip.pl` | Registry hive analysis (9 approved plugins) |
+| `create_supertimeline` | log2timeline | Plaso supertimeline generation |
+| `sort_timeline` | psort | Sorted CSV timeline output |
+| `list_files` | TSK `fls` | Disk image file listing, deleted file recovery |
+| `extract_file` | TSK `icat` | File extraction by inode |
+
+All tools are **READ-ONLY by architecture**. Destructive commands do not exist in the MCP server.
+
+---
+
+## Agent Loop
+
+```
+Receive case briefing + evidence paths
+→ Form initial hypothesis
+→ Call forensic tools via MCP
+→ Parse typed ForensicResult objects
+→ Update hypothesis based on findings
+→ Repeat until confident or max iterations (15)
+→ Output structured incident report
+```
+
+Report sections: Executive Summary · Timeline of Events · Indicators of Compromise · Persistence Mechanisms · Recommendations · Evidence References
+
+---
+
+## Dataset Documentation
+
+**Case:** TEST-001  
+**Evidence Type:** Windows 10 x64 memory image  
+**File:** `/cases/TEST-001/base-hunt-memory.img`  
+**Source:** Protocol SIFT starter dataset (SANS SIFT Workstation sample case data)  
+**Scenario:** APT hunt — suspected compromise, unknown initial vector  
+
+**What the agent found (TEST-001):**
+- 91 running processes at time of capture
+- 153 network artifacts
+- 5 confirmed malicious processes: `subject_ctrl.e`, `license_ctrl.e`, `usbclient.exe`, `ftusbsrvc.exe`, `cmd.exe`
+- 8 IOCs: 3 network indicators, 5 process indicators
+- Active C2 beaconing to `172.16.4.10:8080` (multiple CLOSE_WAIT connections)
+- External exfiltration attempt to `23.194.110.27:80` (SYN_SENT at capture time)
+- Backdoor listeners on ports `5682` (license_ctrl.e) and `33001` (ftusbsrvc.exe)
+- WinRM enabled on port `5985` (lateral movement vector)
+- Compromise timeline: 2018-09-03 (boot) → 2018-09-07 (capture)
+- Verdict: **CONFIRMED COMPROMISE — APT activity**
+
+**Reproducibility:** Any analyst can reproduce results by running SIFTGuard against the same memory image on SANS SIFT Workstation. Results are cached in `/cases/TEST-001/siftguard_cache/` for deterministic re-runs.
+
+---
+
+## Accuracy Report
+
+### TEST-001 Results
+
+| Metric | Score |
+|--------|-------|
+| IOC Precision | 66.7% |
+| IOC Recall | 75.0% |
+| IOC F1 | 70.6% |
+| Section Completeness | 100% |
+| Verdict Accuracy | 100% |
+| **Overall** | **85.3%** |
+
+### False Positives
+- `cmd.exe` (PID 2156) flagged as malicious — legitimate in some contexts; flagged due to long-running shell from explorer.exe parent and timing correlation with compromise window. Borderline call.
+
+### Missed Artifacts
+- `InstallAgent.e` (PID 6284) identified in report but not scored as primary IOC in ground truth
+- Disk-based persistence mechanisms not recoverable from memory image alone (requires disk forensics)
+
+### Hallucinated Claims
+- None detected in TEST-001 run. All findings traced to specific tool outputs in audit log.
+
+### Evidence Integrity Approach
+
+**Primary (architectural):** The MCP server exposes only read-only forensic functions. `rm`, `dd`, `mkfs`, `chmod +w`, shell redirects, and path traversal outside evidence root are blocked at the function boundary — not by prompt instruction. The agent physically cannot call these because the tools don't exist.
+
+**Proof:** Spoliation test suite (`tests/spoliation/test_spoliation.py`) — 12 attack scenarios, 12 blocked, 0 failures.
+
+```
+tests/spoliation/test_spoliation.py::test_rm_binary_blocked PASSED
+tests/spoliation/test_spoliation.py::test_dd_wipe_blocked PASSED
+tests/spoliation/test_spoliation.py::test_mkfs_blocked PASSED
+tests/spoliation/test_spoliation.py::test_path_traversal_blocked PASSED
+tests/spoliation/test_spoliation.py::test_redirect_overwrite_blocked PASSED
+... 12/12 passed in 0.02s
+```
+
+**Secondary (prompt):** SYSTEM_PROMPT instructs read-only operation. If the model ignores this, the architectural boundary still holds. Prompt-based restriction is defense-in-depth, not the primary control.
+
+---
+
+## Agent Execution Logs
+
+Every tool invocation is persisted to an append-only SQLite database at `./audit/<case_id>.db`.
+
+Schema:
+```sql
+CREATE TABLE audit_log (
+  id INTEGER PRIMARY KEY,
+  timestamp TEXT,
+  case_id TEXT,
+  tool_name TEXT,
+  tool_version TEXT,
+  args TEXT,          -- JSON
+  outcome TEXT,       -- ok | partial | fail
+  output TEXT,        -- ForensicResult JSON
+  duration_ms INTEGER,
+  agent_iteration INTEGER
+);
+```
+
+Every finding in the incident report can be traced to a specific row in this table — tool name, args, iteration, outcome, duration. No finding exists without a corresponding audit record.
+
+Live dashboard streams execution events via SSE (`/api/stream/{session_id}`) with timestamps on every tool call, result, and agent reasoning block.
+
+---
+
+## Project Structure
+
+```
+src/siftguard/
+├── agent/loop.py          # Main agent loop (Claude + tool dispatch)
+├── mcp_server/
+│   ├── server.py          # MCP server (stdio transport)
+│   ├── safe_exec.py       # Allowlist + deny-pattern enforcement
+│   └── tools/             # Forensic tool wrappers
+│       ├── volatility.py  # Volatility 3 (pslist, netscan, malfind)
+│       ├── mft.py         # MFT analysis
+│       ├── registry.py    # RegRipper
+│       ├── timeline.py    # log2timeline / psort
+│       └── filesystem.py  # TSK fls/icat
+├── models/forensic.py     # Pydantic models (ForensicResult, MFTEntry, etc.)
+├── parsers/               # Output parsers for each tool
+├── audit/log.py           # SQLite audit trail
+├── dashboard/app.py       # FastAPI + SSE live dashboard + PDF export
+└── cli/main.py            # CLI entry point
+tests/
+├── benchmark/             # Ground truth, scorer, runner, reports
+├── spoliation/            # 12-test suite proving evidence destruction blocked
+└── unit/
+```
+
+---
+
+## Security
+
+- Tool allowlist enforced at MCP server level (`safe_exec.py`) — no arbitrary command execution
+- Deny-pattern list blocks `rm`, `dd`, `mkfs`, `chmod +w`, shell redirects in any arg position
+- Path traversal outside evidence root blocked at validation layer
+- RegRipper limited to 9 approved plugins
+- Full SQLite audit trail of every tool invocation (args, outcome, duration, iteration)
+
+---
+
+## Roadmap
+
+- [x] Repo scaffold, MCP server, 9 typed SIFT tool wrappers
+- [x] Self-correcting agent loop with hypothesis tracker
+- [x] Append-only SQLite audit trail
+- [x] Benchmark suite with precision/recall/F1 scoring
+- [x] Spoliation test suite (12/12)
+- [x] Live SSE dashboard with real-time IOC panel
+- [x] PDF/markdown/text report export
+- [ ] IOC visualization graph
+- [ ] Registry + filesystem + MFT tools end-to-end on live cases
+- [ ] Demo video (Loom, 5 min)
+- [ ] Public release (June 10, 2026)
+
+---
 
 ## License
 
-MIT License — see [LICENSE](LICENSE) for details.
+MIT — effective at public release, June 10 2026
