@@ -14,3 +14,5 @@ audit/
 analysis/
 .DS_Store
 src/siftguard/dashboard/tools/
+.venv/
+*.log.gz
