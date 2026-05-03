@@ -6,7 +6,7 @@ from mcp.types import TextContent, Tool
 from siftguard.mcp_server.tools.mft import analyze_mft, scan_mft_ads
 from siftguard.mcp_server.tools.volatility import vol_pslist, vol_netscan, vol_malfind
 from siftguard.mcp_server.tools.timeline import create_supertimeline, sort_timeline
-from siftguard.mcp_server.tools.registry import run_regripper, list_registry_hives, dump_registry_hive, hunt_registry
+from siftguard.mcp_server.tools.registry import run_regripper, list_registry_hives, query_registry_key, hunt_registry
 from siftguard.mcp_server.tools.filesystem import list_files, extract_file
 
 app = Server("siftguard-mcp")
