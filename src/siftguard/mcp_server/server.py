@@ -3,7 +3,7 @@ import asyncio
 from mcp.server import Server
 from mcp.server.stdio import stdio_server
 from mcp.types import TextContent, Tool
-from siftguard.mcp_server.tools.mft import analyze_mft
+from siftguard.mcp_server.tools.mft import analyze_mft, scan_mft_ads
 from siftguard.mcp_server.tools.volatility import vol_pslist, vol_netscan, vol_malfind
 from siftguard.mcp_server.tools.timeline import create_supertimeline, sort_timeline
 from siftguard.mcp_server.tools.registry import run_regripper, list_registry_hives, dump_registry_hive, hunt_registry
@@ -14,7 +14,7 @@ app = Server("siftguard-mcp")
 TOOLS = [
     Tool(name="analyze_mft",
          description="Parse Windows $MFT. Returns typed entries with timestomp flags. READ-ONLY.",
-         inputSchema={"type":"object","properties":{"mft_path":{"type":"string"},"timestomp_only":{"type":"boolean","default":False}},"required":["mft_path"]}),
+         inputSchema={"type":"object","properties":{"memory_image":{"type":"string"},"timestomp_only":{"type":"boolean","default":False}},"required":["memory_image"]}),
     Tool(name="vol_pslist",
          description="List processes from memory image. Flags suspicious names and parent-child combos. READ-ONLY.",
          inputSchema={"type":"object","properties":{"memory_image":{"type":"string"}},"required":["memory_image"]}),
