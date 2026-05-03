@@ -378,6 +378,7 @@
     <div class="modal-footer">
       <button class="btn-outlined" onclick="exportMarkdown()">⬇ Export .md</button>
       <button class="btn-outlined" onclick="exportText()">⬇ Export .txt</button>
+      <button class="btn-outlined" onclick="exportPDF()">⬇ Export PDF</button>
     </div>
   </div>
 </div>
@@ -463,7 +464,7 @@ function startInvestigation() {
     })
   })
   .then(function(r) { return r.json(); })
-  .then(function(data) { connectSSE(data.session_id); })
+  .then(function(data) { window.currentSessionId = data.session_id; connectSSE(data.session_id); })
   .catch(function(err) { addAudit('err', err); resetBtn(); });
 }
 
@@ -621,6 +622,11 @@ function exportText() {
   a.href = URL.createObjectURL(new Blob([state.reportText], {type: 'text/plain'}));
   a.download = document.getElementById('caseId').value + '_report.txt';
   a.click();
+}
+function exportPDF() {
+  var sessionId = window.currentSessionId;
+  if (!sessionId) { alert("No active session to export."); return; }
+  window.open("/api/export/pdf/" + sessionId, "_blank");
 }
 </script>
 </body>
