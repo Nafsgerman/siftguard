@@ -13,3 +13,4 @@ tests/benchmark/scores/
 audit/
 analysis/
 .DS_Store
+src/siftguard/dashboard/tools/
