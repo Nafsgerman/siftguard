@@ -152,6 +152,22 @@
   .metric-card.red { border-top-color: var(--red); }
   .metric-card.yellow { border-top-color: var(--yellow); }
 
+
+  .ioc-graph-panel {
+    background: var(--white); border-radius: 8px; box-shadow: var(--shadow-1);
+    overflow: hidden; grid-column: 1 / -1;
+  }
+  .ioc-graph-panel .panel-header {
+    padding: 10px 16px; border-bottom: 1px solid var(--grey-200);
+    font-size: 13px; font-weight: 600; color: var(--grey-800);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  #iocGraph { width: 100%; height: 260px; display: block; cursor: grab; }
+  #iocGraph:active { cursor: grabbing; }
+  .graph-legend { display: flex; gap: 16px; padding: 6px 16px 8px;
+    border-top: 1px solid var(--grey-200); font-size: 11px; color: var(--grey-600); }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 4px; vertical-align: middle; }
+
   .metric-label { font-size: 11px; font-weight: 500; color: var(--grey-600); text-transform: uppercase; letter-spacing: 0.5px; }
 
   .metric-value {
@@ -363,6 +379,19 @@
       <div class="panel-card">
         <div class="panel-header">Hypothesis Tracker <span class="badge green" id="hypBadge">0</span></div>
         <div class="panel-body" id="hypLog"></div>
+      </div>
+    </div>
+    <div class="ioc-graph-panel">
+      <div class="panel-header">
+        IOC Relationship Graph
+        <span style="font-size:11px;color:var(--grey-600);font-weight:400">force-directed · hover for details</span>
+      </div>
+      <canvas id="iocGraph"></canvas>
+      <div class="graph-legend">
+        <span><span class="legend-dot" style="background:#1a73e8"></span>Process</span>
+        <span><span class="legend-dot" style="background:#d93025"></span>IP Address</span>
+        <span><span class="legend-dot" style="background:#f9ab00"></span>MITRE ATT&CK</span>
+        <span><span class="legend-dot" style="background:#1e8e3e"></span>Tool</span>
       </div>
     </div>
   </div>
@@ -592,6 +621,209 @@ function extractIOCs(tool, summary) {
     }
   });
 }
+
+
+// ── IOC Force-Directed Graph ─────────────────────────────────────────────────
+var graph = {
+  nodes: [], edges: [], nodeMap: {},
+  dragging: null, dragOffX: 0, dragOffY: 0,
+  tooltip: null, animFrame: null
+};
+
+var NODE_COLORS = {
+  'Process':     '#1a73e8',
+  'IP Address':  '#d93025',
+  'MITRE ATT&CK':'#f9ab00',
+  'Tool':        '#1e8e3e'
+};
+
+function addGraphNode(type, val, tool) {
+  var canvas = document.getElementById('iocGraph');
+  var W = canvas.width, H = canvas.height;
+  var key = type + ':' + val;
+  var toolKey = 'Tool:' + tool;
+
+  // Add main node
+  if (!graph.nodeMap[key]) {
+    graph.nodeMap[key] = {
+      id: key, label: val, type: type,
+      x: W * 0.2 + Math.random() * W * 0.6,
+      y: H * 0.2 + Math.random() * H * 0.6,
+      vx: 0, vy: 0, r: type === 'Tool' ? 14 : 10
+    };
+    graph.nodes.push(graph.nodeMap[key]);
+  }
+
+  // Add tool node
+  if (!graph.nodeMap[toolKey]) {
+    graph.nodeMap[toolKey] = {
+      id: toolKey, label: tool, type: 'Tool',
+      x: W * 0.3 + Math.random() * W * 0.4,
+      y: H * 0.3 + Math.random() * H * 0.4,
+      vx: 0, vy: 0, r: 14
+    };
+    graph.nodes.push(graph.nodeMap[toolKey]);
+  }
+
+  // Add edge tool → ioc
+  var edgeKey = toolKey + '→' + key;
+  if (!graph.nodeMap[edgeKey]) {
+    graph.nodeMap[edgeKey] = true;
+    graph.edges.push({ source: toolKey, target: key });
+  }
+
+  if (!graph.animFrame) startGraphLoop();
+}
+
+function startGraphLoop() {
+  var canvas = document.getElementById('iocGraph');
+  canvas.width  = canvas.offsetWidth;
+  canvas.height = canvas.offsetHeight;
+  var ctx = canvas.getContext('2d');
+
+  function tick() {
+    var W = canvas.width, H = canvas.height;
+    var nodes = graph.nodes, edges = graph.edges;
+    var nodeMap = graph.nodeMap;
+
+    // Force simulation
+    var REPEL = 1800, SPRING_LEN = 90, SPRING_K = 0.04, DAMP = 0.85, GRAVITY = 0.015;
+
+    // Repulsion
+    for (var i = 0; i < nodes.length; i++) {
+      for (var j = i + 1; j < nodes.length; j++) {
+        var a = nodes[i], b = nodes[j];
+        var dx = a.x - b.x, dy = a.y - b.y;
+        var dist = Math.sqrt(dx*dx + dy*dy) || 1;
+        var force = REPEL / (dist * dist);
+        a.vx += (dx/dist) * force;
+        a.vy += (dy/dist) * force;
+        b.vx -= (dx/dist) * force;
+        b.vy -= (dy/dist) * force;
+      }
+    }
+
+    // Spring along edges
+    for (var k = 0; k < edges.length; k++) {
+      var e = edges[k];
+      var s = nodeMap[e.source], t = nodeMap[e.target];
+      if (!s || !t || s === true || t === true) continue;
+      var dx = t.x - s.x, dy = t.y - s.y;
+      var dist = Math.sqrt(dx*dx + dy*dy) || 1;
+      var stretch = (dist - SPRING_LEN) * SPRING_K;
+      s.vx += (dx/dist) * stretch;
+      s.vy += (dy/dist) * stretch;
+      t.vx -= (dx/dist) * stretch;
+      t.vy -= (dy/dist) * stretch;
+    }
+
+    // Gravity to center + damping + update
+    for (var i = 0; i < nodes.length; i++) {
+      var n = nodes[i];
+      if (graph.dragging === n) continue;
+      n.vx += (W/2 - n.x) * GRAVITY;
+      n.vy += (H/2 - n.y) * GRAVITY;
+      n.vx *= DAMP; n.vy *= DAMP;
+      n.x += n.vx; n.y += n.vy;
+      n.x = Math.max(n.r + 2, Math.min(W - n.r - 2, n.x));
+      n.y = Math.max(n.r + 2, Math.min(H - n.r - 2, n.y));
+    }
+
+    // Draw
+    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = '#f8f9fa';
+    ctx.fillRect(0, 0, W, H);
+
+    // Edges
+    for (var k = 0; k < edges.length; k++) {
+      var e = edges[k];
+      var s = nodeMap[e.source], t = nodeMap[e.target];
+      if (!s || !t || s === true || t === true) continue;
+      ctx.beginPath();
+      ctx.moveTo(s.x, s.y);
+      ctx.lineTo(t.x, t.y);
+      ctx.strokeStyle = 'rgba(189,193,198,0.7)';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+    }
+
+    // Nodes
+    for (var i = 0; i < nodes.length; i++) {
+      var n = nodes[i];
+      var color = NODE_COLORS[n.type] || '#80868b';
+
+      // Shadow
+      ctx.shadowColor = 'rgba(0,0,0,0.15)';
+      ctx.shadowBlur = 6;
+
+      // Circle
+      ctx.beginPath();
+      ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
+      ctx.fillStyle = color;
+      ctx.fill();
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+
+      // Label
+      var label = n.label.length > 14 ? n.label.substring(0,13) + '…' : n.label;
+      ctx.fillStyle = '#3c4043';
+      ctx.font = '10px Roboto Mono, monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(label, n.x, n.y + n.r + 12);
+    }
+
+    graph.animFrame = requestAnimationFrame(tick);
+  }
+
+  graph.animFrame = requestAnimationFrame(tick);
+
+  // Drag support
+  canvas.addEventListener('mousedown', function(e) {
+    var rect = canvas.getBoundingClientRect();
+    var mx = e.clientX - rect.left, my = e.clientY - rect.top;
+    for (var i = 0; i < graph.nodes.length; i++) {
+      var n = graph.nodes[i];
+      if (Math.hypot(mx - n.x, my - n.y) < n.r + 4) {
+        graph.dragging = n;
+        graph.dragOffX = n.x - mx;
+        graph.dragOffY = n.y - my;
+        break;
+      }
+    }
+  });
+  canvas.addEventListener('mousemove', function(e) {
+    if (!graph.dragging) return;
+    var rect = canvas.getBoundingClientRect();
+    graph.dragging.x = e.clientX - rect.left + graph.dragOffX;
+    graph.dragging.y = e.clientY - rect.top  + graph.dragOffY;
+    graph.dragging.vx = 0; graph.dragging.vy = 0;
+  });
+  canvas.addEventListener('mouseup',   function() { graph.dragging = null; });
+  canvas.addEventListener('mouseleave',function() { graph.dragging = null; });
+}
+
+// Patch extractIOCs to also feed the graph
+var _origExtractIOCs = extractIOCs;
+extractIOCs = function(tool, summary) {
+  _origExtractIOCs(tool, summary);
+  var patterns = [
+    { re: /(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})/g, type: 'IP Address' },
+    { re: /([A-Za-z0-9_-]+\.exe)/gi, type: 'Process' },
+    { re: /(T\d{4}(?:\.\d{3})?)/g, type: 'MITRE ATT&CK' }
+  ];
+  var processWhitelist = ['explorer.exe','services.exe','svchost.exe','lsass.exe','csrss.exe','winlogon.exe','wininit.exe','smss.exe','taskhostw.exe','conhost.exe'];
+  patterns.forEach(function(p) {
+    var m, re = new RegExp(p.re.source, p.re.flags);
+    while ((m = re.exec(summary)) !== null) {
+      var val = m[1];
+      if (val === '127.0.0.1' || val === '0.0.0.0') continue;
+      if (p.type === 'Process' && processWhitelist.indexOf(val.toLowerCase()) !== -1) continue;
+      addGraphNode(p.type, val, tool);
+    }
+  });
+};
 
 function resetBtn() {
   var btn = document.getElementById('btnInvestigate');
