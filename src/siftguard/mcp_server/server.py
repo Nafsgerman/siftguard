@@ -8,6 +8,7 @@ from siftguard.mcp_server.tools.volatility import vol_pslist, vol_netscan, vol_m
 from siftguard.mcp_server.tools.timeline import create_supertimeline, sort_timeline
 from siftguard.mcp_server.tools.registry import run_regripper, list_registry_hives, query_registry_key, hunt_registry
 from siftguard.mcp_server.tools.filesystem import list_files, extract_file
+from siftguard.mcp_server.tools.correlation import correlate_findings
 
 app = Server("siftguard-mcp")
 
