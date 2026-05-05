@@ -687,7 +687,7 @@ function startGraphLoop() {
     var nodeMap = graph.nodeMap;
 
     // Force simulation
-    var REPEL = 1800, SPRING_LEN = 90, SPRING_K = 0.04, DAMP = 0.85, GRAVITY = 0.015;
+    var REPEL = 3500, SPRING_LEN = 90, SPRING_K = 0.04, DAMP = 0.85, GRAVITY = 0.015;
 
     // Repulsion
     for (var i = 0; i < nodes.length; i++) {
@@ -766,12 +766,16 @@ function startGraphLoop() {
       ctx.stroke();
       ctx.shadowBlur = 0;
 
-      // Label
-      var label = n.label.length > 14 ? n.label.substring(0,13) + '…' : n.label;
-      ctx.fillStyle = '#3c4043';
+      // Label with background
+      var label = n.label.length > 16 ? n.label.substring(0,15) + '…' : n.label;
       ctx.font = '10px Roboto Mono, monospace';
       ctx.textAlign = 'center';
-      ctx.fillText(label, n.x, n.y + n.r + 12);
+      var tw = ctx.measureText(label).width;
+      var lx = n.x, ly = n.y + n.r + 14;
+      ctx.fillStyle = 'rgba(248,249,250,0.85)';
+      ctx.fillRect(lx - tw/2 - 2, ly - 10, tw + 4, 13);
+      ctx.fillStyle = '#3c4043';
+      ctx.fillText(label, lx, ly);
     }
 
     graph.animFrame = requestAnimationFrame(tick);
