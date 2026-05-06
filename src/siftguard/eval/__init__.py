@@ -1,0 +1,36 @@
+"""SIFTGuard evaluation framework — agent-agnostic trace-based evaluation."""
+from siftguard.eval.trace import (
+    CorrectionEvent,
+    ExperimentConfig,
+    Finding,
+    FindingType,
+    HypothesisEvent,
+    HypothesisEventType,
+    IterationSnapshot,
+    Orchestrator,
+    TerminatedReason,
+    Trace,
+    TraceMeta,
+    ToolCall,
+    UsageTotals,
+    Verdict,
+    SCHEMA_VERSION,
+)
+
+__all__ = [
+    "CorrectionEvent",
+    "ExperimentConfig",
+    "Finding",
+    "FindingType",
+    "HypothesisEvent",
+    "HypothesisEventType",
+    "IterationSnapshot",
+    "Orchestrator",
+    "TerminatedReason",
+    "Trace",
+    "TraceMeta",
+    "ToolCall",
+    "UsageTotals",
+    "Verdict",
+    "SCHEMA_VERSION",
+]
