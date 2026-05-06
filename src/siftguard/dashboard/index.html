@@ -362,7 +362,7 @@
         </button>
       </div>
     </div>
-    <div class="card" style="flex:1;min-height:0">
+    <div class="card" style="flex:1;min-height:0;display:flex;flex-direction:column;">
       <div class="card-header">Audit Trail</div>
       <div class="audit-list" id="auditLog" style="flex:1;overflow-y:auto;">
         <div class="audit-row"><span class="audit-prefix">—</span>Waiting...</div>
@@ -416,7 +416,7 @@
         <div class="panel-header">Hypothesis Tracker <span class="badge green" id="hypBadge">0</span></div>
         <div class="panel-body" id="hypLog"></div>
       </div>
-      <div class="panel-card" id="trainingPanel" style="display:none;border-top:3px solid var(--yellow);">
+      <div class="panel-card" id="trainingPanel" style="display:none;border-top:3px solid var(--yellow);grid-column:1/-1;">
         <div class="panel-header">🎓 Training Annotations <span class="badge" id="trainingBadge" style="background:var(--yellow);color:#fff">0</span><span style="font-size:11px;color:var(--grey-600);font-weight:400;margin-left:8px">agent explains each decision</span></div>
         <div class="panel-body" id="trainingLog"></div>
       </div>
