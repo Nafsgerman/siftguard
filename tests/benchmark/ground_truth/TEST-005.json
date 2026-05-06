@@ -1,0 +1,30 @@
+{
+  "case_id": "TEST-005",
+  "description": "Windows 10 x64 memory image. Focus: full C2 infrastructure mapping and network correlation.",
+  "threat_type": "apt_c2_full",
+  "expected_iocs": [
+    {"type": "ip", "value": "172.16.4.10", "confidence": "high"},
+    {"type": "ip", "value": "172.16.4.4", "confidence": "medium"},
+    {"type": "port", "value": "5682", "confidence": "high"},
+    {"type": "port", "value": "33001", "confidence": "high"},
+    {"type": "process", "value": "ftusbsrvc", "confidence": "high"},
+    {"type": "process", "value": "license_ctrl", "confidence": "high"},
+    {"type": "technique", "value": "lateral", "confidence": "medium"},
+    {"type": "technique", "value": "c2", "confidence": "high"}
+  ],
+  "expected_persistence": true,
+  "expected_lateral_movement": true,
+  "expected_timestomp": false,
+  "expected_code_injection": false,
+  "expected_verdict_keywords": [
+    "172.16.4.10", "ftusbsrvc", "license_ctrl", "backdoor", "c2", "lateral", "33001", "5682"
+  ],
+  "required_sections": [
+    "Executive Summary",
+    "Timeline of Events",
+    "Indicators of Compromise",
+    "Persistence Mechanisms",
+    "Recommendations",
+    "Evidence References"
+  ]
+}

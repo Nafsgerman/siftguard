@@ -1,0 +1,57 @@
+{
+  "case_id": "TEST-004",
+  "description": "Windows 10 x64 memory image. Focus: registry persistence and truncated process names.",
+  "threat_type": "apt_persistence_registry",
+  "expected_iocs": [
+    {
+      "type": "process",
+      "value": "license_ctrl",
+      "confidence": "high"
+    },
+    {
+      "type": "process",
+      "value": "ftusbsrvc",
+      "confidence": "high"
+    },
+    {
+      "type": "process",
+      "value": "msiexec",
+      "confidence": "medium"
+    },
+    {
+      "type": "ip",
+      "value": "172.16.4.10",
+      "confidence": "high"
+    },
+    {
+      "type": "port",
+      "value": "5682",
+      "confidence": "high"
+    },
+    {
+      "type": "technique",
+      "value": "naming",
+      "confidence": "high"
+    }
+  ],
+  "expected_persistence": true,
+  "expected_lateral_movement": false,
+  "expected_timestomp": false,
+  "expected_code_injection": false,
+  "expected_verdict_keywords": [
+    "license_ctrl",
+    "172.16.4.10",
+    "service",
+    "persist",
+    "backdoor",
+    "5682"
+  ],
+  "required_sections": [
+    "Executive Summary",
+    "Timeline of Events",
+    "Indicators of Compromise",
+    "Persistence Mechanisms",
+    "Recommendations",
+    "Evidence References"
+  ]
+}
