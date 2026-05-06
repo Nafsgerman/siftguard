@@ -200,7 +200,12 @@ async def export_pdf(session_id: str):
         story.append(HRFlowable(width="100%", thickness=0.5, color=GRAY, spaceAfter=4))
         for block in report_blocks:
             import re as _re2
-        block = _re2.sub(r"\[TRAINING\][^\[]*", "", block).strip()
+        # Strip [TRAINING] blocks - everything from [TRAINING] up to next ## section
+        block = _re2.sub(r"\[TRAINING\].*?(?=##|\Z)", "", block, flags=_re2.DOTALL).strip()
+        # Strip remaining ** markdown bold markers for PDF
+        block = _re2.sub(r"\*\*([^*]+)\*\*", r"\1", block)
+        # Strip * italic markers
+        block = _re2.sub(r"\*([^*]+)\*", r"\1", block)
         for line in block.split("\n"):
                 line = line.strip()
                 if not line:
