@@ -71,17 +71,19 @@ async def start_investigation(request: Request):
     case_id = body.get("case_id", f"CASE-{session_id}")
     briefing = body.get("briefing", "")
     memory_image = body.get("memory_image", "")
-    asyncio.create_task(_run_investigation(session_id, case_id, briefing, memory_image))
+    training_mode = body.get("training_mode", False)
+    asyncio.create_task(_run_investigation(session_id, case_id, briefing, memory_image, training_mode))
     return {"session_id": session_id, "case_id": case_id}
 
-async def _run_investigation(session_id: str, case_id: str, briefing: str, memory_image: str):
-    from siftguard.agent.loop import SYSTEM_PROMPT, TOOL_SCHEMAS, _dispatch_tool
+async def _run_investigation(session_id: str, case_id: str, briefing: str, memory_image: str, training_mode: bool = False):
+    from siftguard.agent.loop import SYSTEM_PROMPT, TRAINING_SYSTEM_PROMPT, TOOL_SCHEMAS, _dispatch_tool
     from siftguard.audit.log import AuditLog
     import anthropic
 
     await push_event(session_id, {"type": "start", "case_id": case_id, "briefing": briefing})
     client = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
     evidence = {"memory_image": memory_image} if memory_image else {}
+    active_prompt = TRAINING_SYSTEM_PROMPT if training_mode else SYSTEM_PROMPT
     audit = AuditLog(f"./audit/{case_id}.db")
     evidence_summary = "\n".join(f"- {k}: {v}" for k, v in evidence.items())
     messages = [{"role": "user", "content": (
@@ -95,7 +97,7 @@ async def _run_investigation(session_id: str, case_id: str, briefing: str, memor
         response = client.messages.create(
             model="claude-sonnet-4-5",
             max_tokens=4096,
-            system=SYSTEM_PROMPT,
+            system=active_prompt,
             tools=TOOL_SCHEMAS,
             messages=messages,
         )
@@ -107,6 +109,12 @@ async def _run_investigation(session_id: str, case_id: str, briefing: str, memor
                 await push_event(session_id, {"type": "agent_text", "text": block.text})
                 if "## Executive Summary" in block.text:
                     await push_event(session_id, {"type": "report", "content": block.text})
+                if training_mode and "[TRAINING]" in block.text:
+                    for line in block.text.split("\n"):
+                        if "[TRAINING]" in line:
+                            annotation = line.replace("[TRAINING]", "").strip()
+                            if annotation:
+                                await push_event(session_id, {"type": "training_annotation", "text": annotation})
             elif block.type == "tool_use":
                 tool_calls.append(block)
                 await push_event(session_id, {"type": "tool_call", "tool": block.name, "args": block.input})
