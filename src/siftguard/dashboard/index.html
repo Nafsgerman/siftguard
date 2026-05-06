@@ -350,6 +350,13 @@
         <input type="text" id="memoryImage" value="/cases/TEST-001/base-hunt-memory.img">
         <label>Briefing</label>
         <textarea id="briefing">Windows 10 x64 memory image. APT hunt scenario. Suspected compromise. Find evil.</textarea>
+        <div class="training-toggle">
+          <label class="toggle-switch">
+            <input type="checkbox" id="trainingMode" onchange="toggleTrainingPanel()">
+            <span class="toggle-slider"></span>
+          </label>
+          <span class="toggle-label">🎓 Analyst Training Mode</span>
+        </div>
         <button class="btn-primary" id="btnInvestigate" onclick="startInvestigation()">
           ▶ Launch Investigation
         </button>
