@@ -182,6 +182,7 @@ async def export_pdf(session_id: str):
     generated_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
 
     story.append(Paragraph("SIFTGuard DFIR Report", h1))
+    story.append(Spacer(1, 4*mm))
     story.append(HRFlowable(width="100%", thickness=2, color=BLUE, spaceAfter=6))
     story.append(Paragraph(f"Case ID: <b>{case_id}</b>", meta))
     story.append(Paragraph(f"Generated: {generated_at}", meta))
