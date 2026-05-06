@@ -416,6 +416,10 @@
         <div class="panel-header">Hypothesis Tracker <span class="badge green" id="hypBadge">0</span></div>
         <div class="panel-body" id="hypLog"></div>
       </div>
+      <div class="panel-card" id="trainingPanel" style="display:none;border-top:3px solid var(--yellow);">
+        <div class="panel-header">🎓 Training Annotations <span class="badge" id="trainingBadge" style="background:var(--yellow);color:#fff">0</span><span style="font-size:11px;color:var(--grey-600);font-weight:400;margin-left:8px">agent explains each decision</span></div>
+        <div class="panel-body" id="trainingLog"></div>
+      </div>
     </div>
     <div class="ioc-graph-panel">
       <div class="panel-header">
@@ -433,13 +437,6 @@
   </div>
 </div>
 
-    <div class="training-panel" id="trainingPanel">
-      <div class="panel-header">
-        🎓 Training Annotations <span class="badge" id="trainingBadge" style="background:#f9ab00;color:#fff">0</span>
-        <span style="font-size:11px;color:var(--grey-600);font-weight:400">agent explains each decision</span>
-      </div>
-      <div class="panel-body" id="trainingLog"></div>
-    </div>
 
 <div class="modal-overlay" id="reportOverlay">
   <div class="modal">
@@ -536,7 +533,8 @@ function startInvestigation() {
     body: JSON.stringify({
       case_id: document.getElementById('caseId').value,
       briefing: document.getElementById('briefing').value,
-      memory_image: document.getElementById('memoryImage').value
+      memory_image: document.getElementById('memoryImage').value,
+      training_mode: document.getElementById('trainingMode').checked
     })
   })
   .then(function(r) { return r.json(); })
@@ -882,7 +880,7 @@ extractIOCs = function(tool, summary) {
 function toggleTrainingPanel() {
   var panel = document.getElementById('trainingPanel');
   var checked = document.getElementById('trainingMode').checked;
-  panel.classList.toggle('visible', checked);
+  panel.style.display = checked ? 'block' : 'none';
 }
 
 var _trainingCount = 0;
