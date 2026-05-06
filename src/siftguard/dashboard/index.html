@@ -168,6 +168,35 @@
     border-top: 1px solid var(--grey-200); font-size: 11px; color: var(--grey-600); }
   .legend-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 4px; vertical-align: middle; }
 
+
+  .training-toggle { display: flex; align-items: center; gap: 8px; margin-top: 12px; }
+  .toggle-switch { position: relative; width: 36px; height: 20px; }
+  .toggle-switch input { opacity: 0; width: 0; height: 0; }
+  .toggle-slider {
+    position: absolute; cursor: pointer; inset: 0;
+    background: var(--grey-300, #dadce0); border-radius: 20px;
+    transition: background 0.2s;
+  }
+  .toggle-slider:before {
+    content: ""; position: absolute;
+    width: 14px; height: 14px; left: 3px; bottom: 3px;
+    background: white; border-radius: 50%; transition: transform 0.2s;
+  }
+  .toggle-switch input:checked + .toggle-slider { background: var(--blue); }
+  .toggle-switch input:checked + .toggle-slider:before { transform: translateX(16px); }
+  .toggle-label { font-size: 12px; color: var(--grey-600); font-weight: 500; }
+  .training-panel {
+    background: var(--white); border-radius: 8px; box-shadow: var(--shadow-1);
+    overflow: hidden; display: none;
+  }
+  .training-panel.visible { display: block; }
+  .training-row {
+    padding: 8px 16px; font-size: 12px; color: var(--grey-800);
+    border-left: 3px solid var(--yellow); background: #fffde7;
+    margin: 4px 8px; border-radius: 0 4px 4px 0; line-height: 1.5;
+  }
+  .training-row .training-icon { color: var(--yellow); margin-right: 6px; }
+
   .metric-label { font-size: 11px; font-weight: 500; color: var(--grey-600); text-transform: uppercase; letter-spacing: 0.5px; }
 
   .metric-value {
@@ -397,6 +426,14 @@
   </div>
 </div>
 
+    <div class="training-panel" id="trainingPanel">
+      <div class="panel-header">
+        🎓 Training Annotations <span class="badge" id="trainingBadge" style="background:#f9ab00;color:#fff">0</span>
+        <span style="font-size:11px;color:var(--grey-600);font-weight:400">agent explains each decision</span>
+      </div>
+      <div class="panel-body" id="trainingLog"></div>
+    </div>
+
 <div class="modal-overlay" id="reportOverlay">
   <div class="modal">
     <div class="modal-header">
@@ -459,6 +496,9 @@ function startInvestigation() {
   state.durations = [];
   state.reportText = '';
   state.seenIOCs = {};
+  _trainingCount = 0;
+  document.getElementById('trainingBadge').textContent = '0';
+  document.getElementById('trainingLog').innerHTML = '';
 
   ['toolLog','iocLog','agentLog','hypLog','auditLog'].forEach(function(id) {
     document.getElementById(id).innerHTML = '';
@@ -584,6 +624,8 @@ function handleEvent(ev) {
     document.getElementById('btnInvestigate').onclick = showReport;
     addAudit('ok', 'Incident report generated');
 
+  } else if (ev.type === 'training_annotation') {
+    handleTrainingEvent(ev);
   } else if (ev.type === 'complete') {
     clearInterval(state.elapsedTimer);
     document.getElementById('statusChip').classList.remove('active');
@@ -828,6 +870,28 @@ extractIOCs = function(tool, summary) {
     }
   });
 };
+
+
+function toggleTrainingPanel() {
+  var panel = document.getElementById('trainingPanel');
+  var checked = document.getElementById('trainingMode').checked;
+  panel.classList.toggle('visible', checked);
+}
+
+var _trainingCount = 0;
+function handleTrainingEvent(ev) {
+  if (ev.type === 'training_annotation') {
+    _trainingCount++;
+    document.getElementById('trainingBadge').textContent = _trainingCount;
+    addToLog('trainingLog',
+      '<div class="training-row">' +
+      '<span class="training-icon">💡</span>' +
+      ev.text.substring(0, 300) +
+      (ev.text.length > 300 ? '…' : '') +
+      '</div>'
+    );
+  }
+}
 
 function resetBtn() {
   var btn = document.getElementById('btnInvestigate');
