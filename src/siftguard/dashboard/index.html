@@ -590,12 +590,15 @@ function handleEvent(ev) {
     }
     state.totalFindings += ev.findings_count || 0;
     setMetric('mvFindings', 'mcFindings', state.totalFindings, state.totalFindings > 0 ? 'yellow' : '');
-    if (ev.duration_ms > 0) {
-      state.durations.push(ev.duration_ms);
-      var avg = Math.round(state.durations.reduce(function(a,b){return a+b;},0) / state.durations.length);
+    state.durations.push(ev.duration_ms);
+    var nonZero = state.durations.filter(function(d){return d>0;});
+    if (nonZero.length > 0) {
+      var avg = Math.round(nonZero.reduce(function(a,b){return a+b;},0) / nonZero.length);
       document.getElementById('mvAvg').textContent = avg;
-      bump('mvAvg');
+    } else {
+      document.getElementById('mvAvg').textContent = 'cached';
     }
+    bump('mvAvg');
     extractIOCs(ev.tool, ev.summary);
     addAudit('ok', ev.tool + ': ' + ev.summary);
 
