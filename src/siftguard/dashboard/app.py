@@ -199,7 +199,9 @@ async def export_pdf(session_id: str):
         story.append(Paragraph("Investigation Report", h2))
         story.append(HRFlowable(width="100%", thickness=0.5, color=GRAY, spaceAfter=4))
         for block in report_blocks:
-            for line in block.split("\n"):
+            import re as _re2
+        block = _re2.sub(r"\[TRAINING\][^\[]*", "", block).strip()
+        for line in block.split("\n"):
                 line = line.strip()
                 if not line:
                     story.append(Spacer(1, 2*mm))
