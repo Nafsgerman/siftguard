@@ -110,11 +110,11 @@ async def _run_investigation(session_id: str, case_id: str, briefing: str, memor
                 if "## Executive Summary" in block.text:
                     await push_event(session_id, {"type": "report", "content": block.text})
                 if training_mode and "[TRAINING]" in block.text:
-                    for line in block.text.split("\n"):
-                        if "[TRAINING]" in line:
-                            annotation = line.replace("[TRAINING]", "").strip()
-                            if annotation:
-                                await push_event(session_id, {"type": "training_annotation", "text": annotation})
+                    import re as _re
+                    for chunk in _re.split(r"\[TRAINING\]", block.text):
+                        chunk = chunk.strip()
+                        if chunk and len(chunk) > 10:
+                            await push_event(session_id, {"type": "training_annotation", "text": chunk[:400]})
             elif block.type == "tool_use":
                 tool_calls.append(block)
                 await push_event(session_id, {"type": "tool_call", "tool": block.name, "args": block.input})
