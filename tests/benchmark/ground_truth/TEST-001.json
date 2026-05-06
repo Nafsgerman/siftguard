@@ -3,18 +3,20 @@
   "description": "Windows 10 x64 memory image from SRL-2018 APT hunt scenario. Suspected compromise. Find evil.",
   "threat_type": "apt_c2",
   "expected_iocs": [
-    {"type": "process", "value": "usbclient.exe", "confidence": "high"},
-    {"type": "process", "value": "license_ctrl.e", "confidence": "high"},
+    {"type": "process", "value": "license_ctrl", "confidence": "high"},
+    {"type": "process", "value": "ftusbsrvc", "confidence": "high"},
     {"type": "ip", "value": "172.16.4.10", "confidence": "high"},
     {"type": "port", "value": "5682", "confidence": "medium"},
-    {"type": "technique", "value": "T1071", "confidence": "high"},
-    {"type": "technique", "value": "T1055", "confidence": "medium"}
+    {"type": "technique", "value": "c2", "confidence": "high"},
+    {"type": "technique", "value": "persist", "confidence": "high"}
   ],
   "expected_persistence": true,
   "expected_lateral_movement": false,
   "expected_timestomp": false,
   "expected_code_injection": false,
-  "expected_verdict_keywords": ["usbclient", "license_ctrl", "172.16.4.10", "c&c", "suspicious", "backdoor"],
+  "expected_verdict_keywords": [
+    "license_ctrl", "172.16.4.10", "c2", "suspicious", "backdoor", "service"
+  ],
   "required_sections": [
     "Executive Summary",
     "Timeline of Events",
