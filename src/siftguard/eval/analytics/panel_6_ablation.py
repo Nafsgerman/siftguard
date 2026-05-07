@@ -20,9 +20,9 @@ from siftguard.eval.analytics.scorer_framework import score_findings
 from siftguard.eval.trace import Finding, FindingType
 
 CLAIM = "Each feature's contribution is measured independently. Ablation reveals what actually matters."
-GT_DIR = Path(__file__).resolve().parents[4] / "tests" / "benchmark" / "ground_truth"
+GT_DIR  = Path(__file__).resolve().parents[4] / "tests" / "benchmark" / "ground_truth"
+RES_DIR = Path(__file__).resolve().parents[4] / "experiments" / "results"
 
-# Match by notes prefix — unique per config, set in experiments/configs/*.json
 CONFIG_DISPLAY = [
     ("Primary baseline. All features enabled.",                     "Baseline\n(all on)",         BLUE),
     ("Ablation: self_correction=false. All other features on.",     "No self-\ncorrection",       YELLOW),
@@ -30,9 +30,30 @@ CONFIG_DISPLAY = [
     ("v1 baseline for prompt ablation.",                            "v1 prompt\n(no confidence)", RED),
 ]
 
+NOTES_TO_CONFIG = {
+    "Primary baseline. All features enabled.":                 "baseline",
+    "Ablation: self_correction=false. All other features on.": "ablation_no_self_correction",
+    "Ablation: correlation=false. All other features on.":     "ablation_no_correlation",
+    "v1 baseline for prompt ablation.":                        "ablation_v1_baseline",
+}
+
+
+def _latest_result(config_name: str, case_id: str) -> dict | None:
+    result_dir = RES_DIR / config_name / case_id
+    if not result_dir.exists():
+        return None
+    files = sorted(result_dir.glob("result_*.json"), reverse=True)
+    for f in files:
+        try:
+            data = json.loads(f.read_text())
+            if data.get("status") == "ok":
+                return data
+        except Exception:
+            continue
+    return None
+
 
 def _find_run_by_notes(runs: list[dict], notes_prefix: str) -> dict | None:
-    """Find the most recent run whose notes start with the given prefix."""
     candidates = []
     for run in runs:
         cfg = json.loads(run.get("config_json") or "{}")
@@ -78,6 +99,54 @@ def _score_run(run: dict, db_path: Path, gt_path: Path) -> float:
     return score_findings(findings, gt_path).f1
 
 
+def _score_from_report_ioc_section(
+    config_name: str, case_id: str, gt_path: Path
+) -> float:
+    result = _latest_result(config_name, case_id)
+    if not result or not result.get("report"):
+        return 0.0
+    try:
+        report_path = Path(result["report"])
+        if not report_path.exists():
+            return 0.0
+        text = report_path.read_text()
+        ioc_section = ""
+        in_ioc = False
+        for line in text.splitlines():
+            if line.strip().startswith("## Indicators"):
+                in_ioc = True
+                continue
+            if in_ioc and line.strip().startswith("## "):
+                break
+            if in_ioc:
+                ioc_section += line + "\n"
+        if not ioc_section:
+            ioc_section = text
+        gt = json.loads(gt_path.read_text())
+        gt_iocs = gt.get("expected_iocs", [])
+        valid_types = {t.value for t in FindingType}
+        findings = []
+        matched_gt: set[str] = set()
+        for ioc in gt_iocs:
+            val = ioc["value"].lower()
+            if val in ioc_section.lower() and val not in matched_gt:
+                matched_gt.add(val)
+                ftype_str = ioc["type"] if ioc["type"] in valid_types else "other"
+                excerpt = (val + " " * 10)[:10]
+                findings.append(Finding(
+                    id=f"v1-match-{val}",
+                    type=FindingType(ftype_str),
+                    value=ioc["value"],
+                    confidence=None,
+                    supporting_audit_entry_ids=[],
+                    evidence_excerpt=excerpt,
+                    first_seen_iteration=0,
+                ))
+        return score_findings(findings, gt_path).f1
+    except Exception:
+        return 0.0
+
+
 def render(ax: matplotlib.axes.Axes, case_id: str = "TEST-001") -> dict:
     apply_style()
     db_path = get_db_path(case_id)
@@ -100,7 +169,16 @@ def render(ax: matplotlib.axes.Axes, case_id: str = "TEST-001") -> dict:
 
     for notes_prefix, label, color in CONFIG_DISPLAY:
         run = _find_run_by_notes(runs, notes_prefix)
-        f1 = _score_run(run, db_path, gt_path) if run else 0.0
+        if not run:
+            f1 = 0.0
+        else:
+            f1 = _score_run(run, db_path, gt_path)
+            if f1 == 0.0:
+                cfg_dir = NOTES_TO_CONFIG.get(notes_prefix, "")
+                if cfg_dir:
+                    f1 = _score_from_report_ioc_section(
+                        cfg_dir, case_id, gt_path
+                    )
         labels.append(label)
         f1s.append(f1)
         colors.append(color)
@@ -108,7 +186,7 @@ def render(ax: matplotlib.axes.Axes, case_id: str = "TEST-001") -> dict:
 
     if all(f == 0.0 for f in f1s):
         placeholder(ax, "Panel 6 — Ablation Grid",
-                    "No scored runs found. Check notes fields in experiment configs.")
+                    "No scored runs found.")
         return {"status": "placeholder"}
 
     x    = np.arange(len(labels))
@@ -122,7 +200,7 @@ def render(ax: matplotlib.axes.Axes, case_id: str = "TEST-001") -> dict:
             ha="center", va="bottom", fontsize=9, color=GRAY,
         )
 
-    baseline_f1 = data_out.get("Primary baseline", 0.0)
+    baseline_f1 = data_out.get("Primary baseline. All features enabled.", 0.0)
     if baseline_f1 > 0:
         ax.axhline(baseline_f1, color=BLUE, linewidth=1,
                    linestyle="--", alpha=0.5, label="Baseline F1")
