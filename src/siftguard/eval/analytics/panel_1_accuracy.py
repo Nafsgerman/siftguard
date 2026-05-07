@@ -68,6 +68,21 @@ def render(ax: matplotlib.axes.Axes, case_id: str = "TEST-001") -> dict:
                     "No experiment runs found in DB.")
         return {"status": "placeholder"}
 
+    # Deduplicate: keep only the most recent run per config
+    seen_configs: dict[str, dict] = {}
+    for run in runs:
+        cfg = json.loads(run.get("config_json") or "{}")
+        key = (
+            cfg.get("prompt_version", "v1"),
+            cfg.get("max_iterations", 15),
+            cfg.get("self_correction", True),
+            cfg.get("correlation", True),
+        )
+        existing = seen_configs.get(str(key))
+        if not existing or run.get("started_at", "") > existing.get("started_at", ""):
+            seen_configs[str(key)] = run
+    runs = list(seen_configs.values())
+
     plotted = 0
     data_out = {}
 

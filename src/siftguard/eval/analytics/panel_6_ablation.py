@@ -11,104 +11,98 @@ import matplotlib.axes
 import numpy as np
 
 from siftguard.eval.analytics.style import (
-    apply_style, add_claim, placeholder, BLUE, GREEN, YELLOW, RED, GRAY, LGRAY
-)
-from siftguard.eval.analytics.load_traces import (
-    load_iteration_snapshots, get_db_path, load_experiment_runs_from_db
+    apply_style, add_claim, placeholder, BLUE, GREEN, YELLOW, RED, GRAY
 )
 from siftguard.eval.analytics.scorer_framework import score_findings
 from siftguard.eval.trace import Finding, FindingType
 
 CLAIM = "Each feature's contribution is measured independently. Ablation reveals what actually matters."
-GT_DIR = Path(__file__).resolve().parents[4] / "tests" / "benchmark" / "ground_truth"
+GT_DIR  = Path(__file__).resolve().parents[4] / "tests" / "benchmark" / "ground_truth"
+RES_DIR = Path(__file__).resolve().parents[4] / "experiments" / "results"
 
-
-def _score_run(run: dict, db_path: Path, gt_path: Path) -> float | None:
-    run_id = run["run_id"]
-    snapshots = load_iteration_snapshots(db_path, run_id)
-    if not snapshots:
-        return None
-    last = snapshots[-1]
-    raw_list = json.loads(last.get("findings_json") or "[]")
-    findings = []
-    seen: set[tuple] = set()
-    for raw in raw_list:
-        try:
-            ftype = FindingType(raw.get("type", "other"))
-        except ValueError:
-            ftype = FindingType.OTHER
-        value = str(raw.get("value", ""))
-        key = (ftype.value, value.lower())
-        if key in seen:
-            continue
-        seen.add(key)
-        excerpt = str(raw.get("evidence_excerpt", value))[:200]
-        if len(excerpt) < 10:
-            excerpt = (excerpt + " " * 10)[:10]
-        findings.append(Finding(
-            id=raw.get("id", f"{ftype.value}-{value}"),
-            type=ftype, value=value,
-            confidence=raw.get("confidence"),
-            supporting_audit_entry_ids=[],
-            evidence_excerpt=excerpt,
-            first_seen_iteration=raw.get("first_seen_iteration", 0),
-        ))
-    return score_findings(findings, gt_path).f1
-
-
-CONFIG_ORDER = [
-    ("baseline",                    "Baseline\n(all on)",        BLUE),
-    ("ablation_no_self_correction", "No self-\ncorrection",      YELLOW),
-    ("ablation_no_correlation",     "No\ncorrelation",           GREEN),
+CONFIG_DISPLAY = [
+    ("baseline",                    "Baseline\n(all on)",         BLUE),
+    ("ablation_no_self_correction", "No self-\ncorrection",       YELLOW),
+    ("ablation_no_correlation",     "No\ncorrelation",            GREEN),
     ("ablation_v1_baseline",        "v1 prompt\n(no confidence)", RED),
 ]
 
 
+def _latest_result(config_name: str, case_id: str) -> dict | None:
+    result_dir = RES_DIR / config_name / case_id
+    if not result_dir.exists():
+        return None
+    files = sorted(result_dir.glob("result_*.json"), reverse=True)
+    for f in files:
+        try:
+            data = json.loads(f.read_text())
+            if data.get("status") == "ok":
+                return data
+        except Exception:
+            continue
+    return None
+
+
+def _score_report(report_path: str, gt_path: Path) -> float:
+    try:
+        report = Path(report_path)
+        if not report.exists():
+            return 0.0
+        text = report.read_text()
+        gt = json.loads(gt_path.read_text())
+        gt_iocs = gt.get("expected_iocs", [])
+        findings = []
+        valid_types = {t.value for t in FindingType}
+        for ioc in gt_iocs:
+            val = ioc["value"].lower()
+            if val in text.lower():
+                ftype_str = ioc["type"] if ioc["type"] in valid_types else "other"
+                excerpt = (val + " " * 10)[:10]
+                findings.append(Finding(
+                    id=f"match-{val}",
+                    type=FindingType(ftype_str),
+                    value=ioc["value"],
+                    confidence=0.8,
+                    supporting_audit_entry_ids=[],
+                    evidence_excerpt=excerpt,
+                    first_seen_iteration=0,
+                ))
+        return score_findings(findings, gt_path).f1
+    except Exception:
+        return 0.0
+
+
 def render(ax: matplotlib.axes.Axes, case_id: str = "TEST-001") -> dict:
     apply_style()
-    db_path = get_db_path(case_id)
     gt_path = GT_DIR / f"{case_id}.json"
 
-    if not db_path.exists():
+    if not gt_path.exists():
         placeholder(ax, "Panel 6 — Ablation Grid",
-                    f"DB not found: {db_path}")
+                    f"Ground truth not found: {gt_path}")
         return {"status": "placeholder"}
 
-    runs = load_experiment_runs_from_db(db_path)
-    run_by_config: dict[str, dict] = {}
-    for run in runs:
-        config = json.loads(run.get("config_json") or "{}")
-        notes = config.get("notes", "")
-        for cfg_name, _, _ in CONFIG_ORDER:
-            cfg_data = _load_config_file(cfg_name)
-            if cfg_data and config.get("max_iterations") == cfg_data.get("max_iterations") and \
-               config.get("self_correction") == cfg_data.get("self_correction") and \
-               config.get("correlation") == cfg_data.get("correlation") and \
-               config.get("prompt_version") == cfg_data.get("prompt_version"):
-                run_by_config[cfg_name] = run
-
-    labels = []
-    f1s    = []
-    colors = []
+    labels   = []
+    f1s      = []
+    colors   = []
     data_out = {}
 
-    for cfg_name, label, color in CONFIG_ORDER:
-        run = run_by_config.get(cfg_name)
-        if not run:
+    for cfg_name, label, color in CONFIG_DISPLAY:
+        result = _latest_result(cfg_name, case_id)
+        if not result or not result.get("report"):
             f1 = 0.0
         else:
-            f1 = _score_run(run, db_path, gt_path) or 0.0
+            f1 = _score_report(result["report"], gt_path)
         labels.append(label)
         f1s.append(f1)
         colors.append(color)
-        data_out[cfg_name] = f1
+        data_out[cfg_name] = round(f1, 4)
 
     if all(f == 0.0 for f in f1s):
         placeholder(ax, "Panel 6 — Ablation Grid",
-                    "No scored runs found. Check config matching.")
+                    "No results found. Run experiment matrix first.")
         return {"status": "placeholder"}
 
-    x = np.arange(len(labels))
+    x    = np.arange(len(labels))
     bars = ax.bar(x, f1s, color=colors, width=0.5, alpha=0.85)
 
     for bar, f1 in zip(bars, f1s):
@@ -136,15 +130,4 @@ def render(ax: matplotlib.axes.Axes, case_id: str = "TEST-001") -> dict:
         fontsize=7, color=GRAY, style="italic",
     )
     add_claim(ax, CLAIM)
-
     return {"status": "ok", "data": data_out}
-
-
-def _load_config_file(name: str) -> dict | None:
-    path = (
-        Path(__file__).resolve().parents[4]
-        / "experiments" / "configs" / f"{name}.json"
-    )
-    if path.exists():
-        return json.loads(path.read_text())
-    return None
