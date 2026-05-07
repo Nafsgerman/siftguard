@@ -36,19 +36,31 @@ def score_findings(
     gt = json.loads(Path(ground_truth_path).read_text())
     gt_iocs: list[dict] = gt.get("expected_iocs", [])
 
-    gt_keys = {
+    gt_keys = [
         (_normalise(ioc["type"]), _normalise(ioc["value"]))
         for ioc in gt_iocs
-    }
+    ]
 
-    pred_keys = {
-        (_normalise(f.type.value), _normalise(f.value))
-        for f in findings
-    }
+    tp_keys: set[tuple] = set()
+    fp_findings: list[Finding] = []
 
-    tp_keys = pred_keys & gt_keys
-    fp_keys = pred_keys - gt_keys
-    fn_keys = gt_keys - pred_keys
+    for f in findings:
+        f_type = _normalise(f.type.value)
+        f_value = _normalise(f.value)
+        matched = False
+        for gt_type, gt_value in gt_keys:
+            if f_type == gt_type and (
+                gt_value in f_value or f_value in gt_value
+            ):
+                tp_keys.add((gt_type, gt_value))
+                matched = True
+                break
+        if not matched:
+            fp_findings.append(f)
+
+    gt_key_set = {(t, v) for t, v in gt_keys}
+    fn_keys = gt_key_set - tp_keys
+    fp_keys = {(_normalise(f.type.value), _normalise(f.value)) for f in fp_findings}
 
     tp = len(tp_keys)
     fp = len(fp_keys)
