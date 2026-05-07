@@ -79,7 +79,7 @@ def build_report(case_id: str = "TEST-001", out_dir: Path | None = None) -> Path
             f"## Panel {i+1}\n\n"
             f"**Claim:** {claim}\n\n"
             f"**Status:** {status}\n\n"
-            f"**Data:** {json.dumps({k: v for k, v in result.items() if k != 'data'}, indent=2)}\n\n"
+            f"**Data:** {json.dumps({k: v for k, v in result.items() if k != "data"}, indent=2, default=str)}\n\n"
             f"![Panel {i+1}](panel_{i+1}_{panel_mod.__name__.split('.')[-1]}.png)\n\n"
         )
 
