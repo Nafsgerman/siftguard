@@ -168,17 +168,15 @@ def render(ax: matplotlib.axes.Axes, case_id: str = "TEST-001") -> dict:
     data_out = {}
 
     for notes_prefix, label, color in CONFIG_DISPLAY:
+        cfg_dir = NOTES_TO_CONFIG.get(notes_prefix, "")
         run = _find_run_by_notes(runs, notes_prefix)
         if not run:
-            f1 = 0.0
+            # v1 loop doesn't write experiment_run rows — go straight to report
+            f1 = _score_from_report_ioc_section(cfg_dir, case_id, gt_path) if cfg_dir else 0.0
         else:
             f1 = _score_run(run, db_path, gt_path)
-            if f1 == 0.0:
-                cfg_dir = NOTES_TO_CONFIG.get(notes_prefix, "")
-                if cfg_dir:
-                    f1 = _score_from_report_ioc_section(
-                        cfg_dir, case_id, gt_path
-                    )
+            if f1 == 0.0 and cfg_dir:
+                f1 = _score_from_report_ioc_section(cfg_dir, case_id, gt_path)
         labels.append(label)
         f1s.append(f1)
         colors.append(color)
