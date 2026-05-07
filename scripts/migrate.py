@@ -64,12 +64,16 @@ def split_sql_statements(sql: str) -> list[str]:
     return [s.strip() for s in body.split(";") if s.strip()]
 
 
-def apply_migration_001(conn: sqlite3.Connection, dry_run: bool = False) -> None:
-    sql_path = MIGRATIONS_DIR / "001_eval_framework_schema.sql"
+def apply_migration(
+    conn: sqlite3.Connection,
+    version: str,
+    sql_path: Path,
+    dry_run: bool = False,
+) -> None:
+    alter_re = re.compile(
+        r"ALTER\s+TABLE\s+(\w+)\s+ADD\s+COLUMN\s+(\w+)", re.IGNORECASE
+    )
     statements = split_sql_statements(sql_path.read_text())
-
-    alter_re = re.compile(r"ALTER\s+TABLE\s+(\w+)\s+ADD\s+COLUMN\s+(\w+)", re.IGNORECASE)
-
     for stmt in statements:
         m = alter_re.match(stmt)
         if m:
@@ -81,15 +85,19 @@ def apply_migration_001(conn: sqlite3.Connection, dry_run: bool = False) -> None
             if not dry_run:
                 conn.execute(stmt)
             continue
-
-        # CREATE TABLE / CREATE INDEX — IF NOT EXISTS handles idempotency
         first_line = stmt.splitlines()[0].strip()
         print(f"  [apply] {first_line[:80]}")
         if not dry_run:
             conn.execute(stmt)
-
     if not dry_run:
         conn.commit()
+
+
+# Keep explicit function for backwards compat with test imports
+def apply_migration_001(conn: sqlite3.Connection, dry_run: bool = False) -> None:
+    apply_migration(
+        conn, "001", MIGRATIONS_DIR / "001_eval_framework_schema.sql", dry_run
+    )
 
 
 def verify_migration_001(conn: sqlite3.Connection) -> bool:
@@ -118,6 +126,18 @@ def verify_migration_001(conn: sqlite3.Connection) -> bool:
     return ok
 
 
+def verify_migration_002(conn: sqlite3.Connection) -> bool:
+    present = column_exists(conn, "auditentry", "run_id")
+    print(f"  [{'OK  ' if present else 'FAIL'}] auditentry.run_id")
+    return present
+
+
+MIGRATIONS = [
+    ("001", "001_eval_framework_schema.sql", verify_migration_001),
+    ("002", "002_run_id.sql",               verify_migration_002),
+]
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="SIFTGuard schema migrator")
     parser.add_argument("--db", required=True, help="Path to SQLite DB")
@@ -137,33 +157,42 @@ def main() -> int:
 
         if args.verify:
             print(f"Verifying schema in {db_path}")
-            return 0 if verify_migration_001(conn) else 1
+            ok = True
+            for _version, _filename, verify_fn in MIGRATIONS:
+                ok = verify_fn(conn) and ok
+            return 0 if ok else 1
 
         applied = applied_versions(conn)
-        sql_path = MIGRATIONS_DIR / "001_eval_framework_schema.sql"
-        checksum = file_checksum(sql_path)
 
-        if "001" in applied:
-            if applied["001"] != checksum:
-                print(f"  [WARN] migration 001 checksum drift")
-                print(f"         applied:  {applied['001']}")
-                print(f"         on-disk:  {checksum}")
-                return 2
-            print(f"  [skip]  migration 001 already applied (checksum match)")
-            return 0
+        for version, filename, _verify_fn in MIGRATIONS:
+            sql_path = MIGRATIONS_DIR / filename
+            if not sql_path.exists():
+                print(f"  [skip]  migration {version} — file not found: {filename}")
+                continue
 
-        print(f"Applying migration 001 to {db_path} (dry-run={args.dry_run})")
-        apply_migration_001(conn, dry_run=args.dry_run)
+            checksum = file_checksum(sql_path)
 
-        if not args.dry_run:
-            conn.execute(
-                "INSERT INTO schema_migrations (version, checksum) VALUES (?, ?)",
-                ("001", checksum),
-            )
-            conn.commit()
-            print(f"  [done]  migration 001 recorded with checksum {checksum[:12]}...")
-        else:
-            print(f"  [dry-run] no changes committed")
+            if version in applied:
+                if applied[version] != checksum:
+                    print(f"  [WARN] migration {version} checksum drift")
+                    print(f"         applied:  {applied[version]}")
+                    print(f"         on-disk:  {checksum}")
+                    return 2
+                print(f"  [skip]  migration {version} already applied (checksum match)")
+                continue
+
+            print(f"Applying migration {version} to {db_path} (dry-run={args.dry_run})")
+            apply_migration(conn, version, sql_path, dry_run=args.dry_run)
+
+            if not args.dry_run:
+                conn.execute(
+                    "INSERT INTO schema_migrations (version, checksum) VALUES (?, ?)",
+                    (version, checksum),
+                )
+                conn.commit()
+                print(f"  [done]  migration {version} recorded with checksum {checksum[:12]}...")
+            else:
+                print(f"  [dry-run] no changes committed")
 
         return 0
     finally:
