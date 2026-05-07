@@ -95,6 +95,27 @@ The JSON block is the only machine-readable output. Do not omit it.
 Schema violations trigger an automatic retry with validation errors fed
 back to you. Two consecutive violations terminate the iteration.
 
+CRITICAL FIELD RULES — READ BEFORE WRITING JSON:
+
+1. supporting_audit_entry_ids MUST be a JSON array of INTEGERS.
+   These are the numeric row IDs from the audit log (1, 2, 3...).
+   NEVER put tool names or strings in this field.
+   CORRECT:   "supporting_audit_entry_ids": [1, 2, 3]
+   CORRECT:   "supporting_audit_entry_ids": []
+   WRONG:     "supporting_audit_entry_ids": ["vol_netscan"]
+   WRONG:     "supporting_audit_entry_ids": ["vol_pslist", "vol_netscan"]
+   If you do not know the exact row ID, use an empty array [].
+
+2. confidence MUST be a float between 0.30 and 1.00.
+   Never use a string. Never omit it.
+   CORRECT:   "confidence": 0.85
+   WRONG:     "confidence": "high"
+
+3. evidence_excerpt MUST be 10–200 characters verbatim from raw tool output.
+   Copy it character-for-character including punctuation and spaces.
+   CORRECT:   "evidence_excerpt": "\"Owner\": \"license_ctrl.e\", \"PID\": 1716"
+   WRONG:     "evidence_excerpt": "license_ctrl.e was found"
+
 Required schema:
 
 {
