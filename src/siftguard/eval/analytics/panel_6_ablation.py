@@ -24,10 +24,10 @@ GT_DIR = Path(__file__).resolve().parents[4] / "tests" / "benchmark" / "ground_t
 
 # Match by notes prefix — unique per config, set in experiments/configs/*.json
 CONFIG_DISPLAY = [
-    ("Primary baseline",          "Baseline\n(all on)",         BLUE),
-    ("Ablation: self_correction", "No self-\ncorrection",       YELLOW),
-    ("Ablation: correlation",     "No\ncorrelation",            GREEN),
-    ("v1 baseline",               "v1 prompt\n(no confidence)", RED),
+    ("Primary baseline. All features enabled.",                     "Baseline\n(all on)",         BLUE),
+    ("Ablation: self_correction=false. All other features on.",     "No self-\ncorrection",       YELLOW),
+    ("Ablation: correlation=false. All other features on.",         "No\ncorrelation",            GREEN),
+    ("v1 baseline for prompt ablation.",                            "v1 prompt\n(no confidence)", RED),
 ]
 
 
