@@ -1,0 +1,15 @@
+{
+  "name": "iter_sweep_5",
+  "description": "Iteration sweep — max 5 iterations",
+  "agent_id": "siftguard-v2",
+  "model": "claude-sonnet-4-20250514",
+  "orchestrator": "siftguard-native",
+  "self_correction": true,
+  "correlation": true,
+  "training_mode": false,
+  "max_iterations": 5,
+  "prompt_version": "v2",
+  "seed": 42,
+  "notes": "Iteration sweep point: max_iterations=5.",
+  "cases": ["TEST-001"]
+}
