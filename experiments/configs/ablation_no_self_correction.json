@@ -1,0 +1,15 @@
+{
+  "name": "ablation_no_self_correction",
+  "description": "Self-correction disabled — measures contribution of self-correction",
+  "agent_id": "siftguard-v2",
+  "model": "claude-sonnet-4-20250514",
+  "orchestrator": "siftguard-native",
+  "self_correction": false,
+  "correlation": true,
+  "training_mode": false,
+  "max_iterations": 15,
+  "prompt_version": "v2",
+  "seed": 42,
+  "notes": "Ablation: self_correction=false. All other features on.",
+  "cases": ["TEST-001"]
+}
