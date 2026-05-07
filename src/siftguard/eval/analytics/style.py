@@ -31,7 +31,6 @@ def apply_style() -> None:
         "axes.prop_cycle":      mpl.cycler(color=PALETTE),
         "grid.color":           LGRAY,
         "grid.linewidth":       0.8,
-        "grid.zorder":          0,
         "xtick.color":          GRAY,
         "ytick.color":          GRAY,
         "xtick.labelsize":      9,
