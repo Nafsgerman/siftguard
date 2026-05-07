@@ -272,9 +272,13 @@ async def run_case_v2(
 
         messages.append({"role": "assistant", "content": assistant_content})
 
-        # ── Parse v2 structured output ──────────────────────────────────────
+       # ── Parse v2 structured output ──────────────────────────────────────
+        # Only parse v2 JSON on synthesis turns (no tool calls).
+        # On tool-calling turns the structured output IS the tool_use block —
+        # no JSON block is expected and attempting to parse one causes false
+        # v1-fallback on every tool-calling iteration.
         agent_out: Optional[AgentOutput] = None
-        if is_v2_response(response_text):
+        if not tool_calls_made and is_v2_response(response_text):
             agent_out, error = parse_agent_output(response_text)
             if agent_out is None:
                 # Single retry
@@ -294,6 +298,21 @@ async def run_case_v2(
                         "role": "assistant",
                         "content": retry_resp.content,
                     })
+        elif tool_calls_made:
+            # Tool-calling turn — build minimal AgentOutput from tool calls.
+            # v2 JSON verdict appears only on the final synthesis turn.
+            from siftguard.agent.output_schema import NextAction
+            agent_out = AgentOutput(
+                iteration_summary=f"Tool calls: {[t.name for t in tool_calls_made]}",
+                findings=[],
+                hypotheses=[],
+                next_action=NextAction(
+                    decision="continue",
+                    tool_to_call=None,
+                    rationale="Tool-calling turn — continuing investigation.",
+                ),
+                verdict=None,
+            )
         else:
             agent_out = _synthesize_v1_fallback(response_text, iteration)
 
