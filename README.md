@@ -1,10 +1,54 @@
-# SIFTGuard 🛡️
+# SIFTGuard
 
-> Autonomous DFIR agent for the SANS SIFT Workstation.  
-> Typed MCP server makes evidence spoliation architecturally impossible.  
-> Self-correcting loop. Full audit trail. Senior-analyst reasoning at machine speed.
+**Court-defensible autonomous DFIR. Typed function boundaries. Append-only audit. Evals, not vibes.**
+
+[![Methodology v1.0.0](https://img.shields.io/badge/methodology-v1.0.0-1a73e8)](docs/EVAL_FRAMEWORK.md)
+[![Spoliation tests 12/12](https://img.shields.io/badge/spoliation-12%2F12-34a853)](tests/spoliation/)
+[![Eval matrix 8/8](https://img.shields.io/badge/eval%20matrix-8%2F8-34a853)](experiments/results/)
 
 **SANS FIND EVIL! Hackathon 2026** · [Devpost](https://devpost.com/software/siftguard) · Public June 10, 2026
+
+SIFTGuard is an autonomous incident-response agent that runs on the SANS SIFT
+Workstation, calls forensic tools through a typed MCP server, and produces
+incident reports a court could accept — without the analyst having to trust
+the LLM with the evidence.
+
+The architectural claim, stated plainly: **a SIFTGuard agent cannot alter,
+delete, or fabricate evidence, and we prove it with automated tests rather
+than a policy document.**
+
+---
+
+## Architecture at a glance
+
+![SIFTGuard architecture](docs/architecture/architecture-v3.png)
+
+Four hard boundaries from left to right:
+
+1. **Typed MCP boundary.** Every forensic tool is a Pydantic-validated function with a frozen schema. The LLM cannot invoke arbitrary shell. Tool input and output are validated on both sides of the wire.
+2. **Instrumented agent loop.** Every iteration writes a structured snapshot: tokens in/out, dollar cost, confidence vector, hypothesis state, self-correction events. Snapshots are immutable once written.
+3. **Append-only audit DB.** SQLite with insert-only access patterns enforced by the data layer. Schema migrations are versioned and verified. Spoliation would require breaking the migration log, which is checked at startup.
+4. **Versioned methodology.** Every report and manifest is stamped with the methodology version and the SHA-256 of `EVAL_FRAMEWORK.md`. Change the scoring rules, the version bumps, and prior results stay attributable to the methodology that produced them.
+
+---
+
+## What we measured
+
+### Component contribution (ablation)
+
+![Ablation grid](docs/figures/panel_6_ablation.png)
+
+Same case, same ground truth, components turned off one at a time. Self-correction and cross-source correlation each contribute measurable accuracy. The v1 free-form prompt scores higher on the v1 scorer (text matching) but cannot produce calibrated confidence — see [`EVAL_FRAMEWORK.md`](docs/EVAL_FRAMEWORK.md) for the methodological caveat.
+
+### Cost-accuracy frontier
+
+![Cost-accuracy Pareto](docs/figures/panel_4_pareto.png)
+
+Same case, different iteration caps. Cost per run, accuracy delta. The flat region above iteration 5 is the operational signal: more iterations do not buy more accuracy on this case under this configuration.
+
+### Live self-correction event
+
+A captured iteration where the agent revised its own conclusion after a follow-up tool call contradicted an earlier finding. The correction is written as a `correction_event` row in the audit DB and surfaced in the report. Reproducible from the event tag in [`experiments/results/baseline/TEST-001/`](experiments/results/).
 
 ---
 
@@ -21,13 +65,18 @@ SIFTGuard takes a different path:
 
 ---
 
-## Benchmark Results
+## Headline numbers (TEST-001, single-seed)
 
-| Case | Threat Type | IOC F1 | Sections | Verdict | **Overall** |
-|------|------------|--------|----------|---------|-------------|
-| TEST-001 | APT C2 | 70.6% | 100% | 100% | **85.3%** |
+| Metric | Value | Caveat |
+|---|---|---|
+| Verdict accuracy | 100% | Agent correctly classified the APT |
+| Section coverage | 100% | All required report sections produced |
+| IOC F1 | 70.6% | Free-text extraction; ground-truth normalization disclosed in `EVAL_FRAMEWORK.md` |
+| Overall benchmark | 85.3% | Weighted across the four metrics above |
+| Spoliation tests | 12/12 | Automated suite, not a policy document |
+| Methodology drift | 0 | SHA-256 pinned, CI-verified |
 
-Scoring: IOC F1 (50%) + Section completeness (25%) + Verdict accuracy (25%)
+Single seed on TEST-001 is a known limitation. Multi-seed and TEST-004/005 generalization runs are the next deliverable — see [Roadmap](#roadmap).
 
 ---
 
