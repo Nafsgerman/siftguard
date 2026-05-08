@@ -270,3 +270,11 @@ async def export_pdf(session_id: str):
         media_type="application/pdf",
         headers={"Content-Disposition": f'attachment; filename="{filename}"'}
     )
+
+@app.get("/api/corrections/{case_id}")
+async def get_corrections(case_id: str):
+    from siftguard.eval.analytics.correction_panel import get_correction_breakdown
+    db_path = f"./audit/{case_id}.db"
+    if not os.path.exists(db_path):
+        return Response(status_code=404)
+    return get_correction_breakdown(db_path, case_id)
