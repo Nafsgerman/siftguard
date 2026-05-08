@@ -16,6 +16,7 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 
 from siftguard.eval.analytics.style import apply_style, GRAY
+from siftguard.eval.methodology import current_block
 from siftguard.eval.analytics import (
     panel_1_accuracy,
     panel_2_calibration,
@@ -58,7 +59,11 @@ def build_report(case_id: str = "TEST-001", out_dir: Path | None = None) -> Path
     )
 
     all_data = {}
-    md_sections = []
+    _m = current_block()
+    md_sections = [
+        f"<!-- methodology v{_m.version} · {_m.doc} · sha256:{_m.doc_sha256[:12]}… -->",
+        "",
+    ]
 
     for i, panel_mod in enumerate(PANELS):
         ax = axes_flat[i]
