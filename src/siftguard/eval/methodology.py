@@ -19,7 +19,7 @@ METHODOLOGY_DOC_NAME = "EVAL_FRAMEWORK.md"
 # Project root resolution: this file lives at src/siftguard/eval/methodology.py
 # Root is 3 parents up: eval -> siftguard -> src -> <repo root>
 _REPO_ROOT = Path(__file__).resolve().parents[3]
-_DOC_PATH = _REPO_ROOT / METHODOLOGY_DOC_NAME
+_DOC_PATH = _REPO_ROOT / "docs" / METHODOLOGY_DOC_NAME
 
 
 class MethodologyDocMissing(RuntimeError):
