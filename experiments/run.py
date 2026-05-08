@@ -17,6 +17,7 @@ import os
 import sys
 import time
 from datetime import datetime, timezone
+from siftguard.eval.methodology import current_block
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -149,12 +150,13 @@ async def run_single(
         report_path.write_text(report)
 
         result = {
-            "status":    "ok",
-            "config":    config["name"],
-            "case_id":   case_id,
-            "wall_time": round(wall_time, 1),
-            "report":    str(report_path),
-            "timestamp": _timestamp(),
+            "status":      "ok",
+            "config":      config["name"],
+            "case_id":     case_id,
+            "wall_time":   round(wall_time, 1),
+            "report":      str(report_path),
+            "timestamp":   _timestamp(),
+            "methodology": current_block().to_dict(),
         }
 
     except Exception as exc:
