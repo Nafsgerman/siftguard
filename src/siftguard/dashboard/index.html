@@ -416,6 +416,16 @@
         <div class="panel-header">Hypothesis Tracker <span class="badge green" id="hypBadge">0</span></div>
         <div class="panel-body" id="hypLog"></div>
       </div>
+      <div class="panel-card">
+        <div class="panel-header">Self-Correction Taxonomy <span class="badge" id="corrBadge" style="background:#1a73e8;color:#fff">0</span></div>
+        <div class="panel-body" id="corrPanel" style="padding:8px 12px;">
+          <div id="corrEmpty" style="color:#9aa0a6;font-size:12px;padding:8px 0;">No corrections recorded yet.</div>
+          <div id="corrChart" style="display:none;">
+            <canvas id="corrCanvas" height="120"></canvas>
+            <div id="corrBreakdown" style="margin-top:8px;font-size:11px;color:#5f6368;display:flex;flex-wrap:wrap;gap:6px;"></div>
+          </div>
+        </div>
+      </div>
       <div class="panel-card" id="trainingPanel" style="display:none;border-top:3px solid var(--yellow);grid-column:1/-1;">
         <div class="panel-header">🎓 Training Annotations <span class="badge" id="trainingBadge" style="background:var(--yellow);color:#fff">0</span><span style="font-size:11px;color:var(--grey-600);font-weight:400;margin-left:8px">agent explains each decision</span></div>
         <div class="panel-body" id="trainingLog"></div>
@@ -900,6 +910,48 @@ function handleTrainingEvent(ev) {
     );
   }
 }
+
+
+function loadCorrections(caseId) {
+  if (!caseId) return;
+  fetch('/api/corrections/' + caseId)
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (!data || data.total_corrections === 0) return;
+      document.getElementById('corrEmpty').style.display = 'none';
+      document.getElementById('corrChart').style.display = 'block';
+      document.getElementById('corrBadge').textContent = data.total_corrections;
+      var breakdown = data.breakdown_by_type;
+      var colors = {
+        'FORMAT_RETRY':'#1a73e8','TOOL_RETRY':'#e37400','VERDICT_REVISION':'#d93025',
+        'IOC_REVISION':'#1e8e3e','SECTION_REFILL':'#9334e6','HALLUCINATION_RETRACT':'#c5221f',
+        'CONFIDENCE_DOWNGRADE':'#f29900','SCOPE_EXPANSION':'#00897b','UNKNOWN':'#9aa0a6'
+      };
+      var el = document.getElementById('corrBreakdown');
+      el.innerHTML = '';
+      Object.keys(breakdown).forEach(function(k) {
+        var dot = '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:' + (colors[k]||'#9aa0a6') + ';margin-right:3px;vertical-align:middle;"></span>';
+        el.innerHTML += '<span style="white-space:nowrap;">' + dot + k.replace(/_/g,' ') + ': <b>' + breakdown[k] + '</b></span>';
+      });
+      var canvas = document.getElementById('corrCanvas');
+      var ctx = canvas.getContext('2d');
+      var keys = Object.keys(breakdown);
+      var vals = keys.map(function(k){ return breakdown[k]; });
+      var max = Math.max.apply(null, vals) || 1;
+      canvas.width = canvas.offsetWidth || 300;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      var barW = Math.floor((canvas.width - 20) / keys.length) - 4;
+      keys.forEach(function(k, i) {
+        var h = Math.round((vals[i] / max) * 90);
+        var x = 10 + i * (barW + 4);
+        var y = 110 - h;
+        ctx.fillStyle = colors[k] || '#9aa0a6';
+        ctx.fillRect(x, y, barW, h);
+      });
+    })
+    .catch(function(){});
+}
+
 
 function resetBtn() {
   var btn = document.getElementById('btnInvestigate');
