@@ -76,66 +76,29 @@ async def start_investigation(request: Request):
     return {"session_id": session_id, "case_id": case_id}
 
 async def _run_investigation(session_id: str, case_id: str, briefing: str, memory_image: str, training_mode: bool = False):
-    from siftguard.agent.loop import SYSTEM_PROMPT, TRAINING_SYSTEM_PROMPT, TOOL_SCHEMAS, _dispatch_tool
-    from siftguard.audit.log import AuditLog
-    import anthropic
+    from siftguard.agent.loop import run_case
 
     await push_event(session_id, {"type": "start", "case_id": case_id, "briefing": briefing})
-    client = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
-    evidence = {"memory_image": memory_image} if memory_image else {}
-    active_prompt = TRAINING_SYSTEM_PROMPT if training_mode else SYSTEM_PROMPT
-    audit = AuditLog(f"./audit/{case_id}.db")
-    evidence_summary = "\n".join(f"- {k}: {v}" for k, v in evidence.items())
-    messages = [{"role": "user", "content": (
-        f"## Case ID: {case_id}\n\n## Briefing\n{briefing}\n\n"
-        f"## Available Evidence\n{evidence_summary}\n\nBegin your investigation."
-    )}]
-    max_iterations = int(os.environ.get("SIFTGUARD_MAX_AGENT_ITERATIONS", "15"))
 
-    for iteration in range(max_iterations):
-        await push_event(session_id, {"type": "iteration", "iteration": iteration + 1, "max": max_iterations})
-        response = client.messages.create(
-            model="claude-sonnet-4-5",
-            max_tokens=4096,
-            system=active_prompt,
-            tools=TOOL_SCHEMAS,
-            messages=messages,
+    evidence = {"memory_image": memory_image} if memory_image else {}
+    audit_db = os.path.join(os.path.dirname(__file__), "..", "..", "..", "audit", f"{case_id}.db")
+
+    async def on_event(event: dict):
+        await push_event(session_id, event)
+
+    try:
+        report = await run_case(
+            case_id=case_id,
+            evidence_files=evidence,
+            briefing=briefing,
+            audit_db=audit_db,
+            training_mode=training_mode,
+            on_event=on_event,
         )
-        assistant_content = []
-        tool_calls = []
-        for block in response.content:
-            assistant_content.append(block)
-            if block.type == "text" and block.text.strip():
-                await push_event(session_id, {"type": "agent_text", "text": block.text})
-                if "## Executive Summary" in block.text:
-                    await push_event(session_id, {"type": "report", "content": block.text})
-                if training_mode and "[TRAINING]" in block.text:
-                    import re as _re
-                    for chunk in _re.split(r"\[TRAINING\]", block.text):
-                        chunk = chunk.strip()
-                        if chunk and len(chunk) > 10:
-                            await push_event(session_id, {"type": "training_annotation", "text": chunk[:400]})
-            elif block.type == "tool_use":
-                tool_calls.append(block)
-                await push_event(session_id, {"type": "tool_call", "tool": block.name, "args": block.input})
-        messages.append({"role": "assistant", "content": assistant_content})
-        if response.stop_reason == "end_turn" and not tool_calls:
-            break
-        if tool_calls:
-            tool_results = []
-            for tc in tool_calls:
-                result = await _dispatch_tool(tc.name, tc.input)
-                audit.record(case_id=case_id, tool_name=tc.name, tool_version="1.0.0",
-                    args=tc.input, outcome=result.outcome.value, output=result.model_dump_json(),
-                    duration_ms=result.duration_ms, agent_iteration=iteration)
-                await push_event(session_id, {
-                    "type": "tool_result", "tool": tc.name, "outcome": result.outcome.value,
-                    "summary": result.summary, "duration_ms": result.duration_ms,
-                    "findings_count": len(result.findings),
-                })
-                tool_results.append({"type": "tool_result", "tool_use_id": tc.id,
-                    "content": result.model_dump_json()[:8000]})
-            messages.append({"role": "user", "content": tool_results})
+        if report:
+            await push_event(session_id, {"type": "report", "content": report})
+    except Exception as e:
+        await push_event(session_id, {"type": "error", "message": str(e)})
 
     await push_event(session_id, {"type": "complete"})
 
@@ -170,13 +133,9 @@ async def export_pdf(session_id: str):
     body = ParagraphStyle("body", parent=styles["Normal"], fontSize=9, textColor=DARK,
         leading=14, spaceAfter=3)
     meta = ParagraphStyle("meta", parent=styles["Normal"], fontSize=8, textColor=GRAY, spaceAfter=2)
-    code = ParagraphStyle("code", parent=styles["Normal"], fontSize=8, textColor=DARK,
-        fontName="Courier", backColor=colors.HexColor("#f8f9fa"), leading=12,
-        leftIndent=6, spaceAfter=2)
 
     story = []
 
-    # Header
     case_id = next((e["case_id"] for e in events if e.get("case_id")), session_id)
     briefing = next((e.get("briefing","") for e in events if e.get("type") == "start"), "")
     generated_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
@@ -194,20 +153,16 @@ async def export_pdf(session_id: str):
         story.append(Paragraph(briefing.replace("\n","<br/>"), body))
         story.append(Spacer(1, 4*mm))
 
-    # Executive report blocks
     report_blocks = [e["content"] for e in events if e.get("type") == "report"]
     if report_blocks:
         story.append(Paragraph("Investigation Report", h2))
         story.append(HRFlowable(width="100%", thickness=0.5, color=GRAY, spaceAfter=4))
+        import re as _re2
         for block in report_blocks:
-            import re as _re2
-        # Strip [TRAINING] blocks - everything from [TRAINING] up to next ## section
-        block = _re2.sub(r"\[TRAINING\].*?(?=##|\Z)", "", block, flags=_re2.DOTALL).strip()
-        # Strip remaining ** markdown bold markers for PDF
-        block = _re2.sub(r"\*\*([^*]+)\*\*", r"\1", block)
-        # Strip * italic markers
-        block = _re2.sub(r"\*([^*]+)\*", r"\1", block)
-        for line in block.split("\n"):
+            block = _re2.sub(r"\[TRAINING\].*?(?=##|\Z)", "", block, flags=_re2.DOTALL).strip()
+            block = _re2.sub(r"\*\*([^*]+)\*\*", r"\1", block)
+            block = _re2.sub(r"\*([^*]+)\*", r"\1", block)
+            for line in block.split("\n"):
                 line = line.strip()
                 if not line:
                     story.append(Spacer(1, 2*mm))
@@ -220,7 +175,6 @@ async def export_pdf(session_id: str):
                 else:
                     story.append(Paragraph(line, body))
 
-    # Tool execution summary table
     tool_events = [e for e in events if e.get("type") == "tool_result"]
     if tool_events:
         story.append(Spacer(1, 4*mm))
@@ -228,11 +182,9 @@ async def export_pdf(session_id: str):
         story.append(HRFlowable(width="100%", thickness=0.5, color=GRAY, spaceAfter=4))
         table_data = [["Tool", "Outcome", "Findings", "Duration", "Summary"]]
         for e in tool_events:
-            outcome = e.get("outcome", "")
-            outcome_color = GREEN if outcome == "ok" else (RED if outcome == "fail" else GRAY)
             table_data.append([
                 e.get("tool","")[:30],
-                outcome.upper(),
+                e.get("outcome","").upper(),
                 str(e.get("findings_count", 0)),
                 f"{e.get('duration_ms',0)}ms",
                 (e.get("summary","")[:60] + "…") if len(e.get("summary","")) > 60 else e.get("summary",""),
@@ -253,7 +205,6 @@ async def export_pdf(session_id: str):
         ]))
         story.append(t)
 
-    # Footer
     story.append(Spacer(1, 8*mm))
     story.append(HRFlowable(width="100%", thickness=0.5, color=GRAY))
     story.append(Paragraph(
@@ -274,7 +225,7 @@ async def export_pdf(session_id: str):
 @app.get("/api/corrections/{case_id}")
 async def get_corrections(case_id: str):
     from siftguard.eval.analytics.correction_panel import get_correction_breakdown
-    db_path = f"./audit/{case_id}.db"
+    db_path = os.path.join(os.path.dirname(__file__), "..", "..", "..", "audit", f"{case_id}.db")
     if not os.path.exists(db_path):
         return Response(status_code=404)
     return get_correction_breakdown(db_path, case_id)
