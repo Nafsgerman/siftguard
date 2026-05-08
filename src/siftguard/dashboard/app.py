@@ -78,13 +78,23 @@ async def start_investigation(request: Request):
 async def _run_investigation(session_id: str, case_id: str, briefing: str, memory_image: str, training_mode: bool = False):
     from siftguard.agent.loop import run_case
 
-    await push_event(session_id, {"type": "start", "case_id": case_id, "briefing": briefing})
 
     evidence = {"memory_image": memory_image} if memory_image else {}
     audit_db = os.path.join(os.path.dirname(__file__), "..", "..", "..", "audit", f"{case_id}.db")
 
-    async def on_event(event: dict):
-        await push_event(session_id, event)
+    _EVENT_MAP = {
+        "iteration_complete": "iteration",
+        "tool_call_start":    "tool_call",
+        "tool_call_end":      "tool_result",
+        "investigation_started": "start",
+        "verdict_reached":    "complete",
+        "ioc_detected":       "ioc",
+        "hypothesis_update":  "hypothesis",
+    }
+    def on_event(event_type: str, data: dict):
+        mapped = _EVENT_MAP.get(event_type, event_type)
+        loop = asyncio.get_event_loop()
+        loop.create_task(push_event(session_id, {"type": mapped, **data}))
 
     try:
         report = await run_case(
@@ -135,7 +145,6 @@ async def export_pdf(session_id: str):
     meta = ParagraphStyle("meta", parent=styles["Normal"], fontSize=8, textColor=GRAY, spaceAfter=2)
 
     story = []
-
     case_id = next((e["case_id"] for e in events if e.get("case_id")), session_id)
     briefing = next((e.get("briefing","") for e in events if e.get("type") == "start"), "")
     generated_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
