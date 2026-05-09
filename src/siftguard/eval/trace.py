@@ -11,12 +11,11 @@ import json
 import uuid
 from datetime import datetime, timezone
 from enum import Enum
-from typing import TYPE_CHECKING, Optional
+from typing import Optional
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
-if TYPE_CHECKING:
-    from siftguard.eval.verifier_models import VerificationResult
+from siftguard.eval.verifier_models import VerificationResult
 
 SCHEMA_VERSION = "1.0.0"
 
@@ -113,6 +112,8 @@ class Finding(BaseModel, frozen=True):
             )
         return v
 
+
+Finding.model_rebuild()
 
 class ToolCall(BaseModel, frozen=True):
     """Single tool invocation. References the audit DB row."""
