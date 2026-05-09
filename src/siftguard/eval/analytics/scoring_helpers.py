@@ -15,6 +15,24 @@ RES_DIR = Path(__file__).resolve().parents[4] / "experiments" / "results"
 GT_DIR  = Path(__file__).resolve().parents[4] / "tests" / "benchmark" / "ground_truth"
 
 
+def _find_latest_result(config_name: str, case_id: str) -> dict | None:
+    """Check ablation_v2 dir first, then standard results dir. Returns latest ok result."""
+    ablation_dir = RES_DIR / "ablation_v2" / config_name / case_id
+    standard_dir = RES_DIR / config_name / case_id
+    for search_dir in [ablation_dir, standard_dir]:
+        if not search_dir.exists():
+            continue
+        files = sorted(search_dir.glob("result_*.json"), reverse=True)
+        for f in files:
+            try:
+                data = json.loads(f.read_text())
+                if data.get("status") == "ok":
+                    return data
+            except Exception:
+                continue
+    return None
+
+
 def score_run_from_db(run: dict, db_path: Path, gt_path: Path) -> float:
     """Score a run dict (from experiment_run table) against ground truth. Returns IOC F1."""
     run_id = run["run_id"]
@@ -50,61 +68,53 @@ def score_run_from_db(run: dict, db_path: Path, gt_path: Path) -> float:
     return score_findings(findings, gt_path).f1
 
 
-def score_run_from_report(config_name: str, case_id: str, gt_path: Path) -> float:
-    """Score the latest saved report for a config+case against ground truth. Returns IOC F1."""
-    result_dir = RES_DIR / config_name / case_id
-    if not result_dir.exists():
-        return 0.0
-    files = sorted(result_dir.glob("result_*.json"), reverse=True)
-    result = None
-    for f in files:
-        try:
-            data = json.loads(f.read_text())
-            if data.get("status") == "ok":
-                result = data
-                break
-        except Exception:
+def _score_report_text(text: str, gt_path: Path) -> float:
+    """Score IOC section of a report text against ground truth. Returns IOC F1."""
+    ioc_section = ""
+    in_ioc = False
+    for line in text.splitlines():
+        if line.strip().startswith("## Indicators"):
+            in_ioc = True
             continue
+        if in_ioc and line.strip().startswith("## "):
+            break
+        if in_ioc:
+            ioc_section += line + "\n"
+    if not ioc_section:
+        ioc_section = text
+    gt = json.loads(gt_path.read_text())
+    gt_iocs = gt.get("expected_iocs", [])
+    valid_types = {t.value for t in FindingType}
+    findings = []
+    matched_gt: set[str] = set()
+    for ioc in gt_iocs:
+        val = ioc["value"].lower()
+        if val in ioc_section.lower() and val not in matched_gt:
+            matched_gt.add(val)
+            ftype_str = ioc["type"] if ioc["type"] in valid_types else "other"
+            excerpt = (val + " " * 10)[:10]
+            findings.append(Finding(
+                id=f"match-{val}",
+                type=FindingType(ftype_str),
+                value=ioc["value"],
+                confidence=None,
+                supporting_audit_entry_ids=[],
+                evidence_excerpt=excerpt,
+                first_seen_iteration=0,
+            ))
+    return score_findings(findings, gt_path).f1
+
+
+def score_run_from_report(config_name: str, case_id: str, gt_path: Path) -> float:
+    """Score the latest saved report for a config+case. Checks ablation_v2 first."""
+    result = _find_latest_result(config_name, case_id)
     if not result or not result.get("report"):
         return 0.0
     try:
         report_path = Path(result["report"])
         if not report_path.exists():
             return 0.0
-        text = report_path.read_text()
-        ioc_section = ""
-        in_ioc = False
-        for line in text.splitlines():
-            if line.strip().startswith("## Indicators"):
-                in_ioc = True
-                continue
-            if in_ioc and line.strip().startswith("## "):
-                break
-            if in_ioc:
-                ioc_section += line + "\n"
-        if not ioc_section:
-            ioc_section = text
-        gt = json.loads(gt_path.read_text())
-        gt_iocs = gt.get("expected_iocs", [])
-        valid_types = {t.value for t in FindingType}
-        findings = []
-        matched_gt: set[str] = set()
-        for ioc in gt_iocs:
-            val = ioc["value"].lower()
-            if val in ioc_section.lower() and val not in matched_gt:
-                matched_gt.add(val)
-                ftype_str = ioc["type"] if ioc["type"] in valid_types else "other"
-                excerpt = (val + " " * 10)[:10]
-                findings.append(Finding(
-                    id=f"v1-match-{val}",
-                    type=FindingType(ftype_str),
-                    value=ioc["value"],
-                    confidence=None,
-                    supporting_audit_entry_ids=[],
-                    evidence_excerpt=excerpt,
-                    first_seen_iteration=0,
-                ))
-        return score_findings(findings, gt_path).f1
+        return _score_report_text(report_path.read_text(), gt_path)
     except Exception:
         return 0.0
 
@@ -122,41 +132,7 @@ def score_seed_results(seed_results: list[dict], config_name: str, case_id: str,
         if not report_path.exists():
             continue
         try:
-            text = report_path.read_text()
-            ioc_section = ""
-            in_ioc = False
-            for line in text.splitlines():
-                if line.strip().startswith("## Indicators"):
-                    in_ioc = True
-                    continue
-                if in_ioc and line.strip().startswith("## "):
-                    break
-                if in_ioc:
-                    ioc_section += line + "\n"
-            if not ioc_section:
-                ioc_section = text
-            gt = json.loads(gt_path.read_text())
-            gt_iocs = gt.get("expected_iocs", [])
-            valid_types = {t.value for t in FindingType}
-            findings = []
-            matched_gt: set[str] = set()
-            for ioc in gt_iocs:
-                val = ioc["value"].lower()
-                if val in ioc_section.lower() and val not in matched_gt:
-                    matched_gt.add(val)
-                    ftype_str = ioc["type"] if ioc["type"] in valid_types else "other"
-                    excerpt = (val + " " * 10)[:10]
-                    findings.append(Finding(
-                        id=f"seed-match-{val}",
-                        type=FindingType(ftype_str),
-                        value=ioc["value"],
-                        confidence=None,
-                        supporting_audit_entry_ids=[],
-                        evidence_excerpt=excerpt,
-                        first_seen_iteration=0,
-                    ))
-            from siftguard.eval.analytics.scorer_framework import score_findings
-            scores.append(score_findings(findings, gt_path).f1)
+            scores.append(_score_report_text(report_path.read_text(), gt_path))
         except Exception:
             continue
     return scores
