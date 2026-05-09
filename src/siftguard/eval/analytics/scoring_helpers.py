@@ -110,13 +110,53 @@ def score_run_from_report(config_name: str, case_id: str, gt_path: Path) -> floa
 
 
 def score_seed_results(seed_results: list[dict], config_name: str, case_id: str, gt_path: Path) -> list[float]:
-    """Extract F1 scores from a list of seed result dicts (from ablation_v2 dir)."""
+    """Extract F1 scores from seed result dicts by scoring their saved report files."""
     scores = []
     for r in seed_results:
         if r.get("status") != "ok":
             continue
-        report = r.get("report", "")
-        if report:
-            f1 = score_run_from_report(config_name, case_id, gt_path)
-            scores.append(f1)
+        report_path_str = r.get("report", "")
+        if not report_path_str:
+            continue
+        report_path = Path(report_path_str)
+        if not report_path.exists():
+            continue
+        try:
+            text = report_path.read_text()
+            ioc_section = ""
+            in_ioc = False
+            for line in text.splitlines():
+                if line.strip().startswith("## Indicators"):
+                    in_ioc = True
+                    continue
+                if in_ioc and line.strip().startswith("## "):
+                    break
+                if in_ioc:
+                    ioc_section += line + "\n"
+            if not ioc_section:
+                ioc_section = text
+            gt = json.loads(gt_path.read_text())
+            gt_iocs = gt.get("expected_iocs", [])
+            valid_types = {t.value for t in FindingType}
+            findings = []
+            matched_gt: set[str] = set()
+            for ioc in gt_iocs:
+                val = ioc["value"].lower()
+                if val in ioc_section.lower() and val not in matched_gt:
+                    matched_gt.add(val)
+                    ftype_str = ioc["type"] if ioc["type"] in valid_types else "other"
+                    excerpt = (val + " " * 10)[:10]
+                    findings.append(Finding(
+                        id=f"seed-match-{val}",
+                        type=FindingType(ftype_str),
+                        value=ioc["value"],
+                        confidence=None,
+                        supporting_audit_entry_ids=[],
+                        evidence_excerpt=excerpt,
+                        first_seen_iteration=0,
+                    ))
+            from siftguard.eval.analytics.scorer_framework import score_findings
+            scores.append(score_findings(findings, gt_path).f1)
+        except Exception:
+            continue
     return scores
