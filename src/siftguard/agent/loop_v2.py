@@ -224,10 +224,10 @@ async def run_case_v2(
         state.completed_iterations = iteration + 1
         console.print(f"\n[dim]── Iteration {iteration + 1}/{_max_iter} ──[/dim]")
 
-        # ── Model call ──────────────────────────────────────────────────────
+        # Edit 1: line 233 (in main client.messages.create call)
         response = client.messages.create(
             model=model,
-            max_tokens=4096,
+            max_tokens=8192,           # was 4096
             system=system_prompt,
             tools=TOOL_SCHEMAS,
             messages=messages,
@@ -272,6 +272,19 @@ async def run_case_v2(
 
         messages.append({"role": "assistant", "content": assistant_content})
 
+        # ── Early exit: substantial report written, even if response truncated ──
+        if final_report and "## Executive Summary" in final_report and len(final_report) > 1500:
+            if on_event:
+                on_event("verdict_reached", {
+                    "run_id": run_id,
+                    "claim": "Investigation complete (report-based exit)",
+                    "confidence": None,
+                    "findings_count": len(state.all_findings),
+                    "total_cost_usd": state.cumulative_cost_usd,
+                })
+            state.terminated_reason = "report_complete"
+            break
+
        # ── Parse v2 structured output ──────────────────────────────────────
         # Only parse v2 JSON on synthesis turns (no tool calls).
         # On tool-calling turns the structured output IS the tool_use block —
@@ -285,8 +298,9 @@ async def run_case_v2(
                 logger.warning("v2 parse failed iter %d — retrying: %s", iteration, error)
                 retry_msg = build_retry_message(error)
                 messages.append({"role": "user", "content": retry_msg})
+                # Edit 2: line 290 (in retry client.messages.create call)
                 retry_resp = client.messages.create(
-                    model=model, max_tokens=4096,
+                    model=model, max_tokens=8192,        # was 4096
                     system=system_prompt, tools=TOOL_SCHEMAS, messages=messages,
                 )
                 retry_text = _extract_text_blocks(retry_resp.content)

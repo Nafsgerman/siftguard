@@ -1,50 +1,24 @@
 {
   "case_id": "TEST-004",
-  "description": "Windows 10 x64 memory image. Focus: registry persistence and truncated process names.",
-  "threat_type": "apt_persistence_registry",
+  "description": "SRL-2018 base-wkstn-01 memory image. Workstation 01 from compromised enterprise network. Same APT campaign as TEST-001.",
+  "threat_type": "apt_lateral_movement",
   "expected_iocs": [
-    {
-      "type": "process",
-      "value": "license_ctrl",
-      "confidence": "high"
-    },
-    {
-      "type": "process",
-      "value": "ftusbsrvc",
-      "confidence": "high"
-    },
-    {
-      "type": "process",
-      "value": "msiexec",
-      "confidence": "medium"
-    },
-    {
-      "type": "ip",
-      "value": "172.16.4.10",
-      "confidence": "high"
-    },
-    {
-      "type": "port",
-      "value": "5682",
-      "confidence": "high"
-    },
-    {
-      "type": "technique",
-      "value": "naming",
-      "confidence": "high"
-    }
+    {"type": "process", "value": "license_ctrl", "confidence": "high"},
+    {"type": "process", "value": "ftusbsrvc", "confidence": "high"},
+    {"type": "process", "value": "usbclient", "confidence": "medium"},
+    {"type": "ip", "value": "172.16.4.10", "confidence": "high"},
+    {"type": "port", "value": "5682", "confidence": "high"},
+    {"type": "port", "value": "33001", "confidence": "high"},
+    {"type": "technique", "value": "c2", "confidence": "high"},
+    {"type": "technique", "value": "persist", "confidence": "high"}
   ],
   "expected_persistence": true,
-  "expected_lateral_movement": false,
+  "expected_lateral_movement": true,
   "expected_timestomp": false,
   "expected_code_injection": false,
   "expected_verdict_keywords": [
-    "license_ctrl",
-    "172.16.4.10",
-    "service",
-    "persist",
-    "backdoor",
-    "5682"
+    "license_ctrl", "172.16.4.10", "c2", "backdoor",
+    "ftusbsrvc", "5682", "33001", "lateral"
   ],
   "required_sections": [
     "Executive Summary",
@@ -53,5 +27,6 @@
     "Persistence Mechanisms",
     "Recommendations",
     "Evidence References"
-  ]
+  ],
+  "notes": "Ground truth based on SRL-2018 dataset documentation. Update after Volatility cache analysis confirms actual IOCs present in this image."
 }

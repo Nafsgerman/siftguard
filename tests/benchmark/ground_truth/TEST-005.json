@@ -1,6 +1,6 @@
 {
   "case_id": "TEST-005",
-  "description": "Windows 10 x64 memory image. Focus: full C2 infrastructure mapping and network correlation.",
+  "description": "SRL-2018 base-wkstn-05 memory image. Workstation 05 from compromised enterprise network. Same APT campaign as TEST-001.",
   "threat_type": "apt_c2_full",
   "expected_iocs": [
     {"type": "ip", "value": "172.16.4.10", "confidence": "high"},
@@ -17,7 +17,8 @@
   "expected_timestomp": false,
   "expected_code_injection": false,
   "expected_verdict_keywords": [
-    "172.16.4.10", "ftusbsrvc", "license_ctrl", "backdoor", "c2", "lateral", "33001", "5682"
+    "172.16.4.10", "ftusbsrvc", "license_ctrl",
+    "backdoor", "c2", "lateral", "33001", "5682"
   ],
   "required_sections": [
     "Executive Summary",
@@ -26,5 +27,6 @@
     "Persistence Mechanisms",
     "Recommendations",
     "Evidence References"
-  ]
+  ],
+  "notes": "Ground truth based on SRL-2018 dataset documentation. Update after Volatility cache analysis confirms actual IOCs present in this image."
 }
