@@ -38,6 +38,13 @@ NOTES_TO_CONFIG = {
 }
 
 
+from siftguard.eval.analytics.scoring_helpers import (
+    score_run_from_db as _score_run_db,
+    score_run_from_report as _score_from_report_ioc_section,
+    RES_DIR as _RES_DIR,
+)
+
+
 def _latest_result(config_name: str, case_id: str) -> dict | None:
     result_dir = RES_DIR / config_name / case_id
     if not result_dir.exists():
@@ -65,88 +72,6 @@ def _find_run_by_notes(runs: list[dict], notes_prefix: str) -> dict | None:
     return max(candidates, key=lambda r: r.get("started_at", ""))
 
 
-def _score_run(run: dict, db_path: Path, gt_path: Path) -> float:
-    run_id = run["run_id"]
-    snapshots = load_iteration_snapshots(db_path, run_id)
-    if not snapshots:
-        return 0.0
-    last = snapshots[-1]
-    raw_list = json.loads(last.get("findings_json") or "[]")
-    findings = []
-    seen: set[tuple] = set()
-    valid_types = {t.value for t in FindingType}
-    for raw in raw_list:
-        ftype_str = raw.get("type", "other")
-        if ftype_str not in valid_types:
-            ftype_str = "other"
-        value = str(raw.get("value", ""))
-        key = (ftype_str, value.lower())
-        if key in seen:
-            continue
-        seen.add(key)
-        excerpt = str(raw.get("evidence_excerpt", value))[:200]
-        if len(excerpt) < 10:
-            excerpt = (excerpt + " " * 10)[:10]
-        findings.append(Finding(
-            id=raw.get("id", f"{ftype_str}-{value}"),
-            type=FindingType(ftype_str),
-            value=value,
-            confidence=raw.get("confidence"),
-            supporting_audit_entry_ids=[],
-            evidence_excerpt=excerpt,
-            first_seen_iteration=raw.get("first_seen_iteration", 0),
-        ))
-    return score_findings(findings, gt_path).f1
-
-
-def _score_from_report_ioc_section(
-    config_name: str, case_id: str, gt_path: Path
-) -> float:
-    result = _latest_result(config_name, case_id)
-    if not result or not result.get("report"):
-        return 0.0
-    try:
-        report_path = Path(result["report"])
-        if not report_path.exists():
-            return 0.0
-        text = report_path.read_text()
-        ioc_section = ""
-        in_ioc = False
-        for line in text.splitlines():
-            if line.strip().startswith("## Indicators"):
-                in_ioc = True
-                continue
-            if in_ioc and line.strip().startswith("## "):
-                break
-            if in_ioc:
-                ioc_section += line + "\n"
-        if not ioc_section:
-            ioc_section = text
-        gt = json.loads(gt_path.read_text())
-        gt_iocs = gt.get("expected_iocs", [])
-        valid_types = {t.value for t in FindingType}
-        findings = []
-        matched_gt: set[str] = set()
-        for ioc in gt_iocs:
-            val = ioc["value"].lower()
-            if val in ioc_section.lower() and val not in matched_gt:
-                matched_gt.add(val)
-                ftype_str = ioc["type"] if ioc["type"] in valid_types else "other"
-                excerpt = (val + " " * 10)[:10]
-                findings.append(Finding(
-                    id=f"v1-match-{val}",
-                    type=FindingType(ftype_str),
-                    value=ioc["value"],
-                    confidence=None,
-                    supporting_audit_entry_ids=[],
-                    evidence_excerpt=excerpt,
-                    first_seen_iteration=0,
-                ))
-        return score_findings(findings, gt_path).f1
-    except Exception:
-        return 0.0
-
-
 def render(ax: matplotlib.axes.Axes, case_id: str = "TEST-001") -> dict:
     apply_style()
     db_path = get_db_path(case_id)
@@ -171,10 +96,9 @@ def render(ax: matplotlib.axes.Axes, case_id: str = "TEST-001") -> dict:
         cfg_dir = NOTES_TO_CONFIG.get(notes_prefix, "")
         run = _find_run_by_notes(runs, notes_prefix)
         if not run:
-            # v1 loop doesn't write experiment_run rows — go straight to report
             f1 = _score_from_report_ioc_section(cfg_dir, case_id, gt_path) if cfg_dir else 0.0
         else:
-            f1 = _score_run(run, db_path, gt_path)
+            f1 = _score_run_db(run, db_path, gt_path)
             if f1 == 0.0 and cfg_dir:
                 f1 = _score_from_report_ioc_section(cfg_dir, case_id, gt_path)
         labels.append(label)
