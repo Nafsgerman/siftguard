@@ -198,6 +198,25 @@ def render(ax: matplotlib.axes.Axes, case_id: str = "TEST-001") -> dict:
             ha="center", va="bottom", fontsize=9, color=GRAY,
         )
 
+    # halluc_rate annotation — load from ablation_v2 results if available
+    from siftguard.eval.ablation_runner import load_seed_results, ABLATION_DIR
+    from siftguard.eval.variance import compute_variance_stats as _cvs
+    HALLUC_THRESHOLD = 0.05
+    for i, (bar, notes_prefix, label, color) in enumerate(zip(bars, [n for n, _, _ in CONFIG_DISPLAY], labels, colors)):
+        cfg_name = NOTES_TO_CONFIG.get(notes_prefix, "")
+        seed_runs = load_seed_results(cfg_name, case_id) if cfg_name else []
+        halluc_vals = [r["hallucination_rate"] for r in seed_runs if r.get("hallucination_rate") is not None]
+        if halluc_vals:
+            h_stats = _cvs(halluc_vals)
+            h_color = RED if h_stats.mean > HALLUC_THRESHOLD else GREEN
+            ax.text(
+                bar.get_x() + bar.get_width() / 2,
+                -0.08,
+                f"halluc={h_stats.mean:.2f}",
+                ha="center", va="top", fontsize=7, color=h_color,
+                transform=ax.get_xaxis_transform(),
+            )
+
     baseline_f1 = data_out.get("Primary baseline. All features enabled.", 0.0)
     if baseline_f1 > 0:
         ax.axhline(baseline_f1, color=BLUE, linewidth=1,
