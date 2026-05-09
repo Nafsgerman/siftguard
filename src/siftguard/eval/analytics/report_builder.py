@@ -89,7 +89,7 @@ def build_report(case_id: str = "TEST-001", out_dir: Path | None = None) -> Path
             f"![Panel {i+1}](panel_{i+1}_{panel_mod.__name__.split('.')[-1]}.png)\n\n"
         )
 
-    panel8 = render_panel_8(traces)
+    panel8 = render_panel_8([])
     all_data["panel_8"] = panel8["data"]
     md_sections.append(panel8.get("summary", ""))
     if "panel_8" in all_data and all_data["panel_8"].get("total", 0) > 0:
