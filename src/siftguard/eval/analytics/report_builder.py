@@ -24,6 +24,7 @@ from siftguard.eval.analytics import (
     panel_4_pareto,
     panel_5_hypothesis,
     panel_6_ablation,
+    panel_6b_stability,
     panel_7_models,
 )
 from siftguard.eval.analytics.panel_8_verification import render_panel_8
@@ -35,6 +36,7 @@ PANELS = [
     panel_4_pareto,
     panel_5_hypothesis,
     panel_6_ablation,
+    panel_6b_stability,
     panel_7_models,
 ]
 
