@@ -26,6 +26,7 @@ from siftguard.eval.analytics import (
     panel_6_ablation,
     panel_7_models,
 )
+from siftguard.eval.analytics.panel_8_verification import render_panel_8
 
 PANELS = [
     panel_1_accuracy,
@@ -87,6 +88,14 @@ def build_report(case_id: str = "TEST-001", out_dir: Path | None = None) -> Path
             f"**Data:** {json.dumps({k: v for k, v in result.items() if k != "data"}, indent=2, default=str)}\n\n"
             f"![Panel {i+1}](panel_{i+1}_{panel_mod.__name__.split('.')[-1]}.png)\n\n"
         )
+
+    panel8 = render_panel_8(traces)
+    all_data["panel_8"] = panel8["data"]
+    md_sections.append(panel8.get("summary", ""))
+    if "panel_8" in all_data and all_data["panel_8"].get("total", 0) > 0:
+        all_data["hallucination_rate"] = all_data["panel_8"]["hallucination_rate"]
+        all_data["verified_rate"] = all_data["panel_8"]["verified_rate"]
+        all_data["unverifiable_rate"] = all_data["panel_8"]["unverifiable_rate"]
 
     # Hide unused axis (8th slot)
     axes_flat[7].set_visible(False)
