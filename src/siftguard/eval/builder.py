@@ -10,6 +10,7 @@ import sqlite3
 from datetime import datetime, timezone
 from pathlib import Path
 
+from siftguard.eval.verifier import verify_finding
 from siftguard.eval.trace import (
     ExperimentConfig,
     Finding,
@@ -57,12 +58,15 @@ class TraceBuilder:
         self.conn = conn
         self.conn.row_factory = sqlite3.Row
 
-    def build(self, run_id: str) -> Trace:
+    def build(self, run_id: str, skip_verify: bool = False) -> Trace:
         run = self._fetch_experiment_run(run_id)
         tool_calls = self._fetch_tool_calls(run_id)
         iterations = self._fetch_iterations(run_id)
         hyp_events = self._fetch_hypothesis_events(run_id)
         findings = self._build_findings(run_id, tool_calls)
+        if not skip_verify:
+            db_path = self.conn.execute("PRAGMA database_list").fetchone()[2]
+            findings = self._verify_findings(findings, run_id, db_path)
         verdict = self._build_verdict(run, findings)
         config = self._build_config(run)
         meta = TraceMeta(
@@ -89,6 +93,15 @@ class TraceBuilder:
             verdict=verdict,
             usage=usage,
         )
+
+    def _verify_findings(self, findings: tuple, run_id: str, db_path: str) -> tuple:
+        """Post-collection verification pass. Populates finding.verification on each Finding."""
+        result = []
+        for f in findings:
+            finding_dict = {"id": f.id, "value": f.value, "type": f.type.value, "description": f.evidence_excerpt}
+            vr = verify_finding(finding_dict, db_path, run_id)
+            result.append(f.model_copy(update={"verification": vr}))
+        return tuple(result)
 
     def _fetch_experiment_run(self, run_id: str) -> sqlite3.Row:
         cur = self.conn.execute(

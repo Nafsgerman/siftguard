@@ -150,13 +150,16 @@ async def run_single(
         report_path.write_text(report)
 
         result = {
-            "status":      "ok",
-            "config":      config["name"],
-            "case_id":     case_id,
-            "wall_time":   round(wall_time, 1),
-            "report":      str(report_path),
-            "timestamp":   _timestamp(),
-            "methodology": current_block().to_dict(),
+            "status":              "ok",
+            "config":              config["name"],
+            "case_id":             case_id,
+            "wall_time":           round(wall_time, 1),
+            "hallucination_rate":  None,
+            "verified_rate":       None,
+            "unverifiable_rate":   None,
+            "report":              str(report_path),
+            "timestamp":           _timestamp(),
+            "methodology":         current_block().to_dict(),
         }
 
     except Exception as exc:

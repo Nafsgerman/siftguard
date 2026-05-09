@@ -11,10 +11,12 @@ import json
 import uuid
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
+if TYPE_CHECKING:
+    from siftguard.eval.verifier_models import VerificationResult
 
 SCHEMA_VERSION = "1.0.0"
 
@@ -90,6 +92,7 @@ class Finding(BaseModel, frozen=True):
             "Must be 10–200 characters."
         ),
     )
+    verification: "Optional[VerificationResult]" = Field(default=None, description="Result of hallucination verification. None until verifier has run.")
     mitre_technique: Optional[str] = Field(default=None)
     first_seen_iteration: int = Field(
         ge=0,
