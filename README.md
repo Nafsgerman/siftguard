@@ -65,18 +65,22 @@ SIFTGuard takes a different path:
 
 ---
 
-## Headline numbers (TEST-001, single-seed)
+## Headline numbers (TEST-001 · 6-seed baseline · 24-run ablation)
 
-| Metric | Value | Caveat |
+| Metric | Value | Notes |
 |---|---|---|
+| **IOC F1** | **0.909** | 6 seeded runs, σ = 0.000 |
 | Verdict accuracy | 100% | Agent correctly classified the APT |
 | Section coverage | 100% | All required report sections produced |
-| IOC F1 | 70.6% | Free-text extraction; ground-truth normalization disclosed in `EVAL_FRAMEWORK.md` |
-| Overall benchmark | 85.3% | Weighted across the four metrics above |
-| Spoliation tests | 12/12 | Automated suite, not a policy document |
+| Spoliation tests | 12/12 | Architectural guarantee, automated suite |
 | Methodology drift | 0 | SHA-256 pinned, CI-verified |
+| Reproducibility | σ=0.000 | Across 6 seeds on the headline config |
 
-Single seed on TEST-001 is a known limitation. Multi-seed and TEST-004/005 generalization runs are the next deliverable — see [Roadmap](#roadmap).
+**24 ablation runs across 8 configurations.** Self-correction and v2 prompt collapse seed variance to zero. Disabling them reintroduces it (σ up to 0.052) without moving the mean — these features buy stability, not accuracy. That's the kind of thing a single-seed demo would never expose.
+
+> Most LLM-agent demos publish one number from one run. SIFTGuard ran 24 before publishing one. The headline isn't 0.909 — it's σ = 0.000.
+
+**Generalization (TEST-004 & TEST-005):** in progress. Memory-image cache warm-up is the bottleneck under UTM emulation; numbers will land in the next iteration alongside the multi-source correlation work. Reporting them prematurely would be exactly the failure mode this project critiques. See [LIMITATIONS.md](LIMITATIONS.md).
 
 ---
 
