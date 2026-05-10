@@ -15,7 +15,7 @@ SIFTGuard is a hackathon-scoped prototype with deliberately narrow validation. T
 ## What we did not validate
 
 ### Cross-case generalization
-Validation was performed on a single memory image: SRL-2018 TEST-001. TEST-004 and TEST-005 cache warm-up did not complete in submission window due to Volatility execution time on UTM-emulated x86 hardware. Until those runs land, **no claim about generalization to unseen APT scenarios is supported by evidence in this repo.** A 0.909 F1 on one image is one image.
+Validation was performed on a single memory image: SRL-2018 TEST-001. TEST-004 and TEST-005 cache warm completed but ground truth files require forensic re-derivation from actual image contents — the provisional IOC list does not match what Volatility found in those images. Cross-case generalization numbers are deferred until ground truth is corrected. Until those runs land, **no claim about generalization to unseen APT scenarios is supported by evidence in this repo.** A 0.909 F1 on one image is one image.
 
 ### Hallucination rate in production traffic
 The verifier mechanism is tested (60/60). The rate at which the agent actually hallucinates in live runs is not yet measured end-to-end — verification fires post-hoc, but the integration into the agent loop's report-time path is incomplete. Panel 8 will populate that data once wired.
