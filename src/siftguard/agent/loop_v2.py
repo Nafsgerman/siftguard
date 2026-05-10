@@ -282,7 +282,7 @@ async def run_case_v2(
                     "findings_count": len(state.all_findings),
                     "total_cost_usd": state.cumulative_cost_usd,
                 })
-            state.terminated_reason = "report_complete"
+            state.terminated_reason = "verdict_reached"
             break
 
        # ── Parse v2 structured output ──────────────────────────────────────

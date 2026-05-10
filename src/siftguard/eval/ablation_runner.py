@@ -42,12 +42,20 @@ def _result_exists(config_name: str, case_id: str, seed: int) -> bool:
     return any((ABLATION_DIR / config_name / case_id).glob(f"result_seed{seed}_*.json"))
 
 
-async def run_seeded(config: dict, case_id: str, seed: int, dry_run: bool = False) -> dict:
+async def run_seeded(
+    config: dict,
+    case_id: str,
+    seed: int,
+    dry_run: bool = False,
+    orchestrator: str | None = None,
+) -> dict:
     config_name = config["name"]
     if _result_exists(config_name, case_id, seed):
         print(f"[SKIP] {config_name} × {case_id} × seed={seed} — already done")
         return {"status": "skipped_resume", "config": config_name, "case_id": case_id, "seed": seed}
 
+    if orchestrator:
+        config = {**config, "orchestrator": orchestrator}
     seeded = {**config, "seed": seed, "notes": f"{config.get('notes', '')} [seed={seed}]"}
     print(f"\n[RUN] {config_name} × {case_id} × seed={seed}")
     if dry_run:
@@ -62,18 +70,27 @@ async def run_seeded(config: dict, case_id: str, seed: int, dry_run: bool = Fals
     return result
 
 
-async def run_tier1(dry_run: bool = False, seeds: list[int] = SEEDS) -> list[dict]:
+async def run_tier1(
+    dry_run: bool = False,
+    seeds: list[int] = SEEDS,
+    orchestrator: str | None = None,
+) -> list[dict]:
     configs = [load_config(n) for n in list_configs()]
     results, total, done = [], len(configs) * len(seeds), 0
     for cfg in configs:
         for seed in seeds:
             done += 1
             print(f"\n[Tier1 {done}/{total}] {cfg['name']} × {TIER1_CASE} × seed={seed}")
-            results.append(await run_seeded(cfg, TIER1_CASE, seed, dry_run=dry_run))
+            results.append(await run_seeded(cfg, TIER1_CASE, seed, dry_run=dry_run, orchestrator=orchestrator))
     return results
 
 
-async def run_tier2(winner: str, dry_run: bool = False, seeds: list[int] = SEEDS) -> list[dict]:
+async def run_tier2(
+    winner: str,
+    dry_run: bool = False,
+    seeds: list[int] = SEEDS,
+    orchestrator: str | None = None,
+) -> list[dict]:
     config = load_config(winner)
     cases = [c for c in TIER2_CASES if c in available_datasets()]
     if not cases:
@@ -84,7 +101,7 @@ async def run_tier2(winner: str, dry_run: bool = False, seeds: list[int] = SEEDS
         for seed in seeds:
             done += 1
             print(f"\n[Tier2 {done}/{total}] {winner} × {case_id} × seed={seed}")
-            results.append(await run_seeded(config, case_id, seed, dry_run=dry_run))
+            results.append(await run_seeded(config, case_id, seed, dry_run=dry_run, orchestrator=orchestrator))
     return results
 
 
@@ -133,6 +150,7 @@ def main() -> int:
     p.add_argument("--seeds", nargs="+", type=int, default=SEEDS)
     p.add_argument("--dry-run", action="store_true")
     p.add_argument("--variance-table", action="store_true")
+    p.add_argument("--orchestrator", default=None, help="Override orchestrator in config (native|langgraph)")
     args = p.parse_args()
 
     if args.variance_table:
@@ -141,9 +159,9 @@ def main() -> int:
 
     results: list[dict] = []
     if args.tier in ("1", "all"):
-        results += asyncio.run(run_tier1(dry_run=args.dry_run, seeds=args.seeds))
+        results += asyncio.run(run_tier1(dry_run=args.dry_run, seeds=args.seeds, orchestrator=args.orchestrator))
     if args.tier in ("2", "all"):
-        results += asyncio.run(run_tier2(winner=args.winner, dry_run=args.dry_run, seeds=args.seeds))
+        results += asyncio.run(run_tier2(winner=args.winner, dry_run=args.dry_run, seeds=args.seeds, orchestrator=args.orchestrator))
     _print_summary(results)
     return 1 if any(r["status"] == "error" for r in results) else 0
 
