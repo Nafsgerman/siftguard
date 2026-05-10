@@ -42,6 +42,18 @@ hypothesis state, self-correction events when the agent revises a prior
 conclusion. The original v1 loop is preserved, frozen, and remains the
 baseline against which the v2 loop is ablated.
 
+**Empirical evaluation framework.** Before shipping further agent features
+we built an agent-agnostic evaluation subsystem: 30 seeded runs across 8
+configurations, bootstrap confidence intervals, an automated hallucination
+verifier that mechanically checks each finding's evidence excerpt against
+raw tool output, and a SHA-pinned methodology document with a CI drift
+checker. The headline number — 0.909 IOC F1, σ = 0.000 on TEST-001 across
+6 seeds — is reproducible by any third party with the dataset and the
+agent. The ablation produced the result we did not expect: self-correction
+and the v2 prompt buy stability, not accuracy. A single-seed demo would
+have credited those features with accuracy gains they do not provide. The
+full decision record is in `docs/adr/ADR-001-empirical-evaluation-framework.md`.
+
 **Append-only SQLite audit DB.** Insert-only access patterns enforced at the
 data layer. Schema migrations are versioned, checksummed, and verified at
 startup. Spoliation requires breaking the migration log, which is checked.
