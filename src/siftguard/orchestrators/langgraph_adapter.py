@@ -12,12 +12,12 @@ from __future__ import annotations
 import logging
 import os
 import uuid
-from typing import Annotated, Optional, TypedDict
+from typing import Optional, TypedDict
 
 import anthropic
 from dotenv import load_dotenv
 from langgraph.graph import END, StateGraph
-from langgraph.graph.message import add_messages
+
 
 load_dotenv()
 
@@ -41,7 +41,7 @@ logger = logging.getLogger(__name__)
 # ── State ─────────────────────────────────────────────────────────────────────
 
 class AgentState(TypedDict):
-    messages: Annotated[list, add_messages]
+    messages: list
     iter_count: int
     max_iter: int
     run_id: str
@@ -106,7 +106,7 @@ def think_node(state: AgentState) -> dict:
     }
 
     return {
-        "messages": [assistant_msg],
+        "messages": state["messages"] + [assistant_msg],
         "cumulative_tokens_in": state["cumulative_tokens_in"] + tokens_in,
         "cumulative_tokens_out": state["cumulative_tokens_out"] + tokens_out,
         "cumulative_cost_usd": state["cumulative_cost_usd"] + cost,
@@ -205,13 +205,13 @@ async def tool_node(state: AgentState) -> dict:
             "content": result.model_dump_json(indent=2)[:8000],
         })
 
-    return {"messages": [{"role": "user", "content": tool_results}]}
+    return {"messages": state["messages"] + [{"role": "user", "content": tool_results}]}
 
 
 def nudge_node(state: AgentState) -> dict:
     """Replicates native loop's end-turn nudge: ask agent to compile final report."""
     return {
-        "messages": [{
+        "messages": state["messages"] + [{
             "role": "user",
             "content": (
                 "Please compile your final incident report using the required headers, "
