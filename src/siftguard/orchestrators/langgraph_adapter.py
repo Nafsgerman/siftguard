@@ -81,7 +81,7 @@ def think_node(state: AgentState) -> dict:
         system=state["system_prompt"],
         tools=TOOL_SCHEMAS,
         messages=clean_messages,
-        seed=state["seed"],
+
         temperature=0,
     )
 
