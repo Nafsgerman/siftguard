@@ -81,7 +81,6 @@ def think_node(state: AgentState) -> dict:
         system=state["system_prompt"],
         tools=TOOL_SCHEMAS,
         messages=clean_messages,
-
         temperature=0,
     )
 
@@ -105,12 +104,22 @@ def think_node(state: AgentState) -> dict:
         "_response": response,
     }
 
+    text = ""
+    for block in response.content:
+        if hasattr(block, "type") and block.type == "text":
+            text += block.text
+
+    final_report = state.get("final_report", "")
+    if "## Executive Summary" in text and len(text) > 1500:
+        final_report = text
+
     return {
         "messages": state["messages"] + [assistant_msg],
         "cumulative_tokens_in": state["cumulative_tokens_in"] + tokens_in,
         "cumulative_tokens_out": state["cumulative_tokens_out"] + tokens_out,
         "cumulative_cost_usd": state["cumulative_cost_usd"] + cost,
         "iter_count": state["iter_count"] + 1,
+        "final_report": final_report,
     }
 
 
