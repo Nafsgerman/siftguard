@@ -170,6 +170,31 @@ with reproducibility, calibration, and ablation as load-bearing components.
 agents, runs in CI, produces artefacts that survive enterprise procurement
 review, and elevates the DFIR community's evaluation floor.
 
+### D5 — Cross-case generalization claims require validated cross-case data
+
+TEST-004 and TEST-005 cache warm-up completed but the ground truth files
+shipped with those cases were authored against a different image set —
+the expected IOCs do not exist in the memory images we have. Scored runs
+return F1 of 0.074 and 0.000 respectively, but those numbers reflect ground
+truth mismatch, not agent failure. They are not safe to cite as
+generalization evidence.
+
+The decision: the headline does not claim cross-case generalization.
+It claims 0.909 IOC F1 (σ = 0.000) on TEST-001 and discloses the
+TEST-004/005 ground-truth gap as the next research-grade prerequisite —
+in `LIMITATIONS.md` and on the roadmap, not as a footnote.
+
+*Rejected alternative 1:* Cite the 0.074 / 0.000 numbers as generalization
+results. This would be the failure mode the framework was built to expose:
+publishing scored outputs without first validating that the scorer's inputs
+are correct. A near-zero F1 against wrong ground truth tells you nothing
+about the agent.
+
+*Rejected alternative 2:* Treat TEST-001 as the entire reported scope and
+omit TEST-004/005 entirely. Honest about what we have, but lossy — readers
+should know cross-case data was attempted, what blocked it, and what
+unblocking it requires. The visible gap is part of the empirical record.
+
 ---
 
 ## 5. Consequences
