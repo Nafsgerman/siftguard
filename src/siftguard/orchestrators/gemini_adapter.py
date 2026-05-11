@@ -23,14 +23,11 @@ except ImportError:
 
 from siftguard.agent.instrumentation import SnapshotWriter, token_cost
 from siftguard.agent.loop_v2 import (
-    DEFAULT_MODEL,
-    IOC_TYPES,
     MAX_ITERATIONS,
     TOOL_SCHEMAS,
     _dispatch_tool,
-    _synthesize_v1_fallback,
 )
-from siftguard.agent.output_schema import AgentOutput, NextAction
+from siftguard.agent.output_schema import NextAction
 from siftguard.agent.output_validator import is_v2_response, parse_agent_output
 from siftguard.agent.prompts import load_prompt
 from siftguard.audit.log import AuditLog
@@ -39,29 +36,30 @@ logger = logging.getLogger(__name__)
 
 GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.5-pro")
 
-# Convert Anthropic tool schemas to Gemini function declarations
+
 def _to_gemini_tools() -> list:
     tools = []
     for t in TOOL_SCHEMAS:
         schema = t.get("input_schema", {})
+        props = {}
+        for k, v in schema.get("properties", {}).items():
+            props[k] = gtypes.Schema(
+                type=gtypes.Type.STRING,
+                description=v.get("description", ""),
+            )
         tools.append(gtypes.Tool(
             function_declarations=[gtypes.FunctionDeclaration(
                 name=t["name"],
                 description=t["description"],
                 parameters=gtypes.Schema(
                     type=gtypes.Type.OBJECT,
-                    properties={
-                        k: gtypes.Schema(
-                            type=gtypes.Type.STRING,
-                            description=v.get("description", "")
-                        )
-                        for k, v in schema.get("properties", {}).items()
-                    },
+                    properties=props,
                     required=schema.get("required", []),
-                )
+                ),
             )]
         ))
     return tools
+
 
 GEMINI_TOOLS = _to_gemini_tools()
 
@@ -107,7 +105,7 @@ async def run_case_gemini(
     client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
 
     evidence_summary = "\n".join(f"- {k}: {v}" for k, v in evidence_files.items())
-    initial_message = (
+    initial_text = (
         f"## Case ID: {case_id}\n\n"
         f"## Briefing\n{briefing}\n\n"
         f"## Available Evidence\n{evidence_summary}\n\n"
@@ -118,7 +116,8 @@ async def run_case_gemini(
     if on_event:
         on_event("investigation_started", {"case_id": case_id, "briefing": briefing})
 
-    history = []
+    history = [{"role": "user", "parts": [{"text": initial_text}]}]
+
     all_findings: list[dict] = []
     all_hypotheses: list[dict] = []
     cumulative_tokens_in = 0
@@ -128,10 +127,9 @@ async def run_case_gemini(
     terminated_reason = "max_iterations"
     iter_count = 0
 
-    history.append({"role": "user", "parts": [{"text": initial_message}]})
-
     for iteration in range(max_iter):
         iter_count = iteration
+
         if on_event:
             on_event("iteration_complete", {
                 "iteration": iteration,
@@ -150,7 +148,7 @@ async def run_case_gemini(
                 ),
             )
         except Exception as e:
-            logger.error("Gemini API error: %s", e)
+            logger.error("Gemini API error at iteration %d: %s", iteration, e)
             terminated_reason = "error"
             break
 
@@ -161,6 +159,10 @@ async def run_case_gemini(
         cumulative_tokens_out += tokens_out
         cumulative_cost += cost
 
+        if not response.candidates:
+            logger.warning("Gemini returned no candidates at iteration %d", iteration)
+            break
+
         candidate = response.candidates[0]
         text_parts = []
         tool_calls = []
@@ -168,7 +170,7 @@ async def run_case_gemini(
         for part in candidate.content.parts:
             if hasattr(part, "text") and part.text:
                 text_parts.append(part.text)
-            elif hasattr(part, "function_call") and part.function_call:
+            if hasattr(part, "function_call") and part.function_call and part.function_call.name:
                 tool_calls.append(part.function_call)
 
         agent_text = "\n".join(text_parts).strip()
@@ -176,12 +178,10 @@ async def run_case_gemini(
         if agent_text and on_event:
             on_event("agent_text", {"text": agent_text, "iteration": iteration})
 
-        # Add assistant turn to history
         history.append({"role": "model", "parts": candidate.content.parts})
 
-        # Handle tool calls
         if tool_calls:
-            tool_results_parts = []
+            tool_result_parts = []
             for fc in tool_calls:
                 tool_name = fc.name
                 tool_args = dict(fc.args) if fc.args else {}
@@ -189,27 +189,21 @@ async def run_case_gemini(
                 if on_event:
                     on_event("tool_call_start", {"tool": tool_name, "args": tool_args})
 
-                entry_id = audit.log_tool_call(
-                    tool_name=tool_name,
-                    tool_version="1.0",
-                    args=tool_args,
-                    agent_iteration=iteration,
-                    hypothesis_id=run_id,
-                    tokens_in=tokens_in,
-                    tokens_out=tokens_out,
-                    cost_usd=cost,
-                )
-
                 result = await _dispatch_tool(tool_name, tool_args)
                 outcome = "ok" if not result.get("error") else "fail"
                 summary = result.get("summary", str(result)[:200])
-                findings_count = len(result.get("findings", []))
+                duration_ms = result.get("duration_ms", 0)
 
-                audit.update_tool_result(
-                    entry_id=entry_id,
+                audit.record(
+                    case_id=case_id,
+                    tool_name=tool_name,
+                    tool_version="1.0",
+                    args=tool_args,
                     outcome=outcome,
-                    output_excerpt=summary,
-                    duration_ms=result.get("duration_ms", 0),
+                    output=summary,
+                    duration_ms=duration_ms,
+                    agent_iteration=iteration,
+                    hypothesis_id=run_id,
                 )
 
                 if on_event:
@@ -217,32 +211,25 @@ async def run_case_gemini(
                         "tool": tool_name,
                         "outcome": outcome,
                         "summary": summary,
-                        "findings_count": findings_count,
-                        "duration_ms": result.get("duration_ms", 0),
+                        "findings_count": len(result.get("findings", [])),
+                        "duration_ms": duration_ms,
                     })
 
-                tool_results_parts.append(gtypes.Part(
+                tool_result_parts.append(gtypes.Part(
                     function_response=gtypes.FunctionResponse(
                         name=tool_name,
                         response={"result": json.dumps(result, default=str)},
                     )
                 ))
 
-            history.append({"role": "user", "parts": tool_results_parts})
+            history.append({"role": "user", "parts": tool_result_parts})
             continue
 
-        # No tool calls — parse agent output
         if not agent_text:
+            history.append({"role": "user", "parts": [{"text": "Continue your investigation."}]})
             continue
 
         parsed = parse_agent_output(agent_text) if is_v2_response(agent_text) else None
-        if parsed is None:
-            fallback = _synthesize_v1_fallback(agent_text, all_findings)
-            if isinstance(fallback, tuple):
-                final_report = fallback[0]
-                terminated_reason = "verdict_reached"
-                break
-            parsed = fallback
 
         if parsed:
             if parsed.findings:
