@@ -156,7 +156,7 @@ async def run_case_gemini(
 
         tokens_in = getattr(response.usage_metadata, "prompt_token_count", 0) or 0
         tokens_out = getattr(response.usage_metadata, "candidates_token_count", 0) or 0
-        cost = token_cost(tokens_in, tokens_out, model="gemini")
+        cost = token_cost(tokens_in, tokens_out)
         cumulative_tokens_in += tokens_in
         cumulative_tokens_out += tokens_out
         cumulative_cost += cost
