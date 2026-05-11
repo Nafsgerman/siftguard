@@ -141,7 +141,6 @@ async def run_case_openai_fc(
             tools=OPENAI_TOOLS,
             tool_choice="auto",
             seed=seed,
-            temperature=0,
         )
 
         tokens_in = response.usage.prompt_tokens
