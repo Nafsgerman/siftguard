@@ -253,7 +253,7 @@ async def get_orchestrator_comparison(case_id: str):
         SELECT agent_id, final_score, total_cost_usd,
                completed_iterations, started_at, completed_at, config_json
         FROM experiment_run
-        WHERE case_id = ? AND terminated_reason = 'verdict_reached'
+        WHERE case_id = ?
         ORDER BY started_at DESC
     """, (case_id,)).fetchall()
     conn.close()
