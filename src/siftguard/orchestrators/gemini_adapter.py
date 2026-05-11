@@ -229,7 +229,9 @@ async def run_case_gemini(
             history.append({"role": "user", "parts": [{"text": "Continue your investigation."}]})
             continue
 
-        parsed = parse_agent_output(agent_text) if is_v2_response(agent_text) else None
+        parsed = None
+        if is_v2_response(agent_text):
+            parsed, _err = parse_agent_output(agent_text)
 
         if parsed:
             if parsed.findings:
