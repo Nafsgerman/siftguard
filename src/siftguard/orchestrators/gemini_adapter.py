@@ -237,7 +237,12 @@ async def run_case_gemini(
 
         parsed = parse_agent_output(agent_text) if is_v2_response(agent_text) else None
         if parsed is None:
-            parsed = _synthesize_v1_fallback(agent_text, all_findings)
+            fallback = _synthesize_v1_fallback(agent_text, all_findings)
+            if isinstance(fallback, tuple):
+                final_report = fallback[0]
+                terminated_reason = "verdict_reached"
+                break
+            parsed = fallback
 
         if parsed:
             if parsed.findings:
