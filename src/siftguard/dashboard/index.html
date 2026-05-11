@@ -353,16 +353,16 @@
         <div class="training-toggle">
           <label class="toggle-switch">
             <input type="checkbox" id="trainingMode" onchange="toggleTrainingPanel()">
+            <span class="toggle-slider"></span>
           </label>
-          <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#5f6368;margin-top:8px;">
+          <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:#5f6368;margin-top:8px;">
             <span style="font-weight:500;color:#202124;">Orchestrator</span>
             <select id="orchestratorSelect" style="border:1px solid #dadce0;border-radius:4px;padding:4px 8px;font-size:12px;color:#202124;background:#fff;">
               <option value="native">Native Loop</option>
               <option value="langgraph">LangGraph</option>
               <option value="openai-fc">OpenAI FC (gpt-5.5)</option>
             </select>
-            <span class="toggle-slider"></span>
-          </label>
+          </div>
           <span class="toggle-label">🎓 Analyst Training Mode</span>
         </div>
         <button class="btn-primary" id="btnInvestigate" onclick="startInvestigation()">
