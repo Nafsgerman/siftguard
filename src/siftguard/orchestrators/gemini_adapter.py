@@ -190,9 +190,9 @@ async def run_case_gemini(
                     on_event("tool_call_start", {"tool": tool_name, "args": tool_args})
 
                 result = await _dispatch_tool(tool_name, tool_args)
-                outcome = "ok" if not result.get("error") else "fail"
-                summary = result.get("summary", str(result)[:200])
-                duration_ms = result.get("duration_ms", 0)
+                outcome = "ok" if result.outcome == "ok" else "fail"
+                summary = result.summary or ""
+                duration_ms = result.duration_ms or 0
 
                 audit.record(
                     case_id=case_id,
@@ -211,14 +211,14 @@ async def run_case_gemini(
                         "tool": tool_name,
                         "outcome": outcome,
                         "summary": summary,
-                        "findings_count": len(result.get("findings", [])),
+                        "findings_count": len(result.findings or []),
                         "duration_ms": duration_ms,
                     })
 
                 tool_result_parts.append(gtypes.Part(
                     function_response=gtypes.FunctionResponse(
                         name=tool_name,
-                        response={"result": json.dumps(result, default=str)},
+                        response={"result": json.dumps(result.model_dump(), default=str)},
                     )
                 ))
 
