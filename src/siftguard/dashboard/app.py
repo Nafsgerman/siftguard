@@ -72,11 +72,17 @@ async def start_investigation(request: Request):
     briefing = body.get("briefing", "")
     memory_image = body.get("memory_image", "")
     training_mode = body.get("training_mode", False)
-    asyncio.create_task(_run_investigation(session_id, case_id, briefing, memory_image, training_mode))
+    orchestrator = body.get("orchestrator", "native")
+    asyncio.create_task(_run_investigation(session_id, case_id, briefing, memory_image, training_mode, orchestrator))
     return {"session_id": session_id, "case_id": case_id}
 
-async def _run_investigation(session_id: str, case_id: str, briefing: str, memory_image: str, training_mode: bool = False):
-    from siftguard.agent.loop import run_case
+async def _run_investigation(session_id: str, case_id: str, briefing: str, memory_image: str, training_mode: bool = False, orchestrator: str = "native"):
+    if orchestrator == "openai-fc":
+        from siftguard.orchestrators.openai_fc_adapter import run_case_openai_fc as run_case
+    elif orchestrator == "langgraph":
+        from siftguard.orchestrators.langgraph_adapter import run_case_langgraph as run_case
+    else:
+        from siftguard.agent.loop import run_case
 
 
     evidence = {"memory_image": memory_image} if memory_image else {}

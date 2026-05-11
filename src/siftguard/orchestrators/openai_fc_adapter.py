@@ -64,7 +64,7 @@ async def run_case_openai_fc(
     briefing: str,
     audit_db: str = "./audit/siftguard.db",
     training_mode: bool = False,
-    model: str = "gpt-4o",
+    model: str = "gpt-5.5",
     config_override: Optional[dict] = None,
     ground_truth_path: Optional[str] = None,
     on_event: Optional[callable] = None,
