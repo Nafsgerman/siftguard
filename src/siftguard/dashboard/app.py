@@ -243,6 +243,7 @@ async def get_corrections(case_id: str):
 async def get_orchestrator_comparison(case_id: str):
     import json as _json
     import glob
+    import sqlite3
     from datetime import datetime
     db_path = os.path.join(os.path.dirname(__file__), "..", "..", "..", "audit", f"{case_id}.db")
     if not os.path.exists(db_path):
