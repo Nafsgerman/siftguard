@@ -426,6 +426,32 @@
           </div>
         </div>
       </div>
+      <div class="panel-card" id="orchPanel" style="grid-column: 1 / -1;">
+        <div class="panel-header">
+          Orchestrator Comparison
+          <span style="font-size:11px;font-weight:400;color:#9aa0a6;margin-left:8px;">Trace contract: ADR-002 · Single-variable · typed MCP only</span>
+        </div>
+        <div class="panel-body" style="padding:0;">
+          <table id="orchTable" style="width:100%;border-collapse:collapse;font-size:12px;">
+            <thead>
+              <tr style="background:#f8f9fa;border-bottom:2px solid #e8eaed;">
+                <th style="padding:8px 16px;text-align:left;color:#5f6368;font-weight:600;">Orchestrator Paradigm</th>
+                <th style="padding:8px 16px;text-align:center;color:#5f6368;font-weight:600;">IOC F1</th>
+                <th style="padding:8px 16px;text-align:center;color:#5f6368;font-weight:600;">Cost (USD)</th>
+                <th style="padding:8px 16px;text-align:center;color:#5f6368;font-weight:600;">Iterations</th>
+                <th style="padding:8px 16px;text-align:center;color:#5f6368;font-weight:600;">Wall Time</th>
+                <th style="padding:8px 16px;text-align:center;color:#5f6368;font-weight:600;">Status</th>
+              </tr>
+            </thead>
+            <tbody id="orchBody">
+              <tr><td colspan="6" style="padding:16px;text-align:center;color:#9aa0a6;">Run an investigation to populate comparison data.</td></tr>
+            </tbody>
+          </table>
+          <div style="padding:6px 16px 8px;font-size:10px;color:#9aa0a6;border-top:1px solid #e8eaed;">
+            Trace contract validated across graph-DAG and native-loop paradigms — orchestrator-agnostic by construction, not by exhaustion.
+          </div>
+        </div>
+      </div>
       <div class="panel-card" id="trainingPanel" style="display:none;border-top:3px solid var(--yellow);grid-column:1/-1;">
         <div class="panel-header">🎓 Training Annotations <span class="badge" id="trainingBadge" style="background:var(--yellow);color:#fff">0</span><span style="font-size:11px;color:var(--grey-600);font-weight:400;margin-left:8px">agent explains each decision</span></div>
         <div class="panel-body" id="trainingLog"></div>
@@ -650,6 +676,9 @@ function handleEvent(ev) {
     document.getElementById('statusText').textContent = 'Complete';
     document.getElementById('progressFill').style.width = '100%';
     if (!state.reportText) resetBtn();
+    var _caseId = document.getElementById('caseId').value;
+    loadCorrections(_caseId);
+    loadOrchComparison(_caseId);
   }
 }
 
@@ -987,6 +1016,44 @@ function exportPDF() {
   var sessionId = window.currentSessionId;
   if (!sessionId) { alert("No active session to export."); return; }
   window.open("/api/export/pdf/" + sessionId, "_blank");
+}
+
+function loadOrchComparison(caseId) {
+  fetch('/api/orchestrator-comparison/' + caseId)
+    .then(function(r){ return r.json(); })
+    .then(function(rows){
+      var tbody = document.getElementById('orchBody');
+      if (!rows || !rows.length) return;
+      tbody.innerHTML = '';
+      rows.forEach(function(row){
+        var f1Cell = row.real && row.f1 !== null
+          ? '<span style="color:#1a73e8;font-weight:700;">' + row.f1.toFixed(3) + '</span>'
+          : row.real ? '<span style="color:#9aa0a6;">—</span>'
+          : '<span style="color:#bdc1c6;font-style:italic;">pending</span>';
+        var costCell = row.real && row.cost_usd !== null
+          ? '$' + row.cost_usd.toFixed(4)
+          : row.real ? '—' : '<span style="color:#bdc1c6;font-style:italic;">pending</span>';
+        var iterCell = row.real && row.iterations !== null
+          ? row.iterations
+          : row.real ? '—' : '<span style="color:#bdc1c6;font-style:italic;">pending</span>';
+        var wallCell = row.real && row.wall_ms !== null
+          ? (row.wall_ms / 1000).toFixed(1) + 's'
+          : row.real ? '—' : '<span style="color:#bdc1c6;font-style:italic;">pending</span>';
+        var statusBadge = row.real
+          ? '<span style="background:#e6f4ea;color:#137333;padding:2px 8px;border-radius:12px;font-size:10px;font-weight:600;">VERIFIED</span>'
+          : '<span style="background:#fce8e6;color:#c5221f;padding:2px 8px;border-radius:12px;font-size:10px;font-weight:600;">IN PROGRESS</span>';
+        var tr = document.createElement('tr');
+        tr.style.borderBottom = '1px solid #f1f3f4';
+        tr.innerHTML = '<td style="padding:10px 16px;font-weight:' + (row.real ? '500' : '400') + ';color:' + (row.real ? '#202124' : '#9aa0a6') + ';">' + row.label + '</td>'
+          + '<td style="padding:10px 16px;text-align:center;">' + f1Cell + '</td>'
+          + '<td style="padding:10px 16px;text-align:center;color:#5f6368;">' + costCell + '</td>'
+          + '<td style="padding:10px 16px;text-align:center;color:#5f6368;">' + iterCell + '</td>'
+          + '<td style="padding:10px 16px;text-align:center;color:#5f6368;">' + wallCell + '</td>'
+          + '<td style="padding:10px 16px;text-align:center;">' + statusBadge + '</td>';
+        tbody.appendChild(tr);
+      });
+    })
+    .catch(function(){ /* silent — panel stays at default state */ });
 }
 </script>
 </body>
