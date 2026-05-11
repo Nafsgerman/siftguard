@@ -19,7 +19,7 @@ def _make_db(path: str):
             started_at TEXT, completed_at TEXT
         );
         INSERT INTO experiment_run VALUES
-            ('run-native-1','CASE-001','siftguard-native','{"orchestrator":"native"}',
+            ('run-native-1','CASE-001','siftguard-v2','{"orchestrator":"native"}',
              0.909,0.012,5,'verdict_reached',1000,500,
              '2026-05-10T10:00:00.000000+00:00','2026-05-10T10:00:50.000000+00:00'),
             ('run-lg-1','CASE-001','siftguard-langgraph','{"orchestrator":"langgraph"}',
