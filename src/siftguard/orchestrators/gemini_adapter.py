@@ -103,7 +103,7 @@ async def run_case_gemini(
         ground_truth_path=ground_truth_path,
     )
 
-    audit = AuditLog(db_path=audit_db, case_id=case_id, run_id=run_id)
+    audit = AuditLog(db_path=audit_db)
     client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
 
     evidence_summary = "\n".join(f"- {k}: {v}" for k, v in evidence_files.items())
