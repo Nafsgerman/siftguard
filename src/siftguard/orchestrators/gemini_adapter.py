@@ -242,7 +242,7 @@ async def run_case_gemini(
                     for h in parsed.hypotheses:
                         on_event("hypothesis_update", {"hypothesis": h.model_dump()})
 
-            if parsed.verdict and parsed.next_action.decision == NextAction.VERDICT:
+            if parsed.verdict and parsed.next_action.decision == "verdict":
                 final_report = agent_text
                 terminated_reason = "verdict_reached"
                 if on_event:
