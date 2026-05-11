@@ -81,6 +81,13 @@ async def _run_investigation(session_id: str, case_id: str, briefing: str, memor
         from siftguard.orchestrators.openai_fc_adapter import run_case_openai_fc as run_case
     elif orchestrator == "langgraph":
         from siftguard.orchestrators.langgraph_adapter import run_case_langgraph as run_case
+    elif orchestrator == "gemini":
+        from siftguard.orchestrators.gemini_adapter import run_case_gemini as run_case
+    elif orchestrator == "haiku":
+        from siftguard.agent.loop import run_case as _run_native
+        async def run_case(*args, **kwargs):
+            kwargs["model"] = "claude-haiku-4-5"
+            return await _run_native(*args, **kwargs)
     else:
         from siftguard.agent.loop import run_case
 
