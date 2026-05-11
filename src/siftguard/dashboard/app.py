@@ -281,7 +281,7 @@ async def get_orchestrator_comparison(case_id: str):
         }
 
     AGENTS = [
-        ("siftguard-native",    "Native Loop",                        True),
+        ("siftguard-v2",        "Native Loop",                    True),
         ("siftguard-langgraph", "LangGraph Adapter",                  True),
         ("siftguard-openai-fc", "OpenAI FC (Adapter in Progress)",    False),
     ]
