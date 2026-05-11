@@ -241,63 +241,66 @@ async def get_corrections(case_id: str):
 
 @app.get("/api/orchestrator-comparison/{case_id}")
 async def get_orchestrator_comparison(case_id: str):
-    import sqlite3
-    from pathlib import Path
-    from fastapi.responses import JSONResponse
-    db_path = f"./audit/{case_id}.db"
-    if not Path(db_path).exists():
-        return JSONResponse(status_code=404, content={"error": "DB not found"})
+    import json as _json
+    import glob
+    from datetime import datetime
+    db_path = os.path.join(os.path.dirname(__file__), "..", "..", "..", "audit", f"{case_id}.db")
+    if not os.path.exists(db_path):
+        return Response(status_code=404)
+
+    # Pull F1 from latest analysis data.json panel_7
+    f1_by_agent = {}
+    analysis_pattern = os.path.join(os.path.dirname(__file__), "..", "..", "..", "..", "experiments", "analysis", "*", "data.json")
+    analysis_files = sorted(glob.glob(analysis_pattern))
+    if analysis_files:
+        try:
+            d = _json.load(open(analysis_files[-1]))
+            p7 = d.get("panel_7", {}).get("data", {})
+            f1_by_agent["siftguard-v2"] = round(p7.get("baseline", {}).get("mean", 0), 3) or None
+        except Exception:
+            pass
+
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
-    rows = conn.execute("""
-        SELECT agent_id, final_score, total_cost_usd,
-               completed_iterations, started_at, completed_at, config_json
-        FROM experiment_run
-        WHERE case_id = ?
-        ORDER BY started_at DESC
-    """, (case_id,)).fetchall()
+    try:
+        rows = conn.execute("""
+            SELECT agent_id, total_cost_usd, completed_iterations, started_at, completed_at
+            FROM experiment_run
+            WHERE case_id = ?
+            ORDER BY started_at DESC
+        """, (case_id,)).fetchall()
+    except Exception:
+        conn.close()
+        return []
     conn.close()
 
     results = {}
     for row in rows:
         aid = row["agent_id"]
         if aid in results:
-            continue  # keep most recent per agent_id
-        cfg = json.loads(row["config_json"] or "{}")
+            continue
         wall_ms = None
         if row["started_at"] and row["completed_at"]:
-            from datetime import datetime as _dt
             try:
-                wall_ms = int((_dt.fromisoformat(row["completed_at"]) - _dt.fromisoformat(row["started_at"])).total_seconds() * 1000)
+                wall_ms = int((datetime.fromisoformat(row["completed_at"]) - datetime.fromisoformat(row["started_at"])).total_seconds() * 1000)
             except Exception:
                 wall_ms = None
         results[aid] = {
-            "agent_id": aid,
-            "f1": round(row["final_score"], 3) if row["final_score"] else None,
-            "cost_usd": round(row["total_cost_usd"], 4) if row["total_cost_usd"] else None,
+            "f1": f1_by_agent.get(aid),
+            "cost_usd": round(row["total_cost_usd"], 4) if row["total_cost_usd"] is not None else None,
             "iterations": row["completed_iterations"],
             "wall_ms": wall_ms,
-            "orchestrator": cfg.get("orchestrator", aid),
         }
 
-    AGENTS = [
-        ("siftguard-v2",        "Native Loop",                    True),
-        ("siftguard-langgraph", "LangGraph Adapter",                  True),
-        ("siftguard-openai-fc", "OpenAI FC (Adapter in Progress)",    False),
-    ]
     output = []
-    for aid, label, real in AGENTS:
+    for aid, label, real in [
+        ("siftguard-v2",        "Native Loop",                     True),
+        ("siftguard-langgraph", "LangGraph Adapter",               True),
+        ("siftguard-openai-fc", "OpenAI FC (Adapter in Progress)", False),
+    ]:
         if real and aid in results:
             d = results[aid]
-            output.append({
-                "label": label, "real": True,
-                "f1": d["f1"], "cost_usd": d["cost_usd"],
-                "iterations": d["iterations"], "wall_ms": d["wall_ms"],
-            })
+            output.append({"label": label, "real": True, "f1": d["f1"], "cost_usd": d["cost_usd"], "iterations": d["iterations"], "wall_ms": d["wall_ms"]})
         else:
-            output.append({
-                "label": label, "real": False,
-                "f1": None, "cost_usd": None,
-                "iterations": None, "wall_ms": None,
-            })
+            output.append({"label": label, "real": False, "f1": None, "cost_usd": None, "iterations": None, "wall_ms": None})
     return output
