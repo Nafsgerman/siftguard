@@ -308,9 +308,10 @@ async def get_orchestrator_comparison(case_id: str):
 
     output = []
     for aid, label, real in [
-        ("siftguard-v2",        "Native Loop",                     True),
-        ("siftguard-langgraph", "LangGraph Adapter",               True),
-        ("siftguard-openai-fc", "OpenAI FC (gpt-5.5)", True),
+        ("siftguard-v2",        "Native Loop (Sonnet)",            True),
+        ("siftguard-langgraph", "LangGraph (Sonnet)",              True),
+        ("siftguard-openai-fc", "OpenAI FC (gpt-5.5)",             True),
+        ("siftguard-gemini",    "Gemini 3 Pro",                    True),
     ]:
         if real and aid in results:
             d = results[aid]
