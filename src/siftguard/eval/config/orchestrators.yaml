@@ -1,0 +1,11 @@
+orchestrators:
+  - id: siftguard-native
+    label: "Native Loop (Sonnet)"
+  - id: siftguard-langgraph
+    label: "LangGraph"
+  - id: siftguard-openai-fc
+    label: "OpenAI Function Calling (gpt-5.5)"
+  - id: siftguard-gemini3pro
+    label: "Gemini 3 Pro"
+  - id: siftguard-claudecode
+    label: "Claude Code (headless)"
