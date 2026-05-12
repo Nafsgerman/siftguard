@@ -88,6 +88,11 @@ async def _run_investigation(session_id: str, case_id: str, briefing: str, memor
         async def run_case(*args, **kwargs):
             kwargs["model"] = "claude-haiku-4-5"
             return await _run_native(*args, **kwargs)
+    elif orchestrator == "claudecode":
+        from siftguard.eval.orchestrators.claude_code_adapter import ClaudeCodeAdapter
+        _cc = ClaudeCodeAdapter()
+        async def run_case(*args, **kwargs):
+            return _cc.run(case_id, kwargs.get("briefing", ""))
     else:
         from siftguard.agent.loop import run_case
 
