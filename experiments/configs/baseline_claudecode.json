@@ -1,0 +1,15 @@
+{
+  "name": "baseline_claudecode",
+  "description": "SIFTGuard v2 — Claude Code headless orchestrator",
+  "agent_id": "siftguard-claudecode",
+  "model": "claude-sonnet-4-6",
+  "orchestrator": "siftguard-claudecode",
+  "self_correction": true,
+  "correlation": true,
+  "training_mode": false,
+  "max_iterations": 15,
+  "prompt_version": "v2",
+  "seed": 42,
+  "notes": "Claude Code as 5th orchestrator for Panel 7 comparison.",
+  "cases": ["TEST-001"]
+}
