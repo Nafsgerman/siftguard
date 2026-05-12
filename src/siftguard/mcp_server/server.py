@@ -43,7 +43,7 @@ TOOLS = [
 ]
 
 DISPATCH = {
-    "analyze_mft": lambda a: analyze_mft(**a),
+    "analyze_mft": lambda a: analyze_mft(**{**a, "memory_image": a.get("memory_image") or a.get("mft_path", "")}),
     "vol_pslist": lambda a: vol_pslist(**a),
     "vol_netscan": lambda a: vol_netscan(**a),
     "vol_malfind": lambda a: vol_malfind(**a),
