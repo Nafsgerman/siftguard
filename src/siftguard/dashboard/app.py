@@ -4,6 +4,7 @@ import json
 import os
 import uuid
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import AsyncGenerator
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, StreamingResponse, Response
