@@ -92,7 +92,18 @@ async def _run_investigation(session_id: str, case_id: str, briefing: str, memor
         from siftguard.eval.orchestrators.claude_code_adapter import ClaudeCodeAdapter
         _cc = ClaudeCodeAdapter()
         async def run_case(*args, **kwargs):
-            return _cc.run(case_id, kwargs.get("briefing", ""))
+            _on_event = kwargs.get("on_event")
+            if _on_event:
+                _on_event("investigation_started", {"case_id": case_id, "briefing": briefing})
+            result = await asyncio.get_event_loop().run_in_executor(
+                None, lambda: _cc.run(case_id, briefing)
+            )
+            if _on_event:
+                if result.success:
+                    _on_event("verdict_reached", {"verdict": result.report.get("verdict","unknown")})
+                else:
+                    _on_event("verdict_reached", {"verdict": "error", "error": result.error})
+            return result.report
     else:
         from siftguard.agent.loop import run_case
 
