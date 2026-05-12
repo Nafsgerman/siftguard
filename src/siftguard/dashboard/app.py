@@ -10,8 +10,8 @@ from fastapi.responses import HTMLResponse, StreamingResponse, Response
 import io
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
+load_dotenv(Path(__file__).resolve().parents[4] / ".env")
 
-load_dotenv()
 
 app = FastAPI(title="SIFTGuard Dashboard")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
