@@ -95,7 +95,7 @@ async def _run_investigation(session_id: str, case_id: str, briefing: str, memor
             _on_event = kwargs.get("on_event")
             if _on_event:
                 _on_event("investigation_started", {"case_id": case_id, "briefing": briefing})
-            result = await asyncio.get_event_loop().run_in_executor(
+            result = await asyncio.get_running_loop().run_in_executor(
                 None, lambda: _cc.run(case_id, briefing)
             )
             if _on_event:
