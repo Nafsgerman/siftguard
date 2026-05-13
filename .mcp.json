@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "siftguard": {
+      "command": "python3",
+      "args": ["-m", "siftguard.mcp_server.server"],
+      "cwd": "/cases/TEST-001/siftguard",
+      "env": {
+        "SIFTGUARD_CASE_ID": "TEST-001",
+        "SIFTGUARD_CACHE_DIR": "/cases/TEST-001/siftguard_cache",
+        "SIFTGUARD_AUDIT_DB": "/cases/TEST-001/siftguard/audit/CASE-001.db"
+      }
+    }
+  }
+}
