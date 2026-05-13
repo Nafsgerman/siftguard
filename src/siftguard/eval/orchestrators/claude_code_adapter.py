@@ -61,6 +61,13 @@ class ClaudeCodeAdapter(BaseOrchestrator):
 
         env = os.environ.copy()
         env["SIFTGUARD_CASE_ID"] = case_id
+        env_file = self.cwd / ".env"
+        if env_file.exists():
+            for line in env_file.read_text().splitlines():
+                line = line.strip()
+                if line and not line.startswith("#") and "=" in line:
+                    k, v = line.split("=", 1)
+                    env.setdefault(k.strip(), v.strip().strip('"').strip("'"))
 
         t0 = time.monotonic()
         try:
