@@ -69,6 +69,20 @@ class ClaudeCodeAdapter(BaseOrchestrator):
                     k, v = line.split("=", 1)
                     env.setdefault(k.strip(), v.strip().strip('"').strip("'"))
 
+        # Audit DB instrumentation (parity with other orchestrators)
+        run_id = str(uuid.uuid4())
+        audit_db = self.cwd / "audit" / f"{case_id}.db"
+        snap = None
+        try:
+            from siftguard.agent.instrumentation import SnapshotWriter
+            snap = SnapshotWriter(str(audit_db))
+            snap.write_experiment_run_start(
+                run_id=run_id, case_id=case_id, agent_id=self.agent_id,
+                config={"model": self.model, "orchestrator": "claudecode", "cli": "headless"},
+            )
+        except Exception:
+            snap = None
+
         t0 = time.monotonic()
         try:
             proc = subprocess.run(
@@ -82,17 +96,44 @@ class ClaudeCodeAdapter(BaseOrchestrator):
                 stdin=subprocess.DEVNULL,
             )       
         except subprocess.TimeoutExpired as exc:
-            return OrchestratorResult(
-                agent_id=self.agent_id,
-                case_id=case_id,
-                wall_time_s=time.monotonic() - t0,
-                success=False,
-                error=f"timeout after {self.timeout_s}s",
-                raw_stdout=(exc.stdout or b"").decode("utf-8", errors="replace"),
-                raw_stderr=(exc.stderr or b"").decode("utf-8", errors="replace"),
-                report=None,
-                tool_calls=0,
-            )
+            # Estimate cost from Claude CLI envelope
+        cost_usd = 0.0
+        tokens_in = tokens_out = 0
+        try:
+            env = json.loads(proc.stdout)
+            cost_usd = float(env.get("total_cost_usd", 0) or 0)
+            usage = env.get("usage", {}) or {}
+            tokens_in  = int(usage.get("input_tokens", 0) or 0)
+            tokens_out = int(usage.get("output_tokens", 0) or 0)
+        except Exception:
+            pass
+
+        if snap:
+            try:
+                snap.write_experiment_run_complete(
+                    run_id=run_id,
+                    completed_iterations=tool_calls,
+                    terminated_reason="verdict_reached" if report else "no_report",
+                    total_tokens_in=tokens_in,
+                    total_tokens_out=tokens_out,
+                    total_cost_usd=cost_usd,
+                    final_score=None,
+                )
+            except Exception:
+                pass
+
+        return OrchestratorResult(
+            agent_id=self.agent_id,
+            case_id=case_id,
+            wall_time_s=wall,
+            success=report is not None,
+            error=None if report is not None else "no siftguard-report block found",
+            raw_stdout=proc.stdout,
+            raw_stderr=proc.stderr,
+            report=report,
+            tool_calls=tool_calls,
+            agent_text=agent_text,
+        )
 
         wall = time.monotonic() - t0
 
