@@ -199,7 +199,7 @@ async def export_pdf(session_id: str):
         import re as _re2
         for block in report_blocks:
             if isinstance(block, dict):
-            block = _json.dumps(block, indent=2)
+                block = json.dumps(block, indent=2)
             block = _re2.sub(r"\[TRAINING\].*?(?=##|\Z)", "", block, flags=_re2.DOTALL).strip()
             block = _re2.sub(r"\*\*([^*]+)\*\*", r"\1", block)
             block = _re2.sub(r"\*([^*]+)\*", r"\1", block)
