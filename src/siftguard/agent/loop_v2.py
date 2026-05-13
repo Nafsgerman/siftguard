@@ -58,7 +58,7 @@ DEFAULT_MODEL   = os.environ.get("SIFTGUARD_MODEL", "claude-sonnet-4-20250514")
 IOC_TYPES = {"process", "ip", "port", "technique"}
 
 TOOL_REGISTRY = {
-    "analyze_mft":        analyze_mft,
+    "analyze_mft": lambda **a: analyze_mft(**{**a, "memory_image": a.get("memory_image") or a.get("mft_path", "")}),
     "vol_pslist":         vol_pslist,
     "vol_netscan":        vol_netscan,
     "vol_malfind":        vol_malfind,
@@ -70,7 +70,7 @@ TOOL_REGISTRY = {
 }
 
 TOOL_SCHEMAS = [
-    {"name": "analyze_mft", "description": "Parse Windows $MFT. Returns typed entries with timestomp flags. READ-ONLY.", "input_schema": {"type": "object", "properties": {"mft_path": {"type": "string"}, "timestomp_only": {"type": "boolean", "default": False}}, "required": ["mft_path"]}},
+    {"name": "analyze_mft", "description": "Parse Windows $MFT entries directly from a memory image via Volatility3. READ-ONLY.", "input_schema": {"type": "object", "properties": {"memory_image": {"type": "string"}, "timestomp_only": {"type": "boolean", "default": False}}, "required": ["memory_image"]}},
     {"name": "vol_pslist", "description": "List processes from memory image. Flags suspicious names/parent-child combos. READ-ONLY.", "input_schema": {"type": "object", "properties": {"memory_image": {"type": "string"}}, "required": ["memory_image"]}},
     {"name": "vol_netscan", "description": "Scan memory image for network connections. READ-ONLY.", "input_schema": {"type": "object", "properties": {"memory_image": {"type": "string"}}, "required": ["memory_image"]}},
     {"name": "vol_malfind", "description": "Find injected code and suspicious memory regions. READ-ONLY.", "input_schema": {"type": "object", "properties": {"memory_image": {"type": "string"}}, "required": ["memory_image"]}},

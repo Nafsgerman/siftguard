@@ -136,6 +136,34 @@ async def _run_investigation(session_id: str, case_id: str, briefing: str, memor
             on_event=on_event,
         )
         if report:
+            # Universal IOC extraction — works for every orchestrator that returns a report dict
+            report_dict = report if isinstance(report, dict) else None
+            if not report_dict and isinstance(report, str):
+                import re as _re_ioc
+                m = _re_ioc.search(r"```(?:siftguard-report|json)?\s*\n(\{.*?\})\n```", report, _re_ioc.DOTALL)
+                if m:
+                    try:
+                        report_dict = json.loads(m.group(1))
+                    except Exception:
+                        report_dict = None
+            if report_dict:
+                _IOC_TYPE_MAP = {
+                    "process": "process",
+                    "network": "ip",
+                    "ip":      "ip",
+                    "file":    "file",
+                    "registry": "registry",
+                    "hash":    "hash",
+                }
+                for ioc in (report_dict.get("confirmed_iocs") or []) + (report_dict.get("suspicious_indicators") or []):
+                    on_event("ioc_detected", {
+                        "ioc_type":  _IOC_TYPE_MAP.get(ioc.get("type","").lower(), "other"),
+                        "value":     ioc.get("value",""),
+                        "evidence":  ioc.get("evidence", []),
+                        "confirmed": ioc in (report_dict.get("confirmed_iocs") or []),
+                    })
+                for tech in (report_dict.get("mitre_techniques") or report_dict.get("sections",{}).get("mitre_techniques") or []):
+                    on_event("ioc_detected", {"ioc_type": "mitre", "value": tech, "evidence": [], "confirmed": True})
             await push_event(session_id, {"type": "report", "content": report})
     except Exception as e:
         await push_event(session_id, {"type": "error", "message": str(e)})
