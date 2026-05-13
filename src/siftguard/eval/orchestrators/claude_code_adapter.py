@@ -72,7 +72,8 @@ class ClaudeCodeAdapter(BaseOrchestrator):
                 timeout=self.timeout_s,
                 env=env,
                 check=False,
-            )
+                stdin=subprocess.DEVNULL,
+            )       
         except subprocess.TimeoutExpired as exc:
             return OrchestratorResult(
                 agent_id=self.agent_id,
