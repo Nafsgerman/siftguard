@@ -55,7 +55,7 @@ class ClaudeCodeAdapter(BaseOrchestrator):
             "-p", prompt,
             "--output-format", "json",
             "--model", self.model,
-            "--permission-mode", "acceptEdits",
+            "--permission-mode", "bypassPermissions",
             *self.extra_cli_args,
         ]
 
