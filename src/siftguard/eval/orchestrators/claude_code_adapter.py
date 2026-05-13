@@ -113,7 +113,7 @@ class ClaudeCodeAdapter(BaseOrchestrator):
                 snap.write_experiment_run_complete(
                     run_id=run_id,
                     completed_iterations=tool_calls,
-                    terminated_reason="verdict_reached" if report else "no_report",
+                    terminated_reason="verdict_reached" if report else "error",
                     total_tokens_in=tokens_in,
                     total_tokens_out=tokens_out,
                     total_cost_usd=cost_usd,
