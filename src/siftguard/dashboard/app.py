@@ -198,6 +198,8 @@ async def export_pdf(session_id: str):
         story.append(HRFlowable(width="100%", thickness=0.5, color=GRAY, spaceAfter=4))
         import re as _re2
         for block in report_blocks:
+            if isinstance(block, dict):
+            block = _json.dumps(block, indent=2)
             block = _re2.sub(r"\[TRAINING\].*?(?=##|\Z)", "", block, flags=_re2.DOTALL).strip()
             block = _re2.sub(r"\*\*([^*]+)\*\*", r"\1", block)
             block = _re2.sub(r"\*([^*]+)\*", r"\1", block)
@@ -325,10 +327,11 @@ async def get_orchestrator_comparison(case_id: str):
 
     output = []
     for aid, label, real in [
-        ("siftguard-v2",        "Native Loop (Sonnet)",            True),
-        ("siftguard-langgraph", "LangGraph (Sonnet)",              True),
-        ("siftguard-openai-fc", "OpenAI FC (gpt-5.5)",             True),
-        ("siftguard-gemini",    "Gemini 3 Pro",                    True),
+        ("siftguard-v2",          "Native Loop (Sonnet)",          True),
+        ("siftguard-langgraph",   "LangGraph (Sonnet)",            True),
+        ("siftguard-openai-fc",   "OpenAI FC (gpt-5.5)",           True),
+        ("siftguard-gemini",      "Gemini 3 Pro",                  True),
+        ("siftguard-claudecode",  "Claude Code (headless)",        True),
     ]:
         if real and aid in results:
             d = results[aid]
