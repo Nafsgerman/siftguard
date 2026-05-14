@@ -15,10 +15,14 @@ def _cache_path(plugin: str) -> Path:
 
 
 def _read_cache(plugin: str) -> tuple[str, int] | None:
-    """Return (stdout, duration_ms) if cache exists and is non-empty."""
+    """Return (stdout, duration_ms) if cache exists and is non-empty. Strips Volatility header line."""
     p = _cache_path(plugin)
     if p.exists() and p.stat().st_size > 50:
-        return p.read_text(), 0
+        text = p.read_text()
+        # Strip Volatility header line (e.g. "Volatility 3 Framework 2.27.0\n")
+        if text.startswith("Volatility"):
+            text = text[text.index("\n")+1:].lstrip()
+        return text, 0
     return None
 
 
