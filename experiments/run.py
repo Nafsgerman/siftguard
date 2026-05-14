@@ -33,6 +33,9 @@ CASE_EVIDENCE = {
     "TEST-001": {
         "memory": str(CASES_ROOT / "TEST-001" / "base-hunt-memory.img"),
     },
+    "TEST-002": {
+        "disk": str(CASES_ROOT / "TEST-002" / "SCHARDT.img"),
+    },
     "TEST-004": {
         "memory": str(CASES_ROOT / "TEST-004" / "base-hunt-memory.img"),
     },
@@ -45,6 +48,11 @@ CASE_BRIEFINGS = {
     "TEST-001": (
         "Windows 10 x64 memory image from SRL-2018 APT hunt scenario. "
         "Suspected compromise with C2 activity. Find evil."
+    ),
+    "TEST-002": (
+        "Windows XP disk image. Suspect Greg Schardt aka Mr. Evil. "
+        "Find hacking tools, wireless sniffing artifacts, credential "
+        "harvesting software, and evidence of war-driving activity."
     ),
     "TEST-004": (
         "Windows 10 x64 memory image. Focus: registry persistence "

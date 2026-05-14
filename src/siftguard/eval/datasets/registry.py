@@ -11,14 +11,16 @@ class DatasetMeta(BaseModel):
     case_id: str
     description: str
     threat_type: str
-    memory_image: Path
+    memory_image: Path | None = None
+    disk_image: Path | None = None
     ground_truth_path: Path
     briefing: str
     model_config = {"frozen": True}
 
     @property
     def evidence_available(self) -> bool:
-        return self.memory_image.exists()
+        paths = [p for p in (self.memory_image, self.disk_image) if p is not None]
+        return bool(paths) and all(p.exists() for p in paths)
 
     @property
     def ground_truth_available(self) -> bool:
@@ -28,12 +30,46 @@ class DatasetMeta(BaseModel):
         return json.loads(self.ground_truth_path.read_text())
 
     def to_evidence_dict(self) -> dict[str, str]:
-        return {"memory": str(self.memory_image)}
+        result = {}
+        if self.memory_image:
+            result["memory"] = str(self.memory_image)
+        if self.disk_image:
+            result["disk"] = str(self.disk_image)
+        return result
 
 _REGISTRY: dict[str, DatasetMeta] = {
-    "TEST-001": DatasetMeta(case_id="TEST-001", description="SRL-2018 APT hunt scenario. C2 at 172.16.4.10:8080, backdoors on 5682/33001.", threat_type="apt_c2", memory_image=CASES_ROOT/"TEST-001"/"base-hunt-memory.img", ground_truth_path=GT_DIR/"TEST-001.json", briefing="Windows 10 x64 memory image from SRL-2018 APT hunt scenario. Suspected compromise with C2 activity. Find evil."),
-    "TEST-004": DatasetMeta(case_id="TEST-004", description="Windows 10 x64. Registry persistence, truncated process names.", threat_type="apt_persistence_registry", memory_image=CASES_ROOT/"TEST-004"/"base-hunt-memory.img", ground_truth_path=GT_DIR/"TEST-004.json", briefing="Windows 10 x64 memory image. Focus: registry persistence and truncated process names."),
-    "TEST-005": DatasetMeta(case_id="TEST-005", description="Windows 10 x64. Full C2 infrastructure mapping, lateral movement.", threat_type="apt_c2_full", memory_image=CASES_ROOT/"TEST-005"/"base-hunt-memory.img", ground_truth_path=GT_DIR/"TEST-005.json", briefing="Windows 10 x64 memory image. Focus: full C2 infrastructure mapping and network correlation."),
+    "TEST-001": DatasetMeta(
+        case_id="TEST-001",
+        description="SRL-2018 APT hunt scenario. C2 at 172.16.4.10:8080, backdoors on 5682/33001.",
+        threat_type="apt_c2",
+        memory_image=CASES_ROOT / "TEST-001" / "base-hunt-memory.img",
+        ground_truth_path=GT_DIR / "TEST-001.json",
+        briefing="Windows 10 x64 memory image from SRL-2018 APT hunt scenario. Suspected compromise with C2 activity. Find evil.",
+    ),
+    "TEST-002": DatasetMeta(
+        case_id="TEST-002",
+        description="NIST CFReDS Hacking Case. Suspect Greg Schardt / Mr. Evil. War-driving, packet sniffing, credential harvesting tools on disk.",
+        threat_type="hacking_tools_disk",
+        disk_image=CASES_ROOT / "TEST-002" / "SCHARDT.img",
+        ground_truth_path=GT_DIR / "TEST-002.json",
+        briefing="Windows XP disk image. Suspect Greg Schardt aka Mr. Evil. Find hacking tools, wireless sniffing artifacts, credential harvesting software, and evidence of war-driving activity.",
+    ),
+    "TEST-004": DatasetMeta(
+        case_id="TEST-004",
+        description="Windows 10 x64. Registry persistence, truncated process names.",
+        threat_type="apt_persistence_registry",
+        memory_image=CASES_ROOT / "TEST-004" / "base-hunt-memory.img",
+        ground_truth_path=GT_DIR / "TEST-004.json",
+        briefing="Windows 10 x64 memory image. Focus: registry persistence and truncated process names.",
+    ),
+    "TEST-005": DatasetMeta(
+        case_id="TEST-005",
+        description="Windows 10 x64. Full C2 infrastructure mapping, lateral movement.",
+        threat_type="apt_c2_full",
+        memory_image=CASES_ROOT / "TEST-005" / "base-hunt-memory.img",
+        ground_truth_path=GT_DIR / "TEST-005.json",
+        briefing="Windows 10 x64 memory image. Focus: full C2 infrastructure mapping and network correlation.",
+    ),
 }
 
 def get_dataset(case_id: str) -> DatasetMeta:

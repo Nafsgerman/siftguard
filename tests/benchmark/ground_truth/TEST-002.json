@@ -1,0 +1,32 @@
+{
+  "case_id": "TEST-002",
+  "description": "NIST CFReDS Hacking Case. Windows XP disk image. Suspect Greg Schardt / Mr. Evil. War-driving, packet sniffing, credential harvesting.",
+  "threat_type": "hacking_tools_disk",
+  "expected_iocs": [
+    {"type": "file",      "value": "Network Stumbler",  "confidence": "high"},
+    {"type": "file",      "value": "Ethereal",          "confidence": "high"},
+    {"type": "file",      "value": "Cain",              "confidence": "high"},
+    {"type": "file",      "value": "WinPcap",           "confidence": "medium"},
+    {"type": "file",      "value": "unix_hack.tgz",     "confidence": "high"},
+    {"type": "registry",  "value": "Greg Schardt",      "confidence": "high"},
+    {"type": "technique", "value": "war_driving",       "confidence": "high"},
+    {"type": "technique", "value": "packet_sniffing",   "confidence": "high"},
+    {"type": "technique", "value": "credential_harvest","confidence": "medium"}
+  ],
+  "expected_persistence": false,
+  "expected_lateral_movement": false,
+  "expected_timestomp": false,
+  "expected_code_injection": false,
+  "expected_verdict_keywords": [
+    "Schardt", "NetStumbler", "Ethereal", "Cain", "war-driving",
+    "packet", "wireless", "hacking", "suspicious"
+  ],
+  "required_sections": [
+    "Executive Summary",
+    "Timeline of Events",
+    "Indicators of Compromise",
+    "Persistence Mechanisms",
+    "Recommendations",
+    "Evidence References"
+  ]
+}
