@@ -1,7 +1,6 @@
 from __future__ import annotations
 import json
 import os
-import time
 from pathlib import Path
 from siftguard.models.forensic import ForensicResult, ToolOutcome, MFTEntry
 from siftguard.mcp_server.safe_exec import safe_exec, SafeExecError
@@ -15,15 +14,20 @@ def _cache_path(plugin: str) -> Path:
 
 
 def _read_cache(plugin: str) -> tuple[str, int] | None:
-    """Return (stdout, duration_ms) if cache exists and is non-empty. Strips Volatility header line."""
+    """Return (stdout, duration_ms) if cache exists. Strips Volatility header. Caps at 50MB."""
     p = _cache_path(plugin)
-    if p.exists() and p.stat().st_size > 50:
-        text = p.read_text()
-        # Strip Volatility header line (e.g. "Volatility 3 Framework 2.27.0\n")
-        if text.startswith("Volatility"):
-            text = text[text.index("\n")+1:].lstrip()
-        return text, 0
-    return None
+    if not p.exists() or p.stat().st_size < 50:
+        return None
+    MAX_BYTES = 50 * 1024 * 1024
+    with p.open("r", errors="replace") as f:
+        text = f.read(MAX_BYTES)
+    if text.startswith("Volatility"):
+        text = text[text.index("\n")+1:].lstrip()
+    if len(text) == MAX_BYTES:
+        last = text.rfind("\n  },")
+        if last > 0:
+            text = text[:last+4] + "\n]"
+    return text, 0
 
 
 async def _run_or_cache(plugin: str, memory_image: str, timeout_s: int = 300) -> tuple[str, int, str | None]:
