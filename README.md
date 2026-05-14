@@ -388,3 +388,14 @@ tests/
 ## License
 
 MIT — effective at public release, June 10 2026
+
+## Architecture Decision Records
+
+Key design decisions are documented in [`docs/adr/`](docs/adr/).
+
+| ADR | Decision |
+|-----|----------|
+| [ADR-001](docs/adr/ADR-001-empirical-evaluation-framework.md) | Empirical eval framework — why evals, not vibes |
+| [ADR-002](docs/adr/ADR-002-trace-data-model.md) | Trace data model — agent-agnostic contract |
+| [ADR-005](docs/adr/ADR-005-analytics-module-design.md) | Analytics module — falsifiable claims per panel |
+| [ADR-006](docs/adr/ADR-006-multi-orchestrator-vendor-lockin.md) | Multi-orchestrator — vendor lock-in as architectural property |
