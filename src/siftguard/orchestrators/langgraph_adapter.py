@@ -67,7 +67,6 @@ class AgentState(TypedDict):
 def think_node(state: AgentState) -> dict:
     client = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
 
-    # Strip internal _response keys before sending to API
     clean_messages = []
     for m in state["messages"]:
         if isinstance(m, dict):
@@ -218,7 +217,6 @@ async def tool_node(state: AgentState) -> dict:
 
 
 def nudge_node(state: AgentState) -> dict:
-    """Replicates native loop's end-turn nudge: ask agent to compile final report."""
     return {
         "messages": state["messages"] + [{
             "role": "user",
@@ -423,22 +421,33 @@ async def run_case_langgraph(
             "model": model, "orchestrator": "langgraph",
         })
 
-    final_state = await graph.ainvoke(initial_state)
-
-    final_report = final_state.get("final_report") or (
-        f"Investigation incomplete — max_iterations after "
-        f"{final_state['iter_count']} iterations."
-    )
-
-    snap.write_experiment_run_complete(
-        run_id=run_id,
-        completed_iterations=final_state["iter_count"],
-        terminated_reason=(
-            "verdict_reached" if final_state.get("final_report") else "max_iterations"
-        ),
-        total_tokens_in=final_state["cumulative_tokens_in"],
-        total_tokens_out=final_state["cumulative_tokens_out"],
-        total_cost_usd=final_state["cumulative_cost_usd"],
-    )
+    final_report = ""
+    final_state: dict = initial_state
+    terminated_reason = "error"
+    try:
+        final_state = await graph.ainvoke(initial_state)
+        final_report = final_state.get("final_report") or (
+            f"Investigation incomplete — max_iterations after "
+            f"{final_state['iter_count']} iterations."
+        )
+        terminated_reason = "verdict_reached" if final_state.get("final_report") else "max_iterations"
+    except Exception as e:
+        logger.exception("LangGraph run failed: %s", e)
+        final_report = f"Investigation aborted due to error: {e}"
+        terminated_reason = "error"
+        if on_event:
+            on_event("error", {"message": str(e), "run_id": run_id})
+    finally:
+        try:
+            snap.write_experiment_run_complete(
+                run_id=run_id,
+                completed_iterations=final_state.get("iter_count", 0) if isinstance(final_state, dict) else 0,
+                terminated_reason=terminated_reason,
+                total_tokens_in=final_state.get("cumulative_tokens_in", 0) if isinstance(final_state, dict) else 0,
+                total_tokens_out=final_state.get("cumulative_tokens_out", 0) if isinstance(final_state, dict) else 0,
+                total_cost_usd=final_state.get("cumulative_cost_usd", 0.0) if isinstance(final_state, dict) else 0.0,
+            )
+        except Exception as e:
+            logger.warning("Failed to write experiment_run_complete: %s", e)
 
     return final_report, run_id
