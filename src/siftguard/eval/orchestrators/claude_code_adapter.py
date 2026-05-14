@@ -27,6 +27,10 @@ REPORT_BLOCK_RE = re.compile(
 DEFAULT_CWD = Path("/cases/TEST-001/siftguard")
 DEFAULT_TIMEOUT_S = 1800
 DEFAULT_MODEL = "claude-sonnet-4-6"
+MCP_CONFIG_FOR_CASE: dict[str, str] = {
+    "TEST-001": ".mcp.json",
+    "TEST-002": ".mcp.TEST-002.json",
+}
 
 
 @dataclass
@@ -44,12 +48,14 @@ class ClaudeCodeAdapter(BaseOrchestrator):
     timeout_s: int = DEFAULT_TIMEOUT_S
     model: str = DEFAULT_MODEL
     extra_cli_args: list[str] = field(default_factory=list)
+    mcp_config: str | None = None  # None = auto-select from MCP_CONFIG_FOR_CASE
 
     def run(self, case_id: str, prompt: str) -> OrchestratorResult:
+        mcp_config_file = self.mcp_config or MCP_CONFIG_FOR_CASE.get(case_id, ".mcp.json")
         if not (self.cwd / "CLAUDE.md").exists():
             raise FileNotFoundError(f"CLAUDE.md not found at {self.cwd}")
-        if not (self.cwd / ".mcp.json").exists():
-            raise FileNotFoundError(f".mcp.json not found at {self.cwd}")
+        if not (self.cwd / mcp_config_file).exists():
+            raise FileNotFoundError(f"{mcp_config_file} not found at {self.cwd}")
 
         cli = [
             "claude",
@@ -57,6 +63,7 @@ class ClaudeCodeAdapter(BaseOrchestrator):
             "--output-format", "json",
             "--model", self.model,
             "--permission-mode", "bypassPermissions",
+            "--mcp-config", str(self.cwd / mcp_config_file),
             *self.extra_cli_args,
         ]
 
