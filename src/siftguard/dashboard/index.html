@@ -720,6 +720,7 @@ function extractIOCs(tool, summary) {
       state.iocCount++;
       setMetric('mvIOCs', 'mcIOCs', state.iocCount, 'red');
       document.getElementById('iocBadge').textContent = state.iocCount;
+      addGraphNode(p.type, val, tool);
       addToLog('iocLog',
         '<div class="ioc-row">' +
         '<div class="ioc-type">' + p.type + ' · ' + tool + '</div>' +
