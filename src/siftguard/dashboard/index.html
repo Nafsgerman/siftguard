@@ -675,6 +675,7 @@ function handleEvent(ev) {
 
   } else if (ev.type === 'report') {
     state.reportText = typeof ev.content === 'string' ? ev.content : JSON.stringify(ev.content, null, 2);
+    extractIOCs('report', state.reportText);
     document.getElementById('btnInvestigate').textContent = '📋 View Report';
     document.getElementById('btnInvestigate').disabled = false;
     document.getElementById('btnInvestigate').onclick = showReport;
