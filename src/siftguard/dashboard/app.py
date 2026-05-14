@@ -121,10 +121,15 @@ async def _run_investigation(session_id: str, case_id: str, briefing: str, memor
         "ioc_detected":       "ioc",
         "hypothesis_update":  "hypothesis",
     }
+    _main_loop = asyncio.get_running_loop()
     def on_event(event_type: str, data: dict):
         mapped = _EVENT_MAP.get(event_type, event_type)
-        loop = asyncio.get_event_loop()
-        loop.create_task(push_event(session_id, {"type": mapped, **data}))
+        try:
+            _main_loop.call_soon_threadsafe(
+                lambda: _main_loop.create_task(push_event(session_id, {"type": mapped, **data}))
+            )
+        except Exception:
+            pass
 
     try:
         report = await run_case(
