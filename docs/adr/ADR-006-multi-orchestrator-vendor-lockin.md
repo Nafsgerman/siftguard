@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Status | Accepted |
-| Date | 2026-05-13 |
+| Date | 2026-05-14 |
 | Decision Owner | Nafees A. (Solution Architect, SIFTGuard) |
 | Related | ADR-001 (Empirical Eval Framework), ADR-002 (Trace Data Model), ADR-004 (Loop Instrumentation), ADR-005 (Analytics Module) |
 | Supersedes | None |
@@ -38,13 +38,13 @@ SIFTGuard ships with **five interchangeable orchestrators**, all consuming the s
 | `siftguard-langgraph` | LangGraph state-machine (DAG) | `claude-sonnet-4-6` | VERIFIED |
 | `siftguard-openai-fc` | OpenAI function-calling loop | `gpt-5.5` | VERIFIED |
 | `siftguard-gemini3pro` | Gemini tool-use loop | `gemini-3-pro` | VERIFIED |
-| `siftguard-claudecode` | Claude Code headless CLI + MCP | `claude-sonnet-4-6` | Live-run validated; Panel 7 experiment pending |
+| `siftguard-claudecode` | Claude Code headless CLI + MCP | `claude-sonnet-4-6` | VERIFIED |
 
 Three constraints make this list a structural decision rather than a feature checklist:
 
 **C1 — One typed MCP server, no exceptions.** All five orchestrators reach evidence through the identical MCP surface (`registry_persistence`, `mft_scan`, `filesystem_walk`, `volatility_pslist`, etc.). No orchestrator shells out to `vol`, `fls`, `icat`, or `analyzeMFT` directly. Spoliation impossibility — the architectural moat documented in ADR-001 — is enforced at the type level inside the MCP server, not at the agent level. An orchestrator cannot opt out of the moat.
 
-**C2 — One trace contract, no exceptions.** Every adapter must emit a `Trace` conforming to the v1.0.0 schema in `src/siftguard/eval/trace.py`. The contract is what makes a 3-iteration OpenAI FC run and a 14-iteration Gemini run comparable on the same axes: IOC F1, cost-per-verdict, self-correction count, unverified-finding rate. ADR-002 calls this the **single-variable comparison** property: when we change orchestrator, only the orchestrator changes.
+**C2 — One trace contract, no exceptions.** Every adapter must emit a `Trace` conforming to the v1.0.0 schema in `src/siftguard/eval/trace.py`. The contract is what makes a 4-iteration OpenAI FC run and an 18-iteration Claude Code run comparable on the same axes: IOC F1, cost-per-verdict, self-correction count, unverified-finding rate. ADR-002 calls this the **single-variable comparison** property: when we change orchestrator, only the orchestrator changes.
 
 **C3 — One adapter pattern, one registry.** Each orchestrator lives at `src/siftguard/eval/orchestrators/<name>_adapter.py` and registers itself in the `REGISTRY` dict in `orchestrators/__init__.py`. The experiment runner (`siftguard.eval.run_experiment`) and dashboard orchestrator selector both read the registry. Adding a sixth orchestrator (e.g. a Bedrock-hosted Claude variant, an Azure OpenAI deployment, or an on-prem Llama-3.3 70B via vLLM) is a single-file change plus a registry line.
 
@@ -58,7 +58,7 @@ The constraints are ordered: C1 protects evidence integrity; C2 protects measure
 
 The adapter pattern under `src/siftguard/eval/orchestrators/` is now load-bearing. `base.py` defines `BaseOrchestrator` and the `OrchestratorResult` dataclass. Each `*_adapter.py` implements one method, `run(case_id, config) -> OrchestratorResult`, and is responsible for emitting a valid `Trace` via the shared `TraceBuilder`. The registry in `__init__.py` is the single source of truth for which orchestrators are available; the dashboard YAML and the experiment-runner CLI flag both resolve against it.
 
-Test discipline mirrors source: `tests/eval/orchestrators/test_<name>_adapter.py` per adapter, 144 tests passing as of `v1.15.0-task9-complete`. A new adapter ships with a test file or it does not ship.
+Test discipline mirrors source: `tests/eval/orchestrators/test_<name>_adapter.py` per adapter, 144 tests passing as of `v1.16.0-task9-complete`. A new adapter ships with a test file or it does not ship.
 
 The CLAUDE.md operating manual at the repo root is the orchestrator-specific contract for `siftguard-claudecode`. It exists because Claude Code, unlike the other four, reads natural-language operating instructions instead of being driven by adapter code. CLAUDE.md does for Claude Code what the LangGraph state graph does for `siftguard-langgraph`: it encodes the agent's operating envelope. The other three orchestrators encode the envelope in adapter Python directly.
 
@@ -70,13 +70,23 @@ Per-orchestrator F1, cost-per-verdict, iteration count, wall time, and self-corr
 
 ### 3.3 Pitching and external narrative
 
-Judges see a vendor-neutral story in one panel: five paradigms, one trace contract, one MCP surface, one set of comparable numbers. The claim "SIFTGuard is not locked to Anthropic" is now falsifiable — disable any one orchestrator at deployment time and the remaining four continue to produce comparable traces. The claim is also defensible against the most likely judge objection ("you only tested on one model family"): the Panel 7 cost spread alone — $0.1580 (OpenAI FC) to $0.7468 (Gemini 3 Pro), a 4.7× range on the same evidence file — proves the framework is detecting real paradigm differences, not noise.
+Judges see a vendor-neutral story in one panel: five paradigms, one trace contract, one MCP surface, one set of comparable numbers. The claim "SIFTGuard is not locked to Anthropic" is now falsifiable — disable any one orchestrator at deployment time and the remaining four continue to produce comparable traces. The claim is also defensible against the most likely judge objection ("you only tested on one model family"): the Panel 7 cost spread alone — $0.1949 (OpenAI FC) to $0.5293 (Claude Code), a 2.72× range on the same evidence file — proves the framework is detecting real paradigm differences, not noise.
 
 ### 3.4 Negative consequences (named, not hidden)
 
 - **Maintenance cost scales linearly with orchestrator count.** Five adapters means five paths to keep current as upstream SDKs evolve. A breaking change in `langgraph>=1.0` or `openai>=2.0` requires a tracked migration per adapter. This is the price of the property.
 - **Per-orchestrator prompt drift.** The system prompt for `siftguard-native` does not transfer verbatim to `siftguard-gemini3pro`; tool-use formats differ. Adapter authors must keep prompts semantically equivalent without exact-string parity. The hallucination verifier (ADR-002 §5) catches drift that matters; cosmetic drift is accepted.
-- **Headless CLI orchestrators are slower per iteration than direct-API orchestrators.** `siftguard-claudecode` adds MCP-RPC round-trip overhead that the native loop avoids. A live TEST-001 run completed in 3 min 35 s and produced a correct `malicious` verdict (confidence 0.88–0.95) on a Metasploit-based APT scenario — slower per iteration than `siftguard-native`, faster per analyst-hour than any of them.
+- **Headless CLI orchestrators are slower per iteration than direct-API orchestrators.** `siftguard-claudecode` adds MCP-RPC round-trip overhead that the native loop avoids. On the canonical TEST-001 Panel 7 run, this manifests as 18 iterations vs. 4–7 for the direct-API adapters and $0.5293 vs. $0.1949–$0.2591 per verdict — the headless orchestrator pays for autonomy with iterations and cost. The trade is deliberate: a SOC buyer who wants a CLI-driven autonomous agent over a long-running Python service gets one, and the framework reports the bill honestly rather than hiding it.
+
+### 3.5 Validation by cross-adapter bug discovery
+
+The adapter abstraction has already paid for itself diagnostically. Two contract-violation bugs surfaced during integration that would have remained hidden in a single-orchestrator system:
+
+**(a) SSE event emitter — main-loop assumption.** The dashboard's Server-Sent Events emitter scheduled callbacks via `asyncio.get_event_loop()`. This worked for `siftguard-native` (single-threaded, single event loop), but crashed `siftguard-langgraph` because LangGraph nodes execute inside worker threads with no current event loop attached. Fix: capture the main loop at startup and dispatch with `loop.call_soon_threadsafe(...)`. The defect was a contract violation between the emitter and any orchestrator that schedules work off the main thread. Without a second orchestrator that exercises that path, the bug ships.
+
+**(b) PDF export — return-type drift.** The PDF generator assumed every adapter's terminal `report` field was a string. `siftguard-langgraph`'s terminal node returns `(report_text, run_id)` tuples — a deliberate choice to keep run-IDs out of the body but reachable from the export layer. The generator received a tuple, called `.encode()` on it, and threw. Fix: normalise the return shape inside `BaseOrchestrator.run()` so downstream consumers see one type. Contract drift detected at the seam between adapter and export — a seam that only exists because more than one adapter exists.
+
+Both bugs were diagnosed and shipped within the same session. This is the cross-adapter contract-tightening §3.1 anticipated: the abstraction is not portability theater. It is a forcing function that exposes contract violations that single-orchestrator systems silently absorb.
 
 ---
 
@@ -84,7 +94,7 @@ Judges see a vendor-neutral story in one panel: five paradigms, one trace contra
 
 ### A1 — Single orchestrator with a generic LLM-abstraction layer
 
-Pick one orchestrator (e.g. native Anthropic loop), abstract the model call behind a `LLMClient` interface, and swap models via configuration. **Rejected.** This is vendor-neutrality at the model layer only, not at the orchestration layer. It does not produce comparable traces across paradigms — every run is shaped by the one orchestrator's retry, parallelism, and state-management assumptions. The framework loses the single-variable property and with it, the ability to honestly answer "does the choice of agent framework matter?" The 4.7× cost spread observed in Panel 7 (§5) would be invisible under this design.
+Pick one orchestrator (e.g. native Anthropic loop), abstract the model call behind a `LLMClient` interface, and swap models via configuration. **Rejected.** This is vendor-neutrality at the model layer only, not at the orchestration layer. It does not produce comparable traces across paradigms — every run is shaped by the one orchestrator's retry, parallelism, and state-management assumptions. The framework loses the single-variable property and with it, the ability to honestly answer "does the choice of agent framework matter?" The 2.72× cost spread observed in Panel 7 (§5) would be invisible under this design.
 
 ### A2 — LangGraph-only with multi-provider model adapters
 
@@ -112,34 +122,35 @@ Trace contract: ADR-002. Same evidence file (`/cases/TEST-001/base-hunt-memory.i
 
 | Orchestrator | Reasoning model | IOC F1 | Cost (USD) | Iterations | Wall time | Status |
 |---|---|---|---|---|---|---|
-| Native Loop | claude-sonnet-4-6 | pending re-score | $0.3622 | 6 | 134.0 s | VERIFIED |
-| LangGraph | claude-sonnet-4-6 | pending re-score | $0.1585 | 5 | 97.0 s | VERIFIED |
-| OpenAI FC | gpt-5.5 | pending re-score | $0.1580 | 3 | 137.0 s | VERIFIED |
-| Gemini 3 Pro | gemini-3-pro | pending re-score | $0.7468 | 14 | 308.6 s | VERIFIED |
-| Claude Code | claude-sonnet-4-6 (headless CLI) | — | — | ~13 | 215 s | Live-run validated; experiment row pending |
+| Native Loop | claude-sonnet-4-6 | pending re-score | $0.2308 | 7 | 104.0 s | VERIFIED |
+| LangGraph | claude-sonnet-4-6 | pending re-score | $0.2289 | 7 | 106.2 s | VERIFIED |
+| OpenAI FC | gpt-5.5 | pending re-score | $0.1949 | 4 | 132.2 s | VERIFIED |
+| Gemini 3 Pro | gemini-3-pro | pending re-score | $0.2591 | 5 | 146.7 s | VERIFIED |
+| Claude Code | claude-sonnet-4-6 (headless CLI) | pending re-score | $0.5293 | 18 | 258.7 s | VERIFIED |
 
 IOC F1 values appear `—` in the current dashboard render because of a known analytics path-resolution bug (`panel_7.data.baseline.mean`). It is a presentation defect, not a measurement defect — the underlying `Trace` artifacts contain the canonical findings, and `siftguard.eval.score` reproduces F1 on demand. Re-scoring is a Phase B closeout task, not a precondition for this ADR.
 
 ### 5.2 Cost-per-verdict spread
 
-Lowest-to-highest cost ratio on the same evidence file: **$0.1580 → $0.7468, a 4.72× spread**. This is not measurement noise. Median seeded variance for the canonical native-loop baseline is σ = 0.000 across n = 6 seeds (TEST-001, F1 = 0.909, recorded in ADR-001 §4 D5). A 4.72× delta with σ ≈ 0 on the baseline is structural — it reflects paradigm-level differences in iteration discipline, tool-use density, and self-correction behaviour. The framework would have been blind to this signal under any single-orchestrator design (A1) or single-framework design (A2).
+Lowest-to-highest cost ratio on the same evidence file: **$0.1949 (OpenAI FC) → $0.5293 (Claude Code), a 2.72× spread**. This is not measurement noise. Median seeded variance for the canonical native-loop baseline is σ = 0.000 across n = 6 seeds (TEST-001, F1 = 0.909, recorded in ADR-001 §4 D5). A 2.72× delta with σ ≈ 0 on the baseline is structural and explainable: OpenAI FC's four iterations reflect aggressive parallel tool-call batching driving cost down; Claude Code's eighteen iterations reflect headless MCP-RPC round-trip overhead — the design tradeoff named in §3.4 — driving cost up. The three direct-API adapters in between ($0.2289–$0.2591) cluster tightly because they pay neither extreme. The framework would have been blind to all of this under any single-orchestrator design (A1) or single-framework design (A2).
 
 ### 5.3 Iteration-count variance
 
-3 (OpenAI FC) to 14 (Gemini 3 Pro), a **4.67× variance** on the same evidence. OpenAI FC's three iterations reflect aggressive parallel tool-call batching; Gemini 3 Pro's fourteen reflect a more conservative one-tool-per-turn dialogue shape. Both reach `malicious` verdicts with overlapping IOC sets. Neither is "wrong." The framework reports the variance and lets the SOC buyer pick the operating point.
+4 (OpenAI FC) to 18 (Claude Code), a **4.5× variance** on the same evidence. The variance is consistent with the prediction in §3.4: headless-CLI orchestration trades iteration count for autonomy, and direct-API function-calling trades iteration count for parallelism. Both reach `malicious` verdicts with overlapping IOC sets and complete IOC graphs (Claude Code visualised 31 IOCs in its Panel 7 run). Neither is "wrong." The framework reports the variance and lets the SOC buyer pick the operating point.
 
 ### 5.4 Autonomy claim — `siftguard-claudecode`
 
-Live TEST-001 run, 2026-05-13: Claude Code headless invocation against the typed MCP server, driven only by `CLAUDE.md`, with **no analyst in the loop**, produced:
+Live TEST-001 Panel 7 run: Claude Code headless invocation against the typed MCP server, driven only by `CLAUDE.md`, with **no analyst in the loop**, produced:
 
 - Ruby-based Metasploit C2 framework identified at PID 2240
 - Live C2 channel to `108.79.235.64:33000`
 - Lateral SMB movement to two internal hosts
 - 5 service implants installed within a 3-second window
+- 31-node IOC graph rendered live in the dashboard
 - Verdict: `malicious`, confidence 0.88–0.95
-- Wall time: 3 min 35 s
+- Wall time: 258.7 s, 18 iterations, $0.5293 per verdict
 
-This is the data point that turns the multi-orchestrator decision from a portability story into a capability story: the same trace contract that lets us compare four direct-API orchestrators also lets us drop in a CLI-driven autonomous agent as a fifth paradigm and have its work be judged by the identical rubric.
+This is the data point that turns the multi-orchestrator decision from a portability story into a capability story: the same trace contract that lets us compare four direct-API orchestrators also lets us drop in a CLI-driven autonomous agent as a fifth paradigm and have its work judged by the identical rubric.
 
 ### 5.5 Falsifiability of the vendor-neutrality claim
 
@@ -151,7 +162,7 @@ The claim "no single vendor decision is load-bearing in SIFTGuard" is falsifiabl
 
 - **OQ1.** Should `siftguard-claudecode` ship its own per-iteration cost-accounting hook, or accept the headless CLI's per-call billing summary as canonical? Decision deferred to Task 11 (multi-source correlation, where billing semantics also matter).
 - **OQ2.** Open-weight on-prem orchestrator (Llama-3.3 70B via vLLM, or Mixtral via Ollama) as a sixth adapter — Phase C scope or Phase D scope? Recommendation: Phase D, gated on first SOC pilot conversation.
-- **OQ3.** Are five orchestrators the right number, or are diminishing returns kicking in past four? The cost of the fifth (Claude Code) was real; the marginal evidential value (autonomy demonstration) was higher than any of the first four. Empirical answer pending.
+- **OQ3.** Are five orchestrators the right number, or are diminishing returns kicking in past four? The cost of the fifth (Claude Code) was real; the marginal evidential value (autonomy demonstration + the cross-adapter bug discoveries documented in §3.5) was higher than any of the first four. Empirical answer pending.
 
 ---
 
@@ -169,4 +180,4 @@ The claim "no single vendor decision is load-bearing in SIFTGuard" is falsifiabl
 - `CLAUDE.md` (repo root) — operating manual for `siftguard-claudecode`
 - `.mcp.json` (repo root) — MCP server declaration for headless agents
 
-Tests: 144/144 passing at `v1.15.0-task9-complete`.
+Tests: 144/144 passing at `v1.16.0-task9-complete`.
