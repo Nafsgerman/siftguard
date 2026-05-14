@@ -679,6 +679,12 @@ function handleEvent(ev) {
     document.getElementById('btnInvestigate').disabled = false;
     document.getElementById('btnInvestigate').onclick = showReport;
     addAudit('ok', 'Incident report generated');
+  
+  } else if (ev.type === 'ioc') {
+    addGraphNode(ev.ioc_type, ev.value, ev.evidence && ev.evidence[0] ? ev.evidence[0].split(':')[0] : 'report');
+    state.iocCount++;
+    document.getElementById('iocBadge').textContent = state.iocCount;
+    document.getElementById('mvIOCs').textContent = state.iocCount;
 
   } else if (ev.type === 'training_annotation') {
     handleTrainingEvent(ev);
