@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "siftguard": {
+      "command": "python3",
+      "args": ["-m", "siftguard.mcp_server.server"],
+      "cwd": "/cases/TEST-001/siftguard",
+      "env": {
+        "SIFTGUARD_CASE_ID": "TEST-002",
+        "SIFTGUARD_CACHE_DIR": "/cases/TEST-002/siftguard_cache",
+        "SIFTGUARD_AUDIT_DB": "/cases/TEST-001/siftguard/audit/TEST-002.db",
+        "SIFTGUARD_DISK_IMAGE": "/cases/TEST-002/SCHARDT.img",
+        "SIFTGUARD_DISK_OFFSET": "63"
+      }
+    }
+  }
+}
