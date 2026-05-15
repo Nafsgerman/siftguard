@@ -1,0 +1,52 @@
+{
+  "schema_version": "1.1.0",
+  "case_id": "TEST-001",
+  "case_name": "SANS FIND EVIL Base Hunt Memory Image (SRL-2018)",
+  "iocs": [
+    {
+      "ioc_id": "ioc-net-c2-metasploit",
+      "ioc_type": "network_connection",
+      "expected": {
+        "remote_ip": "108.79.235.64",
+        "remote_port": 33000,
+        "process_pid": 2240
+      },
+      "confidence_threshold": 0.75,
+      "evidence_location": "memory_only",
+      "rationale": "Active Metasploit C2 channel visible in netscan + pslist"
+    },
+    {
+      "ioc_id": "ioc-proc-suspicious-pid-2240",
+      "ioc_type": "process",
+      "expected": {
+        "pid": 2240,
+        "suspicious_flags": ["no_parent_path", "injected_memory"]
+      },
+      "confidence_threshold": 0.80,
+      "evidence_location": "memory_only",
+      "rationale": "Metasploit implant process — malfind + pslist correlation"
+    },
+    {
+      "ioc_id": "ioc-service-implant",
+      "ioc_type": "service",
+      "expected": {
+        "artifact_type": "persistence_service",
+        "associated_pid": 2240
+      },
+      "confidence_threshold": 0.75,
+      "evidence_location": "both",
+      "rationale": "Service implant has registry key on disk + live service object in memory"
+    },
+    {
+      "ioc_id": "ioc-net-lateral-smb",
+      "ioc_type": "network_connection",
+      "expected": {
+        "port": 445,
+        "artifact_type": "lateral_movement_smb"
+      },
+      "confidence_threshold": 0.70,
+      "evidence_location": "both",
+      "rationale": "Lateral SMB — active connection in netscan + event log on disk"
+    }
+  ]
+}
