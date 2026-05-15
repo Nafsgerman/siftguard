@@ -16,3 +16,5 @@ analysis/
 src/siftguard/dashboard/tools/
 .venv/
 *.log.gz
+!experiments/analysis/
+!experiments/analysis/**
