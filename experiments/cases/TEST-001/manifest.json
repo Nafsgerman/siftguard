@@ -1,26 +1,29 @@
 {
   "schema_version": "1.0.0",
   "case_id": "TEST-001",
-  "case_name": "SANS FIND EVIL Base Hunt Memory Image (SRL-2018)",
+  "case_name": "SRL-2018 APT Hunt (Windows 10 x64 Memory)",
+  "description": "SRL-2018 APT hunt scenario. C2 at 172.16.4.10:8080, backdoors on 5682/33001.",
+  "threat_type": "apt_c2",
+  "briefing": "Windows 10 x64 memory image from SRL-2018 APT hunt scenario. Suspected compromise with C2 activity. Find evil.",
   "evidence_files": [
     {
       "path": "/cases/TEST-001/base-hunt-memory.img",
       "type": "memory_image",
       "format": "raw",
-      "os": "windows_10"
+      "sha256": ""
     }
   ],
   "available_tools": [
     "volatility_pslist",
     "volatility_netscan",
     "volatility_malfind",
-    "volatility_handles"
+    "volatility_mftscan",
+    "volatility_registry"
   ],
   "unavailable_tools": [
-    {"tool": "mft_parse",            "reason": "no_disk_image"},
-    {"tool": "registry_hive_parse",  "reason": "no_disk_image"},
-    {"tool": "filesystem_walk",      "reason": "no_disk_image"},
-    {"tool": "timeline_build",       "reason": "no_disk_image"}
+    {"tool": "filesystem_walk", "reason": "no_disk_image"},
+    {"tool": "mft_parse", "reason": "no_disk_image"},
+    {"tool": "registry_hive_parse", "reason": "no_disk_image"}
   ],
-  "ground_truth_path": "experiments/ground_truth/TEST-001-v1.1.0.json"
+  "ground_truth_path": "tests/benchmark/ground_truth/TEST-001.json"
 }

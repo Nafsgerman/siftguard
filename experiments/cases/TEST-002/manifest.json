@@ -2,15 +2,16 @@
   "schema_version": "1.0.0",
   "case_id": "TEST-002",
   "case_name": "NIST CFReDS Hacking Case (Schardt / Mr. Evil)",
+  "description": "NIST CFReDS Hacking Case. Suspect Greg Schardt / Mr. Evil. War-driving, packet sniffing, credential harvesting tools on disk.",
+  "threat_type": "hacking_tools_disk",
+  "briefing": "Windows XP disk image. Suspect Greg Schardt aka Mr. Evil. Find hacking tools, wireless sniffing artifacts, credential harvesting software, and evidence of war-driving activity.",
   "evidence_files": [
     {
       "path": "/cases/TEST-002/SCHARDT.img",
       "type": "disk_image",
       "format": "raw_dd",
       "filesystem": "ntfs",
-      "os": "windows_xp",
-      "partition_offset_bytes": 32256,
-      "sha256": "65e2002fed0b286f49541c7e97dcec0dda913d51a063ceeed86782bdacda2312"
+      "sha256": ""
     }
   ],
   "available_tools": [
@@ -22,10 +23,11 @@
     "hash_lookup"
   ],
   "unavailable_tools": [
-    {"tool": "volatility_pslist",   "reason": "no_memory_image"},
-    {"tool": "volatility_netscan",  "reason": "no_memory_image"},
-    {"tool": "volatility_malfind",  "reason": "no_memory_image"},
-    {"tool": "volatility_handles",  "reason": "no_memory_image"}
+    {"tool": "volatility_pslist", "reason": "no_memory_image"},
+    {"tool": "volatility_netscan", "reason": "no_memory_image"},
+    {"tool": "volatility_malfind", "reason": "no_memory_image"},
+    {"tool": "volatility_mftscan", "reason": "no_memory_image"},
+    {"tool": "volatility_registry", "reason": "no_memory_image"}
   ],
-  "ground_truth_path": "experiments/ground_truth/TEST-002-v1.1.0.json"
+  "ground_truth_path": "tests/benchmark/ground_truth/TEST-002.json"
 }
