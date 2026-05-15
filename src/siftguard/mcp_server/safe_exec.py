@@ -6,6 +6,7 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 
+# REPLACE
 ALLOWED_BINARIES: set[str] = {
     "analyzeMFT.py",
     "mft_dump",
@@ -15,10 +16,15 @@ ALLOWED_BINARIES: set[str] = {
     "bulk_extractor",
     "regripper",
     "rip.pl",
+    "/usr/local/bin/rip.pl",
     "fls",
+    "/usr/bin/fls",
     "icat",
+    "/usr/bin/icat",
     "mmls",
+    "/usr/bin/mmls",
     "fsstat",
+    "/usr/bin/fsstat",
     "tsk_recover",
     "evtxexport",
 }
