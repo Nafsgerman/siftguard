@@ -2,7 +2,7 @@
   "name": "baseline",
   "description": "Full SIFTGuard v2 — all features on, 15 iterations",
   "agent_id": "siftguard-v2",
-  "model": "claude-sonnet-4-20250514",
+  "model": "claude-sonnet-4-6",
   "orchestrator": "siftguard-native",
   "self_correction": true,
   "correlation": true,

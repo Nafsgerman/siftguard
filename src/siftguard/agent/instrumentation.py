@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 # ── Token cost table ───────────────────────────────────────────────────────────
 # Prices in USD per token. Update when pricing changes.
 _COST_PER_TOKEN_IN: dict[str, float] = {
-    "claude-sonnet-4-20250514":  3.00 / 1_000_000,
+    "claude-sonnet-4-6":  3.00 / 1_000_000,
     "claude-opus-4-20250514":   15.00 / 1_000_000,
     "claude-haiku-4-20251001":   0.80 / 1_000_000,
     "gpt-4o":                    2.50 / 1_000_000,
@@ -28,7 +28,7 @@ _COST_PER_TOKEN_IN: dict[str, float] = {
     "gemini-2.5-pro":            1.25 / 1_000_000,
 }
 _COST_PER_TOKEN_OUT: dict[str, float] = {
-    "claude-sonnet-4-20250514": 15.00 / 1_000_000,
+    "claude-sonnet-4-6": 15.00 / 1_000_000,
     "claude-opus-4-20250514":   75.00 / 1_000_000,
     "claude-haiku-4-20251001":   4.00 / 1_000_000,
     "gpt-4o":                   10.00 / 1_000_000,

@@ -34,7 +34,7 @@ async def run_case(
     Default: v2
     """
     _version = prompt_version or os.environ.get("SIFTGUARD_PROMPT_VERSION", "v2")
-    _model   = model or os.environ.get("SIFTGUARD_MODEL", "claude-sonnet-4-20250514")
+    _model   = model or os.environ.get("SIFTGUARD_MODEL", "claude-sonnet-4-6")
 
     _orchestrator = (config_override or {}).get("orchestrator", "siftguard-native")
     if _orchestrator == "langgraph":

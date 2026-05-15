@@ -2,7 +2,7 @@
   "name": "ablation_no_self_correction",
   "description": "Self-correction disabled — measures contribution of self-correction",
   "agent_id": "siftguard-v2",
-  "model": "claude-sonnet-4-20250514",
+  "model": "claude-sonnet-4-6",
   "orchestrator": "siftguard-native",
   "self_correction": false,
   "correlation": true,

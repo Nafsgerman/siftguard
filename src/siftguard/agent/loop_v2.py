@@ -53,7 +53,7 @@ logger = logging.getLogger(__name__)
 console = Console()
 
 MAX_ITERATIONS = int(os.environ.get("SIFTGUARD_MAX_AGENT_ITERATIONS", "15"))
-DEFAULT_MODEL   = os.environ.get("SIFTGUARD_MODEL", "claude-sonnet-4-20250514")
+DEFAULT_MODEL   = os.environ.get("SIFTGUARD_MODEL", "claude-sonnet-4-6")
 
 IOC_TYPES = {"process", "ip", "port", "technique"}
 

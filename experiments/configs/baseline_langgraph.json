@@ -2,7 +2,7 @@
   "name": "baseline_langgraph",
   "description": "Baseline config — LangGraph orchestrator (Task 6 single-variable test)",
   "agent_id": "siftguard-langgraph",
-  "model": "claude-sonnet-4-20250514",
+  "model": "claude-sonnet-4-6",
   "orchestrator": "langgraph",
   "self_correction": true,
   "correlation": true,

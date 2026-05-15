@@ -2,7 +2,7 @@
   "name": "ablation_v1_baseline",
   "description": "v1 prompt — free-form output, no structured confidence",
   "agent_id": "siftguard-v1",
-  "model": "claude-sonnet-4-20250514",
+  "model": "claude-sonnet-4-6",
   "orchestrator": "siftguard-native",
   "self_correction": true,
   "correlation": true,
