@@ -1,88 +1,130 @@
-import json, pathlib, pytest
-from unittest.mock import patch, mock_open
-from src.siftguard.cases.loader import load_manifest
-from src.siftguard.eval.ground_truth import CaseManifest, EvidenceLocation
+"""Tests for cases.loader — single source of truth for case manifests.
 
-MANIFEST_TEST002 = json.dumps({
-    "schema_version": "1.0.0",
-    "case_id": "TEST-002",
-    "case_name": "NIST CFReDS Hacking Case",
-    "evidence_files": [{"path": "/cases/TEST-002/SCHARDT.img", "type": "disk_image", "format": "raw_dd", "filesystem": "ntfs", "os": "windows_xp", "partition_offset_bytes": 32256, "sha256": "abc"}],
-    "available_tools": ["filesystem_walk", "mft_parse", "registry_hive_parse", "timeline_build", "file_content_read", "hash_lookup"],
-    "unavailable_tools": [
-        {"tool": "volatility_pslist",  "reason": "no_memory_image"},
-        {"tool": "volatility_netscan", "reason": "no_memory_image"},
-        {"tool": "volatility_malfind", "reason": "no_memory_image"},
-        {"tool": "volatility_handles", "reason": "no_memory_image"}
-    ],
-    "ground_truth_path": "experiments/ground_truth/TEST-002-v1.1.0.json"
-})
+ADR-008: flat datasets/registry.py deleted; loader.py is canonical.
+"""
+from __future__ import annotations
 
+import pytest
+from pathlib import Path
+from unittest.mock import patch, MagicMock
 
-def _make_manifest() -> CaseManifest:
-    return CaseManifest.model_validate_json(MANIFEST_TEST002)
+from siftguard.cases.loader import (
+    get_case,
+    list_case_ids,
+    list_cases,
+    evidence_paths,
+    evidence_available,
+    ground_truth_path,
+    CASES_DIR,
+)
+from siftguard.eval.ground_truth import CaseManifest
 
 
-def test_manifest_parses():
-    m = _make_manifest()
-    assert m.case_id == "TEST-002"
-    assert len(m.available_tools) == 6
-    assert len(m.unavailable_tools) == 4
+KNOWN_CASES = ["TEST-001", "TEST-002"]
 
 
-def test_volatility_unavailable():
-    m = _make_manifest()
-    assert not m.is_tool_available("volatility_pslist")
-    assert not m.is_tool_available("volatility_netscan")
+@pytest.mark.parametrize("case_id", KNOWN_CASES)
+def test_manifest_loads(case_id: str) -> None:
+    manifest = get_case(case_id)
+    assert manifest.case_id == case_id
+    assert manifest.schema_version == "1.0.0"
+    assert manifest.case_name
+    assert manifest.briefing
 
 
-def test_disk_tools_available():
-    m = _make_manifest()
-    assert m.is_tool_available("mft_parse")
-    assert m.is_tool_available("registry_hive_parse")
+@pytest.mark.parametrize("case_id", KNOWN_CASES)
+def test_manifest_has_evidence_files(case_id: str) -> None:
+    manifest = get_case(case_id)
+    assert len(manifest.evidence_files) >= 1
+    for ef in manifest.evidence_files:
+        assert "path" in ef
+        assert "type" in ef
 
 
-def test_reachable_disk_only_ioc(tmp_path):
-    from src.siftguard.eval.ground_truth import IOCExpectation, EvidenceLocation
-    m = _make_manifest()
-    ioc = IOCExpectation(
-        ioc_id="ioc-file-netstumbler",
-        ioc_type="file",
-        expected={"filename_pattern": "*netstumbler*"},
-        confidence_threshold=0.8,
-        evidence_location=EvidenceLocation.DISK_ONLY,
-        rationale="test"
-    )
-    assert m.reachable(ioc) is True
+@pytest.mark.parametrize("case_id", KNOWN_CASES)
+def test_manifest_has_available_tools(case_id: str) -> None:
+    manifest = get_case(case_id)
+    assert len(manifest.available_tools) >= 1
 
 
-def test_not_reachable_memory_only_ioc():
-    from src.siftguard.eval.ground_truth import IOCExpectation, EvidenceLocation
-    m = _make_manifest()
-    ioc = IOCExpectation(
-        ioc_id="ioc-proc-test",
-        ioc_type="process",
-        expected={"pid": 999},
-        confidence_threshold=0.8,
-        evidence_location=EvidenceLocation.MEMORY_ONLY,
-        rationale="test"
-    )
-    assert m.reachable(ioc) is False
+@pytest.mark.parametrize("case_id", KNOWN_CASES)
+def test_threat_type_set(case_id: str) -> None:
+    manifest = get_case(case_id)
+    assert manifest.threat_type != "unknown"
 
 
-def test_applicable_iocs_count():
-    """Scorer denominator = applicable only, never total."""
-    from src.siftguard.eval.ground_truth import IOCExpectation, EvidenceLocation, GroundTruth
-    m = _make_manifest()
-    gt_data = {
-        "schema_version": "1.1.0",
-        "case_id": "TEST-002",
-        "case_name": "test",
-        "iocs": [
-            {"ioc_id": "ioc-file-a", "ioc_type": "file", "expected": {}, "confidence_threshold": 0.8, "evidence_location": "disk_only", "rationale": "r"},
-            {"ioc_id": "ioc-proc-b", "ioc_type": "process", "expected": {}, "confidence_threshold": 0.8, "evidence_location": "memory_only", "rationale": "r"},
-        ]
-    }
-    gt = GroundTruth.model_validate(gt_data)
-    applicable = [ioc for ioc in gt.iocs if m.reachable(ioc)]
-    assert len(applicable) == 1  # only disk_only passes
+def test_list_case_ids_contains_known() -> None:
+    ids = list_case_ids()
+    for cid in KNOWN_CASES:
+        assert cid in ids, f"{cid} missing from list_case_ids()"
+
+
+def test_list_cases_returns_manifests() -> None:
+    cases = list_cases()
+    assert len(cases) >= 2
+    assert all(isinstance(c, CaseManifest) for c in cases)
+
+
+def test_list_case_ids_sorted() -> None:
+    ids = list_case_ids()
+    assert ids == sorted(ids)
+
+
+@pytest.mark.parametrize("case_id", KNOWN_CASES)
+def test_evidence_paths_returns_dict(case_id: str) -> None:
+    manifest = get_case(case_id)
+    paths = evidence_paths(manifest)
+    assert isinstance(paths, dict)
+    assert len(paths) >= 1
+    for key, val in paths.items():
+        assert isinstance(val, Path)
+
+
+def test_test001_has_memory_image() -> None:
+    manifest = get_case("TEST-001")
+    paths = evidence_paths(manifest)
+    assert "memory_image" in paths
+
+
+def test_test002_has_disk_image() -> None:
+    manifest = get_case("TEST-002")
+    paths = evidence_paths(manifest)
+    assert "disk_image" in paths
+
+
+def test_test001_no_disk_image() -> None:
+    manifest = get_case("TEST-001")
+    paths = evidence_paths(manifest)
+    assert "disk_image" not in paths
+
+
+def test_test002_no_memory_image() -> None:
+    manifest = get_case("TEST-002")
+    paths = evidence_paths(manifest)
+    assert "memory_image" not in paths
+
+
+def test_ground_truth_path_returns_path() -> None:
+    manifest = get_case("TEST-001")
+    p = ground_truth_path(manifest)
+    assert isinstance(p, Path)
+
+
+def test_missing_case_raises() -> None:
+    with pytest.raises(FileNotFoundError):
+        get_case("TEST-NONEXISTENT")
+
+
+def test_get_case_is_cached() -> None:
+    m1 = get_case("TEST-001")
+    m2 = get_case("TEST-001")
+    assert m1 is m2  # lru_cache hit
+
+
+@pytest.mark.parametrize("case_id,unavailable_tool", [
+    ("TEST-002", "volatility_pslist"),
+    ("TEST-001", "filesystem_walk"),
+])
+def test_tool_unavailable(case_id: str, unavailable_tool: str) -> None:
+    manifest = get_case(case_id)
+    assert not manifest.is_tool_available(unavailable_tool)

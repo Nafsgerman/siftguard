@@ -25,7 +25,7 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(REPO_ROOT))
 
 from experiments.run import RESULTS_DIR, load_config, list_configs, run_single as _run_single
-from siftguard.eval.datasets.registry import available_datasets
+from siftguard.cases.loader import list_case_ids as available_datasets
 from siftguard.eval.variance import compute_variance_stats
 
 ABLATION_DIR = RESULTS_DIR / "ablation_v2"

@@ -32,6 +32,9 @@ class CaseManifest(BaseModel):
     available_tools: list[str]
     unavailable_tools: list[ToolAvailability]
     ground_truth_path: str
+    briefing: str = ""
+    threat_type: str = "unknown"
+    description: str = ""
 
     def is_tool_available(self, tool: str) -> bool:
         return tool in self.available_tools
