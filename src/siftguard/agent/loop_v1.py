@@ -148,7 +148,7 @@ async def run_case_v1(
         console.print(f"\n[dim]── Iteration {iteration + 1}/{MAX_ITERATIONS} ──[/dim]")
 
         response = client.messages.create(
-            model=os.environ.get("SIFTGUARD_MODEL", "claude-sonnet-4-20250514"),
+            model=os.environ.get("SIFTGUARD_MODEL", "claude-sonnet-4-6"),
             max_tokens=4096,
             system=system_prompt,
             tools=TOOL_SCHEMAS,
