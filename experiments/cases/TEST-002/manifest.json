@@ -1,0 +1,31 @@
+{
+  "schema_version": "1.0.0",
+  "case_id": "TEST-002",
+  "case_name": "NIST CFReDS Hacking Case (Schardt / Mr. Evil)",
+  "evidence_files": [
+    {
+      "path": "/cases/TEST-002/SCHARDT.img",
+      "type": "disk_image",
+      "format": "raw_dd",
+      "filesystem": "ntfs",
+      "os": "windows_xp",
+      "partition_offset_bytes": 32256,
+      "sha256": "65e2002fed0b286f49541c7e97dcec0dda913d51a063ceeed86782bdacda2312"
+    }
+  ],
+  "available_tools": [
+    "filesystem_walk",
+    "mft_parse",
+    "registry_hive_parse",
+    "timeline_build",
+    "file_content_read",
+    "hash_lookup"
+  ],
+  "unavailable_tools": [
+    {"tool": "volatility_pslist",   "reason": "no_memory_image"},
+    {"tool": "volatility_netscan",  "reason": "no_memory_image"},
+    {"tool": "volatility_malfind",  "reason": "no_memory_image"},
+    {"tool": "volatility_handles",  "reason": "no_memory_image"}
+  ],
+  "ground_truth_path": "experiments/ground_truth/TEST-002-v1.1.0.json"
+}

@@ -1,0 +1,97 @@
+{
+  "schema_version": "1.1.0",
+  "case_id": "TEST-002",
+  "case_name": "NIST CFReDS Hacking Case",
+  "iocs": [
+    {
+      "ioc_id": "ioc-file-netstumbler",
+      "ioc_type": "file",
+      "expected": {
+        "filename_pattern": "*Network Stumbler*",
+        "artifact_type": "wireless_scanner"
+      },
+      "confidence_threshold": 0.80,
+      "evidence_location": "disk_only",
+      "rationale": "NetStumbler war-driving tool — filesystem + registry install evidence"
+    },
+    {
+      "ioc_id": "ioc-file-ethereal",
+      "ioc_type": "file",
+      "expected": {
+        "filename_pattern": "ethereal.exe",
+        "artifact_type": "packet_sniffer"
+      },
+      "confidence_threshold": 0.80,
+      "evidence_location": "disk_only",
+      "rationale": "Ethereal packet sniffer installed on suspect laptop"
+    },
+    {
+      "ioc_id": "ioc-file-cain",
+      "ioc_type": "file",
+      "expected": {
+        "filename_pattern": "Cain.exe",
+        "artifact_type": "password_cracker"
+      },
+      "confidence_threshold": 0.80,
+      "evidence_location": "disk_only",
+      "rationale": "Cain & Abel credential harvesting tool"
+    },
+    {
+      "ioc_id": "ioc-file-winpcap",
+      "ioc_type": "file",
+      "expected": {
+        "filename_pattern": "WinPcap*",
+        "artifact_type": "packet_capture_driver"
+      },
+      "confidence_threshold": 0.75,
+      "evidence_location": "disk_only",
+      "rationale": "WinPcap — packet capture prerequisite for Ethereal + Cain"
+    },
+    {
+      "ioc_id": "ioc-file-unix-hack-tgz",
+      "ioc_type": "file",
+      "expected": {
+        "filename_pattern": "unix_hack.tgz",
+        "artifact_type": "hacking_toolkit"
+      },
+      "confidence_threshold": 0.85,
+      "evidence_location": "disk_only",
+      "rationale": "Unix hacking toolkit archive recovered from disk"
+    },
+    {
+      "ioc_id": "ioc-registry-registered-owner",
+      "ioc_type": "registry_key",
+      "expected": {
+        "key_path": "HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion",
+        "value_name": "RegisteredOwner",
+        "value_data": "Greg Schardt"
+      },
+      "confidence_threshold": 0.90,
+      "evidence_location": "disk_only",
+      "rationale": "Registered owner ties device to named suspect"
+    },
+    {
+      "ioc_id": "ioc-registry-wireless-history",
+      "ioc_type": "registry_key",
+      "expected": {
+        "key_path_pattern": "HKLM\\SOFTWARE\\Microsoft\\WZCSVC*",
+        "artifact_type": "wireless_network_history"
+      },
+      "confidence_threshold": 0.75,
+      "evidence_location": "disk_only",
+      "rationale": "WZCSVC wireless AP history confirms war-driving activity"
+    },
+    {
+      "ioc_id": "ioc-file-irc-logs",
+      "ioc_type": "file",
+      "expected": {
+        "path_contains": "mIRC",
+        "filename_pattern": "*.log",
+        "artifact_type": "irc_chat_logs"
+      },
+      "confidence_threshold": 0.70,
+      "evidence_location": "disk_only",
+      "rationale": "mIRC chat logs — hacker communication channel evidence"
+    }
+  ]
+}
