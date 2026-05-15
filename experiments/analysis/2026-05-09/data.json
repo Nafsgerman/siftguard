@@ -1,0 +1,35 @@
+{
+  "panel_1": {
+    "status": "placeholder"
+  },
+  "panel_2": {
+    "status": "placeholder"
+  },
+  "panel_3": {
+    "status": "placeholder"
+  },
+  "panel_4": {
+    "status": "placeholder"
+  },
+  "panel_5": {
+    "status": "placeholder"
+  },
+  "panel_6": {
+    "status": "placeholder"
+  },
+  "panel_7": {
+    "status": "stub",
+    "task": "Task 8"
+  },
+  "panel_8": {
+    "total": 0,
+    "verified": 0,
+    "refuted": 0,
+    "unverifiable": 0,
+    "hallucination_rate": 0.0,
+    "verified_rate": 0.0,
+    "unverifiable_rate": 0.0,
+    "substring_count": 0,
+    "tool_rerun_count": 0
+  }
+}

@@ -1,26 +1,10 @@
 {
   "panel_7": {
     "data": {
-      "langgraph": {
-        "mean": 0.0,
-        "runs": 1
-      },
-      "openai_fc": {
-        "mean": 0.3333,
-        "runs": 1
-      },
-      "gemini": {
-        "mean": 0.3333,
-        "runs": 1
-      },
-      "claudecode": {
-        "mean": 0.0,
-        "runs": 1
-      },
-      "baseline": {
-        "mean": 0.0,
-        "runs": 1
-      }
+      "langgraph": {"mean": 0.0, "runs": 1},
+      "openai_fc": {"mean": 0.3333, "runs": 1},
+      "gemini": {"mean": 0.3333, "runs": 1},
+      "claudecode": {"mean": 0.0, "runs": 1}
     }
   }
 }
