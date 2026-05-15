@@ -12,6 +12,7 @@ from fastapi.responses import HTMLResponse, StreamingResponse, Response
 import io
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
+from siftguard.cases.loader import list_case_ids, get_case
 load_dotenv(Path(__file__).resolve().parents[4] / ".env")
 
 
@@ -309,13 +310,11 @@ async def get_corrections(case_id: str):
         return Response(status_code=404)
     return get_correction_breakdown(db_path, case_id)
 
-@app.get("/api/orchestrator-comparison/{case_id}")
-async def get_orchestrator_comparison(case_id: str, case: str = "all"):
-    import json as _json
-    import glob
-    import sqlite3
-    from datetime import datetime
-    from siftguard.cases.loader import list_case_ids
+@app.get("/api/orchestrator-comparison/{db_id}")
+async def orchestrator_comparison(db_id: str, case: str = "all"):
+    """Panel 7 — case='all' aggregates; case='TEST-001' filters."""
+    import json as _json, sqlite3
+    from datetime import datetime as _dt
 
     ORCH_IDS = [
         "siftguard-v2", "siftguard-langgraph",
@@ -332,9 +331,10 @@ async def get_orchestrator_comparison(case_id: str, case: str = "all"):
     known_cases = list_case_ids()
     target_cases = known_cases if case == "all" else ([case] if case in known_cases else known_cases)
 
-    # --- F1 from analysis data.json per case ---
     repo_root = pathlib.Path(__file__).resolve().parents[3]
-    f1_by_orch_case: dict[str, dict[str, float]] = {}
+
+    # F1 from experiments/analysis/<cid>/data.json
+    f1_by_orch: dict[str, dict[str, float]] = {}
     for cid in target_cases:
         data_file = repo_root / "experiments" / "analysis" / cid / "data.json"
         if not data_file.exists():
@@ -351,12 +351,12 @@ async def get_orchestrator_comparison(case_id: str, case: str = "all"):
             }
             for aid, score in mapping.items():
                 if score is not None:
-                    f1_by_orch_case.setdefault(aid, {})[cid] = round(score, 4)
+                    f1_by_orch.setdefault(aid, {})[cid] = round(score, 4)
         except Exception:
             pass
 
-    # --- cost/iterations/wall_time from audit DB ---
-    db_path = repo_root / "audit" / f"{case_id}.db"
+    # cost/iterations/wall_time from audit DB
+    db_path = repo_root / "audit" / f"{db_id}.db"
     db_results: dict[str, dict] = {}
     if db_path.exists():
         conn = sqlite3.connect(str(db_path))
@@ -374,8 +374,8 @@ async def get_orchestrator_comparison(case_id: str, case: str = "all"):
                 if row["started_at"] and row["completed_at"]:
                     try:
                         wall_ms = int((
-                            datetime.fromisoformat(row["completed_at"]) -
-                            datetime.fromisoformat(row["started_at"])
+                            _dt.fromisoformat(row["completed_at"]) -
+                            _dt.fromisoformat(row["started_at"])
                         ).total_seconds() * 1000)
                     except Exception:
                         pass
@@ -389,24 +389,22 @@ async def get_orchestrator_comparison(case_id: str, case: str = "all"):
         finally:
             conn.close()
 
-    # --- assemble rows ---
     coverage_hits = 0
     coverage_total = len(ORCH_IDS) * len(target_cases)
     rows = {}
     for aid in ORCH_IDS:
-        case_scores = f1_by_orch_case.get(aid, {})
+        case_scores = f1_by_orch.get(aid, {})
         scores = list(case_scores.values())
         coverage_hits += len(scores)
-        mean_f1 = round(sum(scores) / len(scores), 4) if scores else None
         db = db_results.get(aid, {})
         rows[aid] = {
-            "label": ORCH_LABELS[aid],
-            "mean_f1": mean_f1,
+            "label":      ORCH_LABELS[aid],
+            "mean_f1":    round(sum(scores) / len(scores), 4) if scores else None,
             "case_scores": case_scores,
-            "n_cases": len(scores),
-            "cost_usd": db.get("cost_usd"),
+            "n_cases":    len(scores),
+            "cost_usd":   db.get("cost_usd"),
             "iterations": db.get("iterations"),
-            "wall_ms": db.get("wall_ms"),
+            "wall_ms":    db.get("wall_ms"),
         }
 
     return {
@@ -415,3 +413,15 @@ async def get_orchestrator_comparison(case_id: str, case: str = "all"):
         "case_filter": case,
         "available_cases": known_cases,
     }
+
+@app.get("/api/cases")
+async def get_cases():
+    """Returns list of known cases for Panel 7 case selector."""
+    cases = []
+    for cid in list_case_ids():
+        try:
+            m = get_case(cid)
+            cases.append({"case_id": cid, "case_name": m.case_name, "threat_type": m.threat_type})
+        except Exception:
+            cases.append({"case_id": cid, "case_name": cid, "threat_type": "unknown"})
+    return {"cases": cases}
