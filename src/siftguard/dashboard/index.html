@@ -440,6 +440,14 @@
       <div class="panel-card" id="orchPanel" style="grid-column: 1 / -1;">
         <div class="panel-header">
           Orchestrator Comparison
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+            <label for="case-select" style="font-size:13px;color:#5f6368;font-family:'Google Sans',sans-serif;">Case:</label>
+            <select id="case-select" onchange="onCaseChange(this.value)"
+              style="font-size:14px;font-family:'Google Sans',sans-serif;padding:6px 10px;border:1px solid #dadce0;border-radius:4px;background:#fff;color:#202124;cursor:pointer;outline:none;">
+              <option value="all">All cases</option>
+            </select>
+            <span id="coverage-badge" style="font-size:12px;padding:3px 8px;border-radius:12px;background:#e8f0fe;color:#1a73e8;font-family:'Google Sans',sans-serif;display:none;"></span>
+          </div>
           <span style="font-size:11px;font-weight:400;color:#9aa0a6;margin-left:8px;">Trace contract: ADR-002 · Single-variable · typed MCP only</span>
         </div>
         <div class="panel-body" style="padding:0;">
@@ -697,7 +705,7 @@ function handleEvent(ev) {
     if (!state.reportText) resetBtn();
     var _caseId = document.getElementById('caseId').value;
     loadCorrections(_caseId);
-    loadOrchComparison(_caseId);
+    loadPanel7('all');
   }
 }
 
@@ -1038,43 +1046,81 @@ function exportPDF() {
   window.open("/api/export/pdf/" + sessionId, "_blank");
 }
 
-function loadOrchComparison(caseId) {
-  fetch('/api/orchestrator-comparison/' + caseId)
-    .then(function(r){ return r.json(); })
-    .then(function(rows){
-      var tbody = document.getElementById('orchBody');
-      if (!rows || !rows.length) return;
-      tbody.innerHTML = '';
-      rows.forEach(function(row){
-        var f1Cell = row.real && row.f1 !== null
-          ? '<span style="color:#1a73e8;font-weight:700;">' + row.f1.toFixed(3) + '</span>'
-          : row.real ? '<span style="color:#9aa0a6;">—</span>'
-          : '<span style="color:#bdc1c6;font-style:italic;">pending</span>';
-        var costCell = row.real && row.cost_usd !== null
-          ? '$' + row.cost_usd.toFixed(4)
-          : row.real ? '—' : '<span style="color:#bdc1c6;font-style:italic;">pending</span>';
-        var iterCell = row.real && row.iterations !== null
-          ? row.iterations
-          : row.real ? '—' : '<span style="color:#bdc1c6;font-style:italic;">pending</span>';
-        var wallCell = row.real && row.wall_ms !== null
-          ? (row.wall_ms / 1000).toFixed(1) + 's'
-          : row.real ? '—' : '<span style="color:#bdc1c6;font-style:italic;">pending</span>';
-        var statusBadge = row.real
-          ? '<span style="background:#e6f4ea;color:#137333;padding:2px 8px;border-radius:12px;font-size:10px;font-weight:600;">VERIFIED</span>'
-          : '<span style="background:#fce8e6;color:#c5221f;padding:2px 8px;border-radius:12px;font-size:10px;font-weight:600;">IN PROGRESS</span>';
-        var tr = document.createElement('tr');
-        tr.style.borderBottom = '1px solid #f1f3f4';
-        tr.innerHTML = '<td style="padding:10px 16px;font-weight:' + (row.real ? '500' : '400') + ';color:' + (row.real ? '#202124' : '#9aa0a6') + ';">' + row.label + '</td>'
-          + '<td style="padding:10px 16px;text-align:center;">' + f1Cell + '</td>'
-          + '<td style="padding:10px 16px;text-align:center;color:#5f6368;">' + costCell + '</td>'
-          + '<td style="padding:10px 16px;text-align:center;color:#5f6368;">' + iterCell + '</td>'
-          + '<td style="padding:10px 16px;text-align:center;color:#5f6368;">' + wallCell + '</td>'
-          + '<td style="padding:10px 16px;text-align:center;">' + statusBadge + '</td>';
-        tbody.appendChild(tr);
-      });
-    })
-    .catch(function(){ /* silent — panel stays at default state */ });
+// Panel 7 case selector
+async function initCaseSelector() {
+  try {
+    const res = await fetch('/api/cases');
+    const data = await res.json();
+    const sel = document.getElementById('case-select');
+    data.cases.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.case_id;
+      opt.textContent = `${c.case_id} — ${c.case_name}`;
+      sel.appendChild(opt);
+    });
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('case')) sel.value = params.get('case');
+    loadPanel7(sel.value);
+  } catch (e) { console.error('case selector init failed', e); }
 }
+
+function onCaseChange(caseId) {
+  const url = new URL(window.location);
+  if (caseId === 'all') url.searchParams.delete('case');
+  else url.searchParams.set('case', caseId);
+  window.history.replaceState({}, '', url);
+  loadPanel7(caseId);
+}
+
+async function loadPanel7(caseId = 'all') {
+  try {
+    const res = await fetch(`/api/orchestrator-comparison/CASE-001?case=${caseId}`);
+    const data = await res.json();
+
+    // Coverage badge
+    const badge = document.getElementById('coverage-badge');
+    if (data.coverage) {
+      const { hits, total } = data.coverage;
+      const nCases = data.available_cases?.length || 1;
+      badge.style.display = 'inline';
+      badge.style.background = hits === total ? '#e6f4ea' : '#fce8e6';
+      badge.style.color = hits === total ? '#137333' : '#c5221f';
+      badge.textContent = `${hits}/${total} runs (5 orch × ${nCases} case${nCases > 1 ? 's' : ''})`;
+    }
+
+    // Render table rows from new dict shape
+    const tbody = document.getElementById('orchBody');
+    const rows = data.rows || {};
+    if (!Object.keys(rows).length) return;
+    tbody.innerHTML = '';
+    Object.entries(rows).forEach(([orchId, row]) => {
+      const hasRun = row.cost_usd !== null || row.iterations !== null;
+      const f1Cell = row.mean_f1 !== null && row.mean_f1 !== undefined
+        ? `<span style="color:#1a73e8;font-weight:700;">${row.mean_f1.toFixed(3)}</span>${row.n_cases > 1 ? ` <span style="font-size:10px;color:#5f6368">(n=${row.n_cases})</span>` : ''}`
+        : '<span style="color:#9aa0a6">—</span>';
+      const costCell = row.cost_usd !== null ? '$' + row.cost_usd.toFixed(4) : '—';
+      const iterCell = row.iterations !== null ? row.iterations : '—';
+      const wallCell = row.wall_ms !== null ? (row.wall_ms / 1000).toFixed(1) + 's' : '—';
+      const statusBadge = hasRun
+        ? '<span style="background:#e6f4ea;color:#137333;padding:2px 8px;border-radius:12px;font-size:10px;font-weight:600;">VERIFIED</span>'
+        : '<span style="background:#f1f3f4;color:#9aa0a6;padding:2px 8px;border-radius:12px;font-size:10px;font-weight:600;">PENDING</span>';
+      const tr = document.createElement('tr');
+      tr.setAttribute('data-orch', orchId);
+      tr.style.borderBottom = '1px solid #f1f3f4';
+      tr.innerHTML =
+        `<td style="padding:10px 16px;font-weight:500;color:#202124;">${row.label}</td>`
+        + `<td class="f1-cell" style="padding:10px 16px;text-align:center;">${f1Cell}</td>`
+        + `<td style="padding:10px 16px;text-align:center;color:#5f6368;">${costCell}</td>`
+        + `<td style="padding:10px 16px;text-align:center;color:#5f6368;">${iterCell}</td>`
+        + `<td style="padding:10px 16px;text-align:center;color:#5f6368;">${wallCell}</td>`
+        + `<td style="padding:10px 16px;text-align:center;">${statusBadge}</td>`;
+      tbody.appendChild(tr);
+    });
+  } catch (e) { console.error('loadPanel7 failed', e); }
+}
+
+// Init on load
+document.addEventListener('DOMContentLoaded', initCaseSelector);
 </script>
 </body>
 </html>

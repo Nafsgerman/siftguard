@@ -131,8 +131,21 @@ class SnapshotWriter:
     All writes are best-effort — failures logged, never raised.
     """
 
-    def __init__(self, db_path: str | Path) -> None:
-        self._db_path = str(db_path)
+    def __init__(self, db_path: str) -> None:
+        self._db_path = db_path
+        # ... existing init code ...
+
+        # Guard: fail loud if schema not initialized
+        import sqlite3 as _sqlite3
+        try:
+            _conn = _sqlite3.connect(db_path)
+            _conn.execute("SELECT 1 FROM experiment_run LIMIT 1")
+            _conn.close()
+        except _sqlite3.OperationalError as exc:
+            raise RuntimeError(
+                f"SnapshotWriter: experiment_run table missing in {db_path!r}. "
+                f"Run: python -m scripts.migrate --db {db_path}"
+            ) from exc
 
     def _conn(self) -> sqlite3.Connection:
         conn = sqlite3.connect(self._db_path)
