@@ -1,36 +1,36 @@
 {
   "case_id": "TEST-001",
   "version": "1.1.0",
-  "description": "SRL-2018 memory image — Windows system compromised by Metasploit/Meterpreter",
-  "notes": "Populate 'value' fields from verified agent run results. Values must match extractor key format.",
+  "description": "SRL-2018 memory image — Windows 10 compromised by APT deploying multiple backdoor processes (usbclient.exe, license_ctrl.e, ftusbsrvc.exe) with C2 to 172.16.4.10:8080",
+  "source": "Verified from baseline run report_20260512_181441.md (wall_time=105.2s)",
   "iocs": [
     {
       "ioc_id": "proc-001",
       "ioc_type": "process",
-      "value": "POPULATE_PID:metsvc-server.exe",
-      "evidence_location": ["windows_psscan", "windows_malfind"],
-      "description": "Metasploit Meterpreter service process — replace PID from psscan output"
+      "value": "4916:ftusbsrvc.exe",
+      "evidence_location": ["windows_psscan"],
+      "description": "Fake USB service backdoor (PID 4916) listening on port 33001"
     },
     {
       "ioc_id": "proc-002",
       "ioc_type": "process",
-      "value": "POPULATE_PID:metasploit.exe",
+      "value": "6648:usbclient.exe",
       "evidence_location": ["windows_psscan"],
-      "description": "Metasploit main process if present — verify via psscan"
+      "description": "Non-standard USB client (PID 6648) launched from explorer.exe"
+    },
+    {
+      "ioc_id": "proc-003",
+      "ioc_type": "process",
+      "value": "1716:license_ctrl.e",
+      "evidence_location": ["windows_psscan"],
+      "description": "Fake license control service (PID 1716) listening on port 5682"
     },
     {
       "ioc_id": "net-001",
       "ioc_type": "network_connection",
-      "value": "POPULATE_C2_IP:POPULATE_PORT",
+      "value": "172.16.4.10:8080",
       "evidence_location": ["windows_netscan"],
-      "description": "Metasploit C2 connection — format: ip:port (lowercase)"
-    },
-    {
-      "ioc_id": "mem-001",
-      "ioc_type": "memory_injection",
-      "value": "POPULATE_PID:POPULATE_VAD_START",
-      "evidence_location": ["windows_malfind"],
-      "description": "Injected shellcode region — format: pid:0xSTARTADDR (lowercase hex)"
+      "description": "C2 server — multiple closed connections confirmed"
     }
   ]
 }
