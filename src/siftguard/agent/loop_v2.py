@@ -150,6 +150,7 @@ async def run_case_v2(
     config_override: Optional[dict] = None,
     ground_truth_path: Optional[str] = None,
     on_event: Optional[callable] = None,
+    system_prompt_prefix: str = "",
 ) -> tuple[str, str]:
     """
     v2 instrumented agent loop.
@@ -168,7 +169,7 @@ async def run_case_v2(
     client  = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
 
     prompt_version = "v2_training" if training_mode else "v2"
-    system_prompt  = load_prompt(prompt_version)
+    system_prompt  = system_prompt_prefix + load_prompt(prompt_version)
     _max_iter = max_iterations or MAX_ITERATIONS
 
     config = {

@@ -25,6 +25,7 @@ async def run_case(
     config_override: Optional[dict] = None,
     ground_truth_path: Optional[str] = None,
     on_event: Optional[callable] = None,
+    system_prompt_prefix: str = "",
 ) -> str:
     """
     Public entry point. Returns final incident report string.
@@ -71,5 +72,6 @@ async def run_case(
         config_override=config_override,
         ground_truth_path=ground_truth_path,
         on_event=on_event,
+        system_prompt_prefix=system_prompt_prefix,
     )
     return report
