@@ -1,10 +1,97 @@
 {
   "panel_7": {
     "data": {
-      "langgraph": {"mean": 0.0, "runs": 1},
-      "openai_fc": {"mean": 0.3333, "runs": 1},
-      "gemini": {"mean": 0.3333, "runs": 1},
-      "claudecode": {"mean": 0.0, "runs": 1}
+      "langgraph": {
+        "mean": 0.0,
+        "runs": 1
+      },
+      "openai_fc": {
+        "mean": 0.3333,
+        "runs": 1
+      },
+      "gemini": {
+        "mean": 0.3333,
+        "runs": 1
+      },
+      "claudecode": {
+        "mean": 0.0,
+        "runs": 1
+      },
+      "siftguard-v2": {
+        "runs": [
+          {
+            "f1": 0.6,
+            "timestamp": "20260515",
+            "gt_version": "1.1.0",
+            "applicable_count": 5
+          }
+        ],
+        "mean": 0.6,
+        "n": 1,
+        "case_scores": {
+          "TEST-002": 0.6
+        }
+      },
+      "siftguard-langgraph": {
+        "runs": [
+          {
+            "f1": 0.0,
+            "timestamp": "20260515",
+            "gt_version": "1.1.0",
+            "applicable_count": 5
+          }
+        ],
+        "mean": 0.0,
+        "n": 1,
+        "case_scores": {
+          "TEST-002": 0.0
+        }
+      },
+      "siftguard-openai-fc": {
+        "runs": [
+          {
+            "f1": 0.8,
+            "timestamp": "20260515",
+            "gt_version": "1.1.0",
+            "applicable_count": 5
+          }
+        ],
+        "mean": 0.8,
+        "n": 1,
+        "case_scores": {
+          "TEST-002": 0.8
+        }
+      },
+      "siftguard-gemini": {
+        "runs": [
+          {
+            "f1": 0.4,
+            "timestamp": "20260515",
+            "gt_version": "1.1.0",
+            "applicable_count": 5
+          }
+        ],
+        "mean": 0.4,
+        "n": 1,
+        "case_scores": {
+          "TEST-002": 0.4
+        }
+      },
+      "siftguard-claudecode": {
+        "runs": [
+          {
+            "f1": 0.0,
+            "timestamp": "20260515",
+            "gt_version": "1.1.0",
+            "applicable_count": 5
+          }
+        ],
+        "mean": 0.0,
+        "n": 1,
+        "case_scores": {
+          "TEST-002": 0.0
+        }
+      }
     }
   }
 }
