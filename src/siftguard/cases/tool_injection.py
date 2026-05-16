@@ -41,13 +41,13 @@ def build_tools_preamble(manifest: ToolManifest) -> str:
 
     lines += [
         "",
-        "### Unavailable tools (do NOT call -- will error or return no data):",
+        "### Unavailable tools (do NOT call — will error or return no data):",
     ]
     if manifest.unavailable_tools:
         for entry in manifest.unavailable_tools:
             tool = entry.get("tool", entry.get("name", "unknown"))
             reason = entry.get("reason", "not applicable for this case")
-            lines.append(f"- `{tool}` -- {reason}")
+            lines.append(f"- `{tool}` — {reason}")
     else:
         lines.append("- (none)")
 
@@ -84,7 +84,7 @@ def manifest_from_case_loader(case_data: Any) -> ToolManifest:
     available = _get(case_data, "available_tools", "tools", default=[])
     unavailable = _get(case_data, "unavailable_tools", "excluded_tools", default=[])
 
-    # Normalise unavailable entries -- accept list[str] or list[dict]
+    # Normalise unavailable entries — accept list[str] or list[dict]
     normalised_unavailable: list[dict[str, str]] = []
     for entry in unavailable:
         if isinstance(entry, str):
