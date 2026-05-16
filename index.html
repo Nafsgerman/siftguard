@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SIFTGuard — Forensic AI Evaluation Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Google+Sans+Display:wght@400;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --blue: #1a73e8;
+    --blue-light: #e8f0fe;
+    --blue-dark: #1557b0;
+    --green: #1e8e3e;
+    --green-light: #e6f4ea;
+    --red: #d93025;
+    --red-light: #fce8e6;
+    --amber: #f9ab00;
+    --amber-light: #fef7e0;
+    --gray-50: #f8f9fa;
+    --gray-100: #f1f3f4;
+    --gray-200: #e8eaed;
+    --gray-400: #bdc1c6;
+    --gray-600: #80868b;
+    --gray-800: #3c4043;
+    --gray-900: #202124;
+    --white: #ffffff;
+    --shadow-sm: 0 1px 2px 0 rgba(60,64,67,.3), 0 1px 3px 1px rgba(60,64,67,.15);
+    --shadow-md: 0 1px 3px 0 rgba(60,64,67,.3), 0 4px 8px 3px rgba(60,64,67,.15);
+    --radius: 8px;
+    --radius-lg: 12px;
+    --font: 'Google Sans', sans-serif;
+    --font-mono: 'Roboto Mono', monospace;
+    --font-display: 'Google Sans Display', sans-serif;
+  }
+
+  body { font-family: var(--font); background: var(--gray-50); color: var(--gray-900); min-height: 100vh; }
+
+  .header {
+    background: var(--white); border-bottom: 1px solid var(--gray-200);
+    padding: 0 24px; display: flex; align-items: center; height: 64px;
+    position: sticky; top: 0; z-index: 100; box-shadow: 0 1px 3px rgba(60,64,67,.15);
+  }
+  .header-logo { display: flex; align-items: center; gap: 10px; }
+  .header-logo-mark {
+    width: 32px; height: 32px; background: var(--blue); border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .header-logo-mark svg { width: 18px; height: 18px; fill: white; }
+  .header-title { font-family: var(--font-display); font-size: 20px; font-weight: 700; color: var(--gray-900); letter-spacing: -.3px; }
+  .header-title span { color: var(--blue); }
+  .header-meta { margin-left: auto; display: flex; align-items: center; gap: 16px; }
+  .header-tag { font-family: var(--font-mono); font-size: 11px; color: var(--gray-600); background: var(--gray-100); padding: 4px 8px; border-radius: 4px; border: 1px solid var(--gray-200); }
+  .header-deadline { font-size: 13px; color: var(--gray-600); }
+  .header-deadline strong { color: var(--red); font-weight: 500; }
+  .test-pill { font-size: 12px; font-weight: 500; padding: 4px 10px; border-radius: 20px; border: 1.5px solid var(--blue); color: var(--blue); background: var(--blue-light); }
+
+  .layout { max-width: 1080px; margin: 0 auto; padding: 24px 24px 48px; }
+  .accordion { display: flex; flex-direction: column; gap: 8px; }
+
+  details {
+    background: var(--white); border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm); border: 1px solid var(--gray-200); overflow: hidden;
+  }
+  details[open] { box-shadow: var(--shadow-md); border-color: var(--gray-400); }
+  details[open] summary { border-bottom: 1px solid var(--gray-200); }
+
+  summary {
+    display: flex; align-items: center; padding: 16px 20px; cursor: pointer;
+    list-style: none; user-select: none; gap: 12px;
+  }
+  summary::-webkit-details-marker { display: none; }
+  summary:hover { background: var(--gray-50); }
+
+  .panel-num { font-size: 11px; font-weight: 500; color: var(--gray-600); font-family: var(--font-mono); min-width: 20px; }
+  .panel-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .panel-icon svg { width: 16px; height: 16px; }
+  .icon-blue { background: var(--blue-light); } .icon-blue svg { fill: var(--blue); }
+  .icon-green { background: var(--green-light); } .icon-green svg { fill: var(--green); }
+  .icon-amber { background: var(--amber-light); } .icon-amber svg { fill: #b06000; }
+  .icon-red { background: var(--red-light); } .icon-red svg { fill: var(--red); }
+  .icon-gray { background: var(--gray-100); } .icon-gray svg { fill: var(--gray-600); }
+  .icon-teal { background: #e6f7f4; } .icon-teal svg { fill: #0f7a6e; }
+  .icon-purple { background: #f0eefe; } .icon-purple svg { fill: #6b4de8; }
+
+  .panel-label { flex: 1; }
+  .panel-label h2 { font-size: 15px; font-weight: 500; color: var(--gray-900); }
+  .panel-label p { font-size: 12px; color: var(--gray-600); margin-top: 1px; }
+  .summary-right { display: flex; align-items: center; gap: 10px; }
+
+  .badge { font-size: 11px; font-weight: 500; padding: 3px 8px; border-radius: 20px; }
+  .badge-blue { background: var(--blue-light); color: var(--blue-dark); }
+  .badge-green { background: var(--green-light); color: var(--green); }
+  .badge-amber { background: var(--amber-light); color: #8a5400; }
+  .badge-red { background: var(--red-light); color: var(--red); }
+  .badge-gray { background: var(--gray-100); color: var(--gray-800); }
+
+  .chevron { width: 20px; height: 20px; flex-shrink: 0; color: var(--gray-600); transition: transform .25s cubic-bezier(.4,0,.2,1); }
+  details[open] .chevron { transform: rotate(180deg); }
+  .panel-body { padding: 20px; }
+
+  /* Panel 1 */
+  .case-tabs { display: flex; gap: 4px; margin-bottom: 20px; }
+  .case-tab { padding: 7px 16px; border-radius: 20px; font-size: 13px; font-weight: 500; cursor: pointer; border: 1.5px solid var(--gray-200); background: var(--white); color: var(--gray-600); font-family: var(--font); }
+  .case-tab.active { background: var(--blue); color: white; border-color: var(--blue); }
+  .case-tab:hover:not(.active) { background: var(--gray-100); }
+
+  .f1-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+  .f1-card { background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: var(--radius); padding: 14px 16px; position: relative; overflow: hidden; }
+  .f1-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; }
+  .f1-card.perfect::before { background: var(--green); }
+  .f1-card.good::before { background: var(--blue); }
+  .f1-card.mid::before { background: var(--amber); }
+  .f1-card.low::before { background: var(--red); }
+  .f1-card.zero::before { background: var(--gray-400); }
+  .f1-orch { font-size: 12px; color: var(--gray-600); margin-bottom: 6px; font-weight: 500; }
+  .f1-score { font-family: var(--font-display); font-size: 28px; font-weight: 700; letter-spacing: -1px; }
+  .f1-score.perfect { color: var(--green); }
+  .f1-score.good { color: var(--blue); }
+  .f1-score.mid { color: #b06000; }
+  .f1-score.low { color: var(--red); }
+  .f1-score.zero { color: var(--gray-400); }
+  .f1-bar { margin-top: 8px; height: 3px; background: var(--gray-200); border-radius: 2px; overflow: hidden; }
+  .f1-bar-fill { height: 100%; border-radius: 2px; }
+
+  .case-note { margin-top: 14px; padding: 10px 14px; background: var(--amber-light); border-left: 3px solid var(--amber); border-radius: 0 var(--radius) var(--radius) 0; font-size: 12px; color: #7a5000; }
+  .gaps-banner { background: var(--amber-light); border: 1px solid #f9c641; border-radius: var(--radius); padding: 12px 16px; margin-bottom: 16px; font-size: 12px; color: #7a5000; }
+  .gaps-banner strong { font-weight: 500; display: block; margin-bottom: 4px; }
+  .gaps-banner ul { padding-left: 16px; }
+  .gaps-banner li { margin-top: 3px; }
+
+  /* Panel 7 */
+  .mean-hero { display: flex; gap: 16px; align-items: stretch; margin-bottom: 20px; }
+  .mean-card { flex: 1; background: var(--blue-light); border-radius: var(--radius-lg); padding: 16px 20px; border: 1px solid #c5d9f9; }
+  .mean-card-label { font-size: 11px; color: var(--blue-dark); font-weight: 500; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 4px; }
+  .mean-card-value { font-family: var(--font-display); font-size: 42px; font-weight: 700; color: var(--blue); letter-spacing: -2px; line-height: 1; }
+  .mean-card-orch { font-size: 13px; color: var(--blue-dark); margin-top: 4px; font-weight: 500; }
+  .mean-card-runner { flex: 0 0 200px; background: var(--white); border-radius: var(--radius-lg); padding: 16px 20px; border: 1px solid var(--gray-200); }
+
+  .rank-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  .rank-table th { text-align: left; font-size: 11px; font-weight: 500; color: var(--gray-600); padding: 6px 8px; text-transform: uppercase; letter-spacing: .4px; border-bottom: 1px solid var(--gray-200); }
+  .rank-table td { padding: 10px 8px; border-bottom: 1px solid var(--gray-100); vertical-align: middle; }
+  .rank-table tr:last-child td { border-bottom: none; }
+  .rank-num { font-size: 11px; font-family: var(--font-mono); color: var(--gray-600); width: 20px; }
+  .rank-name { font-weight: 500; }
+  .rank-bar-cell { width: 140px; }
+  .rank-bar-bg { background: var(--gray-100); height: 6px; border-radius: 3px; overflow: hidden; }
+  .rank-bar-inner { height: 100%; border-radius: 3px; background: var(--blue); }
+  .rank-score { font-family: var(--font-mono); font-size: 13px; font-weight: 500; text-align: right; }
+
+  /* Panel 8 */
+  .spoliation-hero {
+    background: #f0faf2;
+    border: 1px solid #a8d5b5;
+    border-radius: var(--radius-lg);
+    padding: 20px 24px; margin-bottom: 20px;
+    display: flex; align-items: center; gap: 24px;
+  }
+  .spoliation-shield {
+    width: 56px; height: 56px; background: white; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    border: 2px solid var(--green); flex-shrink: 0;
+    box-shadow: 0 0 0 4px rgba(30,142,62,.1);
+  }
+  .spoliation-shield svg { width: 28px; height: 28px; fill: var(--green); }
+  .spoliation-stats { display: flex; gap: 40px; }
+  .spoliation-stat-val { font-family: var(--font-display); font-size: 36px; font-weight: 700; letter-spacing: -1.5px; color: var(--green); line-height: 1; }
+  .spoliation-stat-val.blocked { color: var(--blue); }
+  .spoliation-stat-val.zero { color: var(--gray-800); }
+  .spoliation-stat-label { font-size: 12px; color: var(--gray-600); margin-top: 3px; font-weight: 500; }
+
+  .audit-label { font-size: 12px; font-weight: 500; color: var(--gray-600); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 10px; }
+  .audit-table-wrap { border: 1px solid var(--gray-200); border-radius: var(--radius); overflow: hidden; }
+  .audit-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .audit-table th { background: var(--gray-50); border-bottom: 1px solid var(--gray-200); padding: 8px 12px; text-align: left; font-size: 11px; font-weight: 500; color: var(--gray-600); text-transform: uppercase; letter-spacing: .4px; white-space: nowrap; }
+  .audit-table td { padding: 10px 12px; border-bottom: 1px solid var(--gray-100); vertical-align: middle; }
+  .audit-table tr:last-child td { border-bottom: none; }
+  .audit-table tr:hover td { background: var(--gray-50); }
+  .mono { font-family: var(--font-mono); font-size: 12px; }
+  .op-badge { font-size: 11px; font-weight: 500; padding: 2px 8px; border-radius: 4px; }
+  .op-delete { background: var(--red-light); color: var(--red); }
+  .op-update { background: var(--amber-light); color: #8a5400; }
+  .op-truncate { background: #fce4ec; color: #b0003a; }
+  .trigger-err { font-size: 11px; font-family: var(--font-mono); color: var(--red); background: var(--red-light); padding: 2px 6px; border-radius: 4px; white-space: nowrap; }
+  .audit-moat-note { margin-top: 14px; display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px; background: var(--green-light); border-radius: var(--radius); border: 1px solid #a8d5b5; }
+  .audit-moat-note svg { width: 16px; height: 16px; fill: var(--green); flex-shrink: 0; margin-top: 1px; }
+  .audit-moat-note p { font-size: 12px; color: #145228; line-height: 1.5; }
+  .code-pill { font-family: var(--font-mono); font-size: 11px; background: rgba(0,0,0,.06); padding: 1px 4px; border-radius: 3px; }
+
+  /* Generic */
+  .placeholder-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
+  .placeholder-card { background: var(--gray-50); border: 1px dashed var(--gray-400); border-radius: var(--radius); padding: 16px; }
+  .placeholder-card h4 { font-size: 13px; font-weight: 500; color: var(--gray-800); margin-bottom: 6px; }
+  .placeholder-card p { font-size: 12px; color: var(--gray-600); line-height: 1.6; }
+  .dataset-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .dataset-block { background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: var(--radius); padding: 14px; }
+  .dataset-block h4 { font-size: 12px; font-weight: 500; color: var(--gray-600); margin-bottom: 10px; text-transform: uppercase; letter-spacing: .4px; }
+  .dataset-block p { font-size: 12px; color: var(--gray-600); line-height: 1.6; margin-top: 8px; }
+
+  .dash-footer { margin-top: 24px; padding: 12px 0; border-top: 1px solid var(--gray-200); display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--gray-600); }
+  .dash-footer a { color: var(--blue); text-decoration: none; }
+  .dash-footer a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-logo">
+    <div class="header-logo-mark">
+      <svg viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m-5 9A9 9 0 1 1 12 3a9 9 0 0 1 0 18z"/></svg>
+    </div>
+    <span class="header-title">SIFT<span>Guard</span></span>
+  </div>
+  <div class="header-meta">
+    <span class="header-tag">v1.19.1-task125-test002-baseline</span>
+    <span class="header-deadline">Deadline: <strong>June 15</strong></span>
+    <span class="test-pill">~229 passing</span>
+  </div>
+</header>
+
+<main class="layout">
+  <div class="accordion">
+
+    <!-- PANEL 1 — Accuracy [OPEN] -->
+    <details open id="panel-1">
+      <summary>
+        <span class="panel-num">01</span>
+        <div class="panel-icon icon-blue">
+          <svg viewBox="0 0 24 24"><path d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/></svg>
+        </div>
+        <div class="panel-label">
+          <h2>Accuracy — Real F1 Scores</h2>
+          <p>Per-orchestrator detection accuracy across both test datasets</p>
+        </div>
+        <div class="summary-right">
+          <span class="badge badge-green">T13 + T12.5 Verified</span>
+          <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+      </summary>
+      <div class="panel-body">
+        <div class="case-tabs">
+          <button class="case-tab active" onclick="switchCase('001',this)">TEST-001</button>
+          <button class="case-tab" onclick="switchCase('002',this)">TEST-002 (NIST CFReDS)</button>
+        </div>
+        <div id="case-001">
+          <div class="f1-grid">
+            <div class="f1-card perfect"><div class="f1-orch">Native Claude</div><div class="f1-score perfect">1.000</div><div class="f1-bar"><div class="f1-bar-fill" style="width:100%;background:var(--green)"></div></div></div>
+            <div class="f1-card perfect"><div class="f1-orch">OpenAI FC</div><div class="f1-score perfect">1.000</div><div class="f1-bar"><div class="f1-bar-fill" style="width:100%;background:var(--green)"></div></div></div>
+            <div class="f1-card perfect"><div class="f1-orch">ClaudeCode</div><div class="f1-score perfect">1.000</div><div class="f1-bar"><div class="f1-bar-fill" style="width:100%;background:var(--green)"></div></div></div>
+            <div class="f1-card mid"><div class="f1-orch">LangGraph</div><div class="f1-score mid">0.750</div><div class="f1-bar"><div class="f1-bar-fill" style="width:75%;background:var(--amber)"></div></div></div>
+            <div class="f1-card low"><div class="f1-orch">Gemini</div><div class="f1-score low">0.250</div><div class="f1-bar"><div class="f1-bar-fill" style="width:25%;background:var(--red)"></div></div></div>
+          </div>
+          <div class="case-note">Gemini 0.250 confirmed genuine hallucination — not tool failure. LangGraph 0.750 is reasoning gap, not environment gap.</div>
+        </div>
+        <div id="case-002" style="display:none">
+          <div class="gaps-banner">
+            <strong>Known gaps — carry to T15</strong>
+            <ul>
+              <li>LangGraph + ClaudeCode 0.000 = tool access failure on raw disk image, not reasoning failure — ADR-006</li>
+              <li>Scorer running in report-text fallback mode (not audit-DB mode) — ADR-007</li>
+            </ul>
+          </div>
+          <div class="f1-grid">
+            <div class="f1-card good"><div class="f1-orch">OpenAI FC</div><div class="f1-score good">0.800</div><div class="f1-bar"><div class="f1-bar-fill" style="width:80%;background:var(--blue)"></div></div></div>
+            <div class="f1-card mid"><div class="f1-orch">Native Claude</div><div class="f1-score mid">0.600</div><div class="f1-bar"><div class="f1-bar-fill" style="width:60%;background:var(--amber)"></div></div></div>
+            <div class="f1-card low"><div class="f1-orch">Gemini</div><div class="f1-score low">0.400</div><div class="f1-bar"><div class="f1-bar-fill" style="width:40%;background:var(--red)"></div></div></div>
+            <div class="f1-card zero"><div class="f1-orch">LangGraph</div><div class="f1-score zero">0.000</div><div class="f1-bar"><div class="f1-bar-fill" style="width:0%;background:var(--gray-400)"></div></div></div>
+            <div class="f1-card zero"><div class="f1-orch">ClaudeCode</div><div class="f1-score zero">0.000</div><div class="f1-bar"><div class="f1-bar-fill" style="width:0%;background:var(--gray-400)"></div></div></div>
+          </div>
+        </div>
+      </div>
+    </details>
+
+    <!-- PANEL 7 — Models [OPEN] -->
+    <details open id="panel-7">
+      <summary>
+        <span class="panel-num">07</span>
+        <div class="panel-icon icon-teal">
+          <svg viewBox="0 0 24 24"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+        </div>
+        <div class="panel-label">
+          <h2>Model Comparison — Cross-Dataset Mean F1</h2>
+          <p>Ranking across TEST-001 + TEST-002 NIST CFReDS</p>
+        </div>
+        <div class="summary-right">
+          <span class="badge badge-blue">Leader: OpenAI FC 0.900</span>
+          <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+      </summary>
+      <div class="panel-body">
+        <div class="mean-hero">
+          <div class="mean-card">
+            <div class="mean-card-label">Cross-dataset leader</div>
+            <div class="mean-card-value">0.900</div>
+            <div class="mean-card-orch">OpenAI Function Calling</div>
+          </div>
+          <div class="mean-card-runner">
+            <div style="font-size:11px;color:var(--gray-600);font-weight:500;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">Runner-up</div>
+            <div style="font-family:var(--font-display);font-size:30px;font-weight:700;color:var(--gray-900);letter-spacing:-1px;line-height:1;">0.800</div>
+            <div style="font-size:13px;color:var(--gray-600);margin-top:4px;font-weight:500;">Native Claude</div>
+          </div>
+        </div>
+        <table class="rank-table">
+          <thead>
+            <tr>
+              <th>#</th><th>Orchestrator</th><th>TEST-001</th><th>TEST-002</th><th class="rank-bar-cell">Mean F1</th><th style="text-align:right">Mean</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="rank-num">1</td><td class="rank-name">OpenAI FC</td>
+              <td><span style="color:var(--green);font-family:var(--font-mono);font-size:13px;font-weight:500;">1.000</span></td>
+              <td><span style="color:var(--blue);font-family:var(--font-mono);font-size:13px;font-weight:500;">0.800</span></td>
+              <td class="rank-bar-cell"><div class="rank-bar-bg"><div class="rank-bar-inner" style="width:90%"></div></div></td>
+              <td class="rank-score" style="color:var(--blue)">0.900</td>
+            </tr>
+            <tr>
+              <td class="rank-num">2</td><td class="rank-name">Native Claude</td>
+              <td><span style="color:var(--green);font-family:var(--font-mono);font-size:13px;font-weight:500;">1.000</span></td>
+              <td><span style="color:#b06000;font-family:var(--font-mono);font-size:13px;font-weight:500;">0.600</span></td>
+              <td class="rank-bar-cell"><div class="rank-bar-bg"><div class="rank-bar-inner" style="width:80%"></div></div></td>
+              <td class="rank-score">0.800</td>
+            </tr>
+            <tr>
+              <td class="rank-num">3</td><td class="rank-name">ClaudeCode</td>
+              <td><span style="color:var(--green);font-family:var(--font-mono);font-size:13px;font-weight:500;">1.000</span></td>
+              <td><span style="color:var(--gray-400);font-family:var(--font-mono);font-size:13px;font-weight:500;">0.000</span></td>
+              <td class="rank-bar-cell"><div class="rank-bar-bg"><div class="rank-bar-inner" style="width:50%"></div></div></td>
+              <td class="rank-score">0.500</td>
+            </tr>
+            <tr>
+              <td class="rank-num">4</td><td class="rank-name">LangGraph</td>
+              <td><span style="color:#b06000;font-family:var(--font-mono);font-size:13px;font-weight:500;">0.750</span></td>
+              <td><span style="color:var(--gray-400);font-family:var(--font-mono);font-size:13px;font-weight:500;">0.000</span></td>
+              <td class="rank-bar-cell"><div class="rank-bar-bg"><div class="rank-bar-inner" style="width:37.5%"></div></div></td>
+              <td class="rank-score">0.375</td>
+            </tr>
+            <tr>
+              <td class="rank-num">5</td><td class="rank-name">Gemini</td>
+              <td><span style="color:var(--red);font-family:var(--font-mono);font-size:13px;font-weight:500;">0.250</span></td>
+              <td><span style="color:var(--red);font-family:var(--font-mono);font-size:13px;font-weight:500;">0.400</span></td>
+              <td class="rank-bar-cell"><div class="rank-bar-bg"><div class="rank-bar-inner" style="width:32.5%"></div></div></td>
+              <td class="rank-score" style="color:var(--red)">0.325</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="case-note" style="margin-top:14px;">ClaudeCode + LangGraph 0.000 on TEST-002 = tool access failure on raw disk image, not reasoning failure. Generalization gap — ADR-006 §generalization.</div>
+      </div>
+    </details>
+
+    <!-- PANEL 8 — Spoliation [COLLAPSED — first collapsed] -->
+    <details id="panel-8">
+      <summary>
+        <span class="panel-num">08</span>
+        <div class="panel-icon icon-green">
+          <svg viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+        </div>
+        <div class="panel-label">
+          <h2>Spoliation Evidence — Audit Integrity</h2>
+          <p>Append-only audit DB moat · triggered mutation blocks logged immutably</p>
+        </div>
+        <div class="summary-right">
+          <span class="badge badge-green">100% Integrity</span>
+          <span class="badge badge-blue">3 Blocked</span>
+          <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+      </summary>
+      <div class="panel-body">
+        <div class="spoliation-hero">
+          <div class="spoliation-shield">
+            <svg viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+          </div>
+          <div class="spoliation-stats">
+            <div class="spoliation-stat">
+              <div class="spoliation-stat-val">100%</div>
+              <div class="spoliation-stat-label">Audit integrity</div>
+            </div>
+            <div class="spoliation-stat">
+              <div class="spoliation-stat-val blocked">3</div>
+              <div class="spoliation-stat-label">Mutation attempts blocked</div>
+            </div>
+            <div class="spoliation-stat">
+              <div class="spoliation-stat-val zero">0</div>
+              <div class="spoliation-stat-label">Mutations succeeded</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="audit-label">Blocked mutation receipts</div>
+        <div class="audit-table-wrap">
+          <table class="audit-table">
+            <thead>
+              <tr>
+                <th>Timestamp (UTC)</th>
+                <th>Orchestrator</th>
+                <th>Attempted op</th>
+                <th>Table</th>
+                <th>Trigger error</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="mono">2025-06-01 09:14:33</td>
+                <td><span class="badge badge-amber">LangGraph</span></td>
+                <td><span class="op-badge op-delete">DELETE</span></td>
+                <td class="mono">audit_events</td>
+                <td><span class="trigger-err">trg_immutable_audit</span></td>
+              </tr>
+              <tr>
+                <td class="mono">2025-06-01 11:02:07</td>
+                <td><span class="badge badge-blue">OpenAI FC</span></td>
+                <td><span class="op-badge op-update">UPDATE</span></td>
+                <td class="mono">evidence_chain</td>
+                <td><span class="trigger-err">trg_immutable_audit</span></td>
+              </tr>
+              <tr>
+                <td class="mono">2025-06-02 14:55:41</td>
+                <td><span class="badge badge-gray">Gemini</span></td>
+                <td><span class="op-badge op-truncate">TRUNCATE</span></td>
+                <td class="mono">audit_events</td>
+                <td><span class="trigger-err">trg_immutable_audit</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="audit-moat-note">
+          <svg viewBox="0 0 24 24"><path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <p><strong>Append-only guarantee:</strong> All write ops to <span class="code-pill">audit_events</span> and <span class="code-pill">evidence_chain</span> pass through <span class="code-pill">trg_immutable_audit</span>. Any agent attempting row mutation triggers immediate rollback — and that event is itself immutable. Chain-of-custody is cryptographically verifiable at judgment.</p>
+        </div>
+      </div>
+    </details>
+
+    <!-- PANEL 2 — Dataset Overview [COLLAPSED] -->
+    <details id="panel-2">
+      <summary>
+        <span class="panel-num">02</span>
+        <div class="panel-icon icon-blue">
+          <svg viewBox="0 0 24 24"><path d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>
+        </div>
+        <div class="panel-label">
+          <h2>Dataset Overview</h2>
+          <p>TEST-001 + TEST-002 NIST CFReDS · SCHARDT.img mount details</p>
+        </div>
+        <div class="summary-right">
+          <span class="badge badge-gray">2 Datasets</span>
+          <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+      </summary>
+      <div class="panel-body">
+        <div class="dataset-row">
+          <div class="dataset-block">
+            <h4>TEST-001</h4>
+            <p>Internal reference dataset. Controlled scenario. 5 orchestrators evaluated. 3× perfect F1 (1.000). Gemini hallucination confirmed genuine.</p>
+          </div>
+          <div class="dataset-block">
+            <h4>TEST-002 — NIST CFReDS</h4>
+            <p>SCHARDT.img mounted at offset <span class="mono">63×512</span> — no E01 conversion needed. Raw FAT partition. LangGraph + ClaudeCode failed on tool access, not reasoning.</p>
+          </div>
+        </div>
+      </div>
+    </details>
+
+    <!-- PANEL 3 — Orchestrator Config [COLLAPSED] -->
+    <details id="panel-3">
+      <summary>
+        <span class="panel-num">03</span>
+        <div class="panel-icon icon-purple">
+          <svg viewBox="0 0 24 24"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        </div>
+        <div class="panel-label">
+          <h2>Orchestrator Configuration</h2>
+          <p>Tool bindings, API configs, and runtime environments</p>
+        </div>
+        <div class="summary-right">
+          <span class="badge badge-gray">5 Orchestrators</span>
+          <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+      </summary>
+      <div class="panel-body">
+        <div class="placeholder-grid">
+          <div class="placeholder-card"><h4>Native Claude</h4><p>Direct Anthropic API · tools: filesystem, hash, timeline · prompt caching on all 4 endpoints (explain, assess, extract, modernize)</p></div>
+          <div class="placeholder-card"><h4>OpenAI FC</h4><p>OpenAI function-calling API · matched tool surface · no caching</p></div>
+          <div class="placeholder-card"><h4>LangGraph</h4><p>Graph-based orchestration · TEST-002 tool binding gap — raw disk access not wired to graph nodes</p></div>
+          <div class="placeholder-card"><h4>Gemini</h4><p>Gemini Pro API · 1M context window · hallucination on TEST-001 confirmed genuine</p></div>
+          <div class="placeholder-card"><h4>ClaudeCode</h4><p>CLI tool mode · TEST-002 disk image path resolution failure · TEST-001 perfect score</p></div>
+        </div>
+      </div>
+    </details>
+
+    <!-- PANEL 4 — Evidence Chain [COLLAPSED] -->
+    <details id="panel-4">
+      <summary>
+        <span class="panel-num">04</span>
+        <div class="panel-icon icon-amber">
+          <svg viewBox="0 0 24 24"><path d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+        </div>
+        <div class="panel-label">
+          <h2>Evidence Chain</h2>
+          <p>Hash verification, timeline reconstruction, artifact provenance</p>
+        </div>
+        <div class="summary-right">
+          <span class="badge badge-green">Chain intact</span>
+          <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+      </summary>
+      <div class="panel-body">
+        <div class="placeholder-card" style="border-style:solid;border-color:var(--gray-200)">
+          <h4>T14 placeholder — detail in T15</h4>
+          <p>Hash log, artifact manifest, and timeline viewer to be wired in T15. SCHARDT.img SHA-256 verified at mount. Audit DB provides immutable provenance trail.</p>
+        </div>
+      </div>
+    </details>
+
+    <!-- PANEL 5 — Evaluation Methodology [COLLAPSED] -->
+    <details id="panel-5">
+      <summary>
+        <span class="panel-num">05</span>
+        <div class="panel-icon icon-gray">
+          <svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+        </div>
+        <div class="panel-label">
+          <h2>Evaluation Methodology</h2>
+          <p>Scorer design, F1 computation, ground truth construction</p>
+        </div>
+        <div class="summary-right">
+          <span class="badge badge-amber">Scorer: fallback mode</span>
+          <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+      </summary>
+      <div class="panel-body">
+        <div class="gaps-banner">
+          <strong>Known gap — carry to T15 / ADR-007</strong>
+          <ul><li>Scorer running in report-text fallback mode, not audit-DB mode. T12 Lock B partial.</li></ul>
+        </div>
+        <div class="placeholder-card" style="border-style:solid;border-color:var(--gray-200)">
+          <h4>Workbench eval suite — extract-v2.2</h4>
+          <p>Sonnet vs Haiku comparison complete. F1 computed against NIST CFReDS ground truth. Report-text scorer active pending DB mode migration.</p>
+        </div>
+      </div>
+    </details>
+
+    <!-- PANEL 6 — Known Limitations [COLLAPSED] -->
+    <details id="panel-6">
+      <summary>
+        <span class="panel-num">06</span>
+        <div class="panel-icon icon-red">
+          <svg viewBox="0 0 24 24"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+        </div>
+        <div class="panel-label">
+          <h2>Known Limitations</h2>
+          <p>Honest gaps carried from T12.5 / T13 — not blocking T14</p>
+        </div>
+        <div class="summary-right">
+          <span class="badge badge-red">3 Open</span>
+          <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+      </summary>
+      <div class="panel-body">
+        <div class="placeholder-grid">
+          <div class="placeholder-card" style="border-color:var(--red);border-style:solid"><h4>Scorer fallback mode</h4><p>Report-text path active. Audit-DB scorer not yet wired. ADR-007 — resolve in T15.</p></div>
+          <div class="placeholder-card" style="border-color:var(--amber);border-style:solid"><h4>LangGraph + ClaudeCode 0.000</h4><p>Tool config failure on raw disk image — not reasoning failure. ADR-006 §generalization.</p></div>
+          <div class="placeholder-card" style="border-color:var(--gray-400);border-style:solid"><h4>Panel 7 visual verification</h4><p>Previously curl-only. T14 visual confirm complete — this dashboard is the fix.</p></div>
+        </div>
+      </div>
+    </details>
+
+  </div>
+
+  <div class="dash-footer">
+    <span>SIFTGuard · <a href="https://github.com/Nafsgerman/siftguard" target="_blank">github.com/Nafsgerman/siftguard</a> · VM: <span style="font-family:var(--font-mono);font-size:11px;">sansforensics@192.168.64.5:/cases/TEST-001/siftguard/</span></span>
+    <span>T14 · v1.19.1-task125-test002-baseline · ~229 passing · Due June 15</span>
+  </div>
+</main>
+
+<script>
+function switchCase(id, btn) {
+  document.getElementById('case-001').style.display = id === '001' ? 'block' : 'none';
+  document.getElementById('case-002').style.display = id === '002' ? 'block' : 'none';
+  document.querySelectorAll('.case-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+}
+</script>
+</body>
+</html>
