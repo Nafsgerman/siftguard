@@ -1,0 +1,103 @@
+{
+  "panel_7": {
+    "data": {
+      "siftguard-v2": {
+        "runs": [
+          {
+            "f1": 1.0,
+            "timestamp": "20260516_095445",
+            "gt_version": "1.1.0",
+            "applicable_count": 4,
+            "tp": 4,
+            "fn": 0
+          }
+        ],
+        "mean": 1.0,
+        "n": 1,
+        "case_scores": {
+          "TEST-001": 1.0
+        }
+      },
+      "baseline": {
+        "mean": 1.0,
+        "runs": [
+          {
+            "f1": 1.0,
+            "timestamp": "20260516_095445",
+            "gt_version": "1.1.0",
+            "applicable_count": 4,
+            "not_applicable_count": 0
+          }
+        ]
+      },
+      "siftguard-langgraph": {
+        "runs": [
+          {
+            "f1": 0.75,
+            "timestamp": "20260510_174657",
+            "gt_version": "1.1.0",
+            "applicable_count": 4,
+            "tp": 3,
+            "fn": 1
+          }
+        ],
+        "mean": 0.75,
+        "n": 1,
+        "case_scores": {
+          "TEST-001": 0.75
+        }
+      },
+      "siftguard-claudecode": {
+        "runs": [
+          {
+            "f1": 1.0,
+            "timestamp": "20260514_073729",
+            "gt_version": "1.1.0",
+            "applicable_count": 4,
+            "tp": 4,
+            "fn": 0
+          }
+        ],
+        "mean": 1.0,
+        "n": 1,
+        "case_scores": {
+          "TEST-001": 1.0
+        }
+      },
+      "siftguard-openai-fc": {
+        "runs": [
+          {
+            "f1": 1.0,
+            "timestamp": "20260516_154212",
+            "gt_version": "1.1.0",
+            "applicable_count": 4,
+            "tp": 4,
+            "fn": 0
+          }
+        ],
+        "mean": 1.0,
+        "n": 1,
+        "case_scores": {
+          "TEST-001": 1.0
+        }
+      },
+      "siftguard-gemini": {
+        "runs": [
+          {
+            "f1": 0.25,
+            "timestamp": "20260516_154448",
+            "gt_version": "1.1.0",
+            "applicable_count": 4,
+            "tp": 1,
+            "fn": 3
+          }
+        ],
+        "mean": 0.25,
+        "n": 1,
+        "case_scores": {
+          "TEST-001": 0.25
+        }
+      }
+    }
+  }
+}
