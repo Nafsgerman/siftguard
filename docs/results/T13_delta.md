@@ -19,5 +19,5 @@
 
 - Native Loop, OpenAI FC, Claude Code all achieve **F1=1.000** on TEST-001
 - LangGraph misses `usbclient.exe` — 0.750
-- Gemini 2.5 Pro misses 3/4 IOCs — result JSON lacks full report text; MD report not generated
+- Gemini 2.5 Pro F1=0.250 confirmed genuine — hallucinated wrong C2 IP (192.168.1.107:4444 vs actual 172.16.4.10:8080), missed ftusbsrvc.exe and usbclient.exe entirely. Measurement is accurate.
 - Single-variable discipline holds: orchestration is the only variable across all 5 runs
