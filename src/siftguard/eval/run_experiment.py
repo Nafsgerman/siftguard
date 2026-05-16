@@ -110,12 +110,12 @@ def _write_raw_result(agent_id: str, case_id: str, payload: Any, ts: str) -> Pat
 
 
 async def _run(agent_id: str, case_id: str, gt_version: str) -> int:
-    from siftguard.cases.loader import load_manifest
+    from siftguard.cases.loader import get_case as load_manifest
     from siftguard.eval.scorer import score_run
     from siftguard.eval.panel_7_writer import update_panel_7
 
     manifest = load_manifest(case_id)
-    evidence = {ef.type: ef.path for ef in manifest.evidence_files}
+    evidence = {ef["type"]: ef["path"] for ef in manifest.evidence_files}
     briefing = manifest.briefing if hasattr(manifest, "briefing") and manifest.briefing \
         else f"Investigate evidence for case {case_id}. Report all IOCs."
     audit_db = _audit_db_for(case_id)
