@@ -343,11 +343,11 @@ async def orchestrator_comparison(db_id: str, case: str = "all"):
             d = _json.loads(data_file.read_text())
             p7 = d.get("panel_7", {}).get("data", {})
             mapping = {
-                "siftguard-v2":         p7.get("baseline", {}).get("mean"),
-                "siftguard-langgraph":  p7.get("langgraph", {}).get("mean"),
-                "siftguard-openai-fc":  p7.get("openai_fc", {}).get("mean"),
-                "siftguard-gemini":     p7.get("gemini", {}).get("mean"),
-                "siftguard-claudecode": p7.get("claudecode", {}).get("mean"),
+                "siftguard-v2":         (p7.get("siftguard-v2") or p7.get("baseline", {})).get("mean"),
+                "siftguard-langgraph":  (p7.get("siftguard-langgraph") or p7.get("langgraph", {})).get("mean"),
+                "siftguard-openai-fc":  (p7.get("siftguard-openai-fc") or p7.get("openai_fc", {})).get("mean"),
+                "siftguard-gemini":     (p7.get("siftguard-gemini") or p7.get("gemini", {})).get("mean"),
+                "siftguard-claudecode": (p7.get("siftguard-claudecode") or p7.get("claudecode", {})).get("mean"),
             }
             for aid, score in mapping.items():
                 if score is not None:
