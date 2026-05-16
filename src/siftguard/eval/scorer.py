@@ -20,9 +20,9 @@ from typing import Callable, Optional
 # ---------------------------------------------------------------------------
 
 IOC_PRODUCING_TOOLS: frozenset[str] = frozenset({
-    "windows_psscan",
-    "windows_netscan",
-    "windows_malfind",
+    "vol_pslist", "windows_psscan", "vol_psscan",
+    "vol_netscan", "windows_netscan",
+    "vol_malfind", "windows_malfind",
     "windows_registry_printkey",
     "windows_mftscan",
     "windows_mftscan_ads",
@@ -172,8 +172,16 @@ def _extract_dlllist(rows: list[dict]) -> set[str]:
 
 
 EXTRACTORS: dict[str, Callable[[list[dict]], set[str]]] = {
+    "vol_pslist": _extract_psscan,
+    "vol_psscan": _extract_psscan,
+    "vol_netscan": _extract_netscan,
+    "vol_malfind": _extract_malfind,
+    "vol_pslist": _extract_psscan,
+    "vol_psscan": _extract_psscan,
     "windows_psscan": _extract_psscan,
+    "vol_netscan": _extract_netscan,
     "windows_netscan": _extract_netscan,
+    "vol_malfind": _extract_malfind,
     "windows_malfind": _extract_malfind,
     "windows_registry_printkey": _extract_registry,
     "windows_mftscan": _extract_mftscan,
@@ -216,7 +224,7 @@ def load_ground_truth(
 def _discover_output_column(cur: sqlite3.Cursor) -> str:
     cur.execute("PRAGMA table_info(auditentry)")
     cols = {row[1] for row in cur.fetchall()}
-    for candidate in ("tool_output", "output", "result", "data"):
+    for candidate in ("output_excerpt", "tool_output", "output", "result", "data"):
         if candidate in cols:
             return candidate
     raise RuntimeError(f"Cannot find tool output column in auditentry. Found: {cols}")
@@ -252,7 +260,13 @@ def extract_findings_from_db(
             continue
         try:
             parsed = json.loads(raw_output)
-            if isinstance(parsed, dict) and "rows" in parsed:
+            if isinstance(parsed, dict):
+                for key in ("findings", "rows", "results", "data"):
+                    if key in parsed:
+                        parsed = parsed[key]
+                        break
+            elif isinstance(parsed, dict) and "findings" in parsed:
+                parsed = parsed["findings"]
                 parsed = parsed["rows"]
             if isinstance(parsed, list):
                 found_keys.update(extractor(parsed))
