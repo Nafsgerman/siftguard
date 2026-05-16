@@ -50,7 +50,11 @@ def score_report_text(text: str, ioc_values: list[str]) -> tuple[float | None, i
     return tp / len(ioc_values), tp, fn
 
 
-def extract_report_text(result: dict) -> str:
+def extract_report_text(result) -> str:
+    if isinstance(result, str):
+        return result
+    if not isinstance(result, dict):
+        return str(result)
     for key in ("report", "raw", "output", "final_report"):
         val = result.get(key)
         if isinstance(val, str) and len(val) > 100:
