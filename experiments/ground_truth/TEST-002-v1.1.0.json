@@ -1,97 +1,36 @@
 {
-  "schema_version": "1.1.0",
   "case_id": "TEST-002",
-  "case_name": "NIST CFReDS Hacking Case",
+  "version": "1.1.0",
+  "description": "NIST CFReDS Hacking Case — Windows disk image SCHARDT.img",
+  "notes": "evidence_location uses filesystem/MFT tools since this is a disk image, not memory. Populate values from agent run results and NIST case documentation.",
   "iocs": [
     {
-      "ioc_id": "ioc-file-netstumbler",
+      "ioc_id": "file-001",
       "ioc_type": "file",
-      "expected": {
-        "filename_pattern": "*Network Stumbler*",
-        "artifact_type": "wireless_scanner"
-      },
-      "confidence_threshold": 0.80,
-      "evidence_location": "disk_only",
-      "rationale": "NetStumbler war-driving tool — filesystem + registry install evidence"
+      "value": "POPULATE_SUSPICIOUS_FILENAME_LOWER",
+      "evidence_location": ["windows_mftscan", "windows_filescan"],
+      "description": "Suspicious executable found in MFT — populate from mftscan output"
     },
     {
-      "ioc_id": "ioc-file-ethereal",
+      "ioc_id": "file-002",
       "ioc_type": "file",
-      "expected": {
-        "filename_pattern": "ethereal.exe",
-        "artifact_type": "packet_sniffer"
-      },
-      "confidence_threshold": 0.80,
-      "evidence_location": "disk_only",
-      "rationale": "Ethereal packet sniffer installed on suspect laptop"
+      "value": "POPULATE_SECOND_SUSPICIOUS_FILE",
+      "evidence_location": ["windows_mftscan", "windows_filescan"],
+      "description": "Second suspicious file if documented in NIST case"
     },
     {
-      "ioc_id": "ioc-file-cain",
-      "ioc_type": "file",
-      "expected": {
-        "filename_pattern": "Cain.exe",
-        "artifact_type": "password_cracker"
-      },
-      "confidence_threshold": 0.80,
-      "evidence_location": "disk_only",
-      "rationale": "Cain & Abel credential harvesting tool"
-    },
-    {
-      "ioc_id": "ioc-file-winpcap",
-      "ioc_type": "file",
-      "expected": {
-        "filename_pattern": "WinPcap*",
-        "artifact_type": "packet_capture_driver"
-      },
-      "confidence_threshold": 0.75,
-      "evidence_location": "disk_only",
-      "rationale": "WinPcap — packet capture prerequisite for Ethereal + Cain"
-    },
-    {
-      "ioc_id": "ioc-file-unix-hack-tgz",
-      "ioc_type": "file",
-      "expected": {
-        "filename_pattern": "unix_hack.tgz",
-        "artifact_type": "hacking_toolkit"
-      },
-      "confidence_threshold": 0.85,
-      "evidence_location": "disk_only",
-      "rationale": "Unix hacking toolkit archive recovered from disk"
-    },
-    {
-      "ioc_id": "ioc-registry-registered-owner",
+      "ioc_id": "reg-001",
       "ioc_type": "registry_key",
-      "expected": {
-        "key_path": "HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion",
-        "value_name": "RegisteredOwner",
-        "value_data": "Greg Schardt"
-      },
-      "confidence_threshold": 0.90,
-      "evidence_location": "disk_only",
-      "rationale": "Registered owner ties device to named suspect"
+      "value": "POPULATE_REGISTRY_KEY_LOWER:POPULATE_VALUE_NAME",
+      "evidence_location": ["windows_registry_printkey"],
+      "description": "Persistence registry key — format: hive\\key:value_name (all lowercase)"
     },
     {
-      "ioc_id": "ioc-registry-wireless-history",
-      "ioc_type": "registry_key",
-      "expected": {
-        "key_path_pattern": "HKLM\\SOFTWARE\\Microsoft\\WZCSVC*",
-        "artifact_type": "wireless_network_history"
-      },
-      "confidence_threshold": 0.75,
-      "evidence_location": "disk_only",
-      "rationale": "WZCSVC wireless AP history confirms war-driving activity"
-    },
-    {
-      "ioc_id": "ioc-file-irc-logs",
-      "ioc_type": "file",
-      "expected": {
-        "path_contains": "mIRC",
-        "filename_pattern": "*.log",
-        "artifact_type": "irc_chat_logs"
-      },
-      "confidence_threshold": 0.70,
-      "evidence_location": "disk_only",
-      "rationale": "mIRC chat logs — hacker communication channel evidence"
+      "ioc_id": "ads-001",
+      "ioc_type": "alternate_data_stream",
+      "value": "POPULATE_FILENAME_LOWER:POPULATE_ADS_NAME",
+      "evidence_location": ["windows_mftscan_ads"],
+      "description": "ADS hiding evidence — populate from mftscan_ads output if found"
     }
   ]
 }

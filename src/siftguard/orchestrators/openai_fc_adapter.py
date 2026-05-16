@@ -68,6 +68,7 @@ async def run_case_openai_fc(
     config_override: Optional[dict] = None,
     ground_truth_path: Optional[str] = None,
     on_event: Optional[callable] = None,
+    system_prompt_prefix: str = "",
 ) -> tuple[str, str]:
     """OpenAI FC-orchestrated investigation. Returns (report, run_id).
 
@@ -78,7 +79,7 @@ async def run_case_openai_fc(
     seed = (config_override or {}).get("seed", 0)
     max_iter = (config_override or {}).get("max_iterations", MAX_ITERATIONS)
     prompt_version = "v2_training" if training_mode else "v2"
-    system_prompt = load_prompt(prompt_version)
+    system_prompt = system_prompt_prefix + load_prompt(prompt_version)
 
     config = {
         "agent_id": "siftguard-openai-fc",
