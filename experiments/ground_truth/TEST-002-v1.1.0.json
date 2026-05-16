@@ -1,36 +1,37 @@
 {
   "case_id": "TEST-002",
   "version": "1.1.0",
-  "description": "NIST CFReDS Hacking Case — Windows disk image SCHARDT.img",
-  "notes": "evidence_location uses filesystem/MFT tools since this is a disk image, not memory. Populate values from agent run results and NIST case documentation.",
+  "description": "NIST CFReDS Hacking Case — Greg Schardt (Mr. Evil), Windows XP disk image",
+  "source": "NIST CFReDS public case documentation https://cfreds.nist.gov/Hacking_Case.html",
+  "notes": "IOC values sourced from public NIST case solution. evidence_location reflects disk-image tools.",
   "iocs": [
     {
       "ioc_id": "file-001",
       "ioc_type": "file",
-      "value": "POPULATE_SUSPICIOUS_FILENAME_LOWER",
-      "evidence_location": ["windows_mftscan", "windows_filescan"],
-      "description": "Suspicious executable found in MFT — populate from mftscan output"
+      "value": "netstumbler",
+      "evidence_location": ["windows_mftscan", "windows_filescan", "list_files"],
+      "description": "NetStumbler war-driving tool found on disk"
     },
     {
       "ioc_id": "file-002",
       "ioc_type": "file",
-      "value": "POPULATE_SECOND_SUSPICIOUS_FILE",
-      "evidence_location": ["windows_mftscan", "windows_filescan"],
-      "description": "Second suspicious file if documented in NIST case"
+      "value": "ethereal",
+      "evidence_location": ["windows_mftscan", "windows_filescan", "list_files"],
+      "description": "Ethereal/Wireshark packet capture tool"
     },
     {
-      "ioc_id": "reg-001",
-      "ioc_type": "registry_key",
-      "value": "POPULATE_REGISTRY_KEY_LOWER:POPULATE_VALUE_NAME",
-      "evidence_location": ["windows_registry_printkey"],
-      "description": "Persistence registry key — format: hive\\key:value_name (all lowercase)"
+      "ioc_id": "net-001",
+      "ioc_type": "network",
+      "value": "192.168.1.111",
+      "evidence_location": ["windows_mftscan", "list_files"],
+      "description": "Target IP found in captured packets / case documentation"
     },
     {
-      "ioc_id": "ads-001",
-      "ioc_type": "alternate_data_stream",
-      "value": "POPULATE_FILENAME_LOWER:POPULATE_ADS_NAME",
-      "evidence_location": ["windows_mftscan_ads"],
-      "description": "ADS hiding evidence — populate from mftscan_ads output if found"
+      "ioc_id": "user-001",
+      "ioc_type": "user",
+      "value": "mr. evil",
+      "evidence_location": ["windows_registry_printkey", "list_files"],
+      "description": "Username found in registry / user profile"
     }
   ]
 }
