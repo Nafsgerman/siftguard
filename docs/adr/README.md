@@ -6,3 +6,4 @@
 | [ADR-002](ADR-002-trace-data-model.md) | Trace Data Model for Agent-Agnostic Evaluation | Accepted |
 | [ADR-005](ADR-005-analytics-module-design.md) | Empirical Operating Characteristic Analytics Module | Accepted |
 | [ADR-006](ADR-006-multi-orchestrator-vendor-lockin.md) | Multi-Orchestrator Architecture and Vendor Lock-In | Accepted |
+| [ADR-008](ADR-008-canonical-case-loader.md) | Canonical Case Loader — Delete Flat Registry | Accepted |
