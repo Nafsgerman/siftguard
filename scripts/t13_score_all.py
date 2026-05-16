@@ -134,7 +134,8 @@ def main():
         text = extract_report_text(result)
         timestamp = result_path.stem.replace("result_", "")
         f1, tp, fn = score_report_text(text, ioc_values)
-        print(f"{label} {result_path.name:<44} {tp:>4} {fn:>4} {f1:.3f if f1 is not None else 'None':>8}  OK")
+        f1_str = f"{f1:.3f}" if f1 is not None else "None"
+        print(f"{label} {result_path.name:<44} {tp:>4} {fn:>4} {f1_str:>8}  OK")
         write_agent_score(data, agent_id, f1, tp, fn, timestamp)
 
     print(sep)
