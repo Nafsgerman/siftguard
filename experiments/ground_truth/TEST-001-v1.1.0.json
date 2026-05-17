@@ -1,36 +1,36 @@
 {
   "case_id": "TEST-001",
   "version": "1.1.0",
-  "description": "SRL-2018 memory image — Windows system compromised by Metasploit/Meterpreter",
-  "notes": "Populate 'value' fields from verified agent run results. Values must match extractor key format.",
+  "description": "SRL-2018 memory image — Windows 10 compromised by APT deploying multiple backdoor processes",
+  "source": "Verified from baseline run report_20260512_181441.md and run_20260516_095445",
   "iocs": [
     {
       "ioc_id": "proc-001",
       "ioc_type": "process",
-      "value": "POPULATE_PID:metsvc-server.exe",
-      "evidence_location": ["windows_psscan", "windows_malfind"],
-      "description": "Metasploit Meterpreter service process — replace PID from psscan output"
+      "value": "ftusbsrvc.exe",
+      "evidence_location": ["vol_pslist", "windows_psscan"],
+      "description": "Fake USB service backdoor listening on port 33001"
     },
     {
       "ioc_id": "proc-002",
       "ioc_type": "process",
-      "value": "POPULATE_PID:metasploit.exe",
-      "evidence_location": ["windows_psscan"],
-      "description": "Metasploit main process if present — verify via psscan"
+      "value": "usbclient.exe",
+      "evidence_location": ["vol_pslist", "windows_psscan"],
+      "description": "Non-standard USB client launched from explorer.exe"
+    },
+    {
+      "ioc_id": "proc-003",
+      "ioc_type": "process",
+      "value": "license_ctrl",
+      "evidence_location": ["vol_pslist", "windows_psscan"],
+      "description": "Fake license control service listening on port 5682"
     },
     {
       "ioc_id": "net-001",
       "ioc_type": "network_connection",
-      "value": "POPULATE_C2_IP:POPULATE_PORT",
-      "evidence_location": ["windows_netscan"],
-      "description": "Metasploit C2 connection — format: ip:port (lowercase)"
-    },
-    {
-      "ioc_id": "mem-001",
-      "ioc_type": "memory_injection",
-      "value": "POPULATE_PID:POPULATE_VAD_START",
-      "evidence_location": ["windows_malfind"],
-      "description": "Injected shellcode region — format: pid:0xSTARTADDR (lowercase hex)"
+      "value": "172.16.4.10:8080",
+      "evidence_location": ["vol_netscan", "windows_netscan"],
+      "description": "C2 server — multiple connections confirmed"
     }
   ]
 }

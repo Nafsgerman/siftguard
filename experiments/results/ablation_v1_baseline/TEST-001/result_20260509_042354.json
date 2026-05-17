@@ -1,0 +1,16 @@
+{
+  "status": "ok",
+  "config": "ablation_v1_baseline",
+  "case_id": "TEST-001",
+  "wall_time": 65.7,
+  "hallucination_rate": null,
+  "verified_rate": null,
+  "unverifiable_rate": null,
+  "report": "/cases/TEST-001/siftguard/experiments/results/ablation_v1_baseline/TEST-001/report_20260509_042354.md",
+  "timestamp": "20260509_042354",
+  "methodology": {
+    "version": "1.0.0",
+    "doc": "EVAL_FRAMEWORK.md",
+    "doc_sha256": "ed5133e4b3bc3f9e307d824057298cbb690ddf03d80ebe6533dcec6b53cab30d"
+  }
+}

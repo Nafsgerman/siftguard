@@ -1,0 +1,326 @@
+{
+  "panel_1": {
+    "status": "ok",
+    "data": {
+      "21c09b61-6514-44e8-8966-85ae0ee8e6e8": {
+        "iterations": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "f1": [
+          0.0,
+          0.0,
+          0.0,
+          0.7273
+        ]
+      },
+      "d93fa49a-07b6-4744-8b7c-c6160cc25ea0": {
+        "iterations": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "f1": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.7273
+        ]
+      },
+      "651fcc79-6236-45c9-a23f-52eeca71d5a2": {
+        "iterations": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        "f1": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.6667,
+          0.6667
+        ]
+      },
+      "6e8a673f-8621-48d0-95a0-43a865c677e7": {
+        "iterations": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "f1": [
+          0.0,
+          0.0,
+          0.0,
+          0.8
+        ]
+      },
+      "38ac5e39-043e-4042-9ceb-7270c75d6927": {
+        "iterations": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "f1": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.7273
+        ]
+      },
+      "1f7be939-501a-4caf-a13e-08f5532f913a": {
+        "iterations": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "f1": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.6667
+        ]
+      },
+      "dfe2ee25-2149-49d4-9950-2de38faa52e9": {
+        "iterations": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "f1": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.8
+        ]
+      }
+    }
+  },
+  "panel_2": {
+    "status": "ok",
+    "brier": 0.5541112359550563,
+    "ece": 0.6052808988764045,
+    "n_findings": 89,
+    "bin_data": [
+      [
+        0.65,
+        0.0,
+        "3"
+      ],
+      [
+        0.7736000000000002,
+        0.36,
+        "25"
+      ],
+      [
+        0.8733333333333332,
+        0.19298245614035087,
+        "57"
+      ],
+      [
+        0.95,
+        0.25,
+        "4"
+      ]
+    ]
+  },
+  "panel_3": {
+    "status": "ok",
+    "run_id": "74ca7f9f-8438-4a2d-ab17-9f7b8c2143be",
+    "f1_series": [
+      0.0,
+      0.0,
+      0.0,
+      0.6,
+      0.6
+    ],
+    "deltas": [
+      0.0,
+      0.0,
+      0.0,
+      0.6,
+      0.0
+    ]
+  },
+  "panel_4": {
+    "status": "ok",
+    "points": [
+      {
+        "cost": 0.120759,
+        "f1": 0.6,
+        "label": "v2 iter=15",
+        "is_v1": false
+      },
+      {
+        "cost": 0.12433499999999999,
+        "f1": 0.6,
+        "label": "v2 iter=15",
+        "is_v1": false
+      },
+      {
+        "cost": 0.17664000000000002,
+        "f1": 0.6,
+        "label": "v2 iter=15",
+        "is_v1": false
+      },
+      {
+        "cost": 0.12567599999999998,
+        "f1": 0.7273,
+        "label": "v2 iter=1",
+        "is_v1": false
+      },
+      {
+        "cost": 0.154893,
+        "f1": 0.6667,
+        "label": "v2 iter=10",
+        "is_v1": false
+      },
+      {
+        "cost": 0.12891,
+        "f1": 0.7273,
+        "label": "v2 iter=3",
+        "is_v1": false
+      },
+      {
+        "cost": 0.154158,
+        "f1": 0.6,
+        "label": "v2 iter=5",
+        "is_v1": false
+      },
+      {
+        "cost": 0.128049,
+        "f1": 0.7273,
+        "label": "v2 iter=15",
+        "is_v1": false
+      },
+      {
+        "cost": 0.122256,
+        "f1": 0.6,
+        "label": "v2 iter=15",
+        "is_v1": false
+      },
+      {
+        "cost": 0.16265399999999997,
+        "f1": 0.7273,
+        "label": "v2 iter=15",
+        "is_v1": false
+      },
+      {
+        "cost": 0.16422,
+        "f1": 0.7273,
+        "label": "v2 iter=1",
+        "is_v1": false
+      },
+      {
+        "cost": 0.158631,
+        "f1": 0.8,
+        "label": "v2 iter=10",
+        "is_v1": false
+      },
+      {
+        "cost": 0.166962,
+        "f1": 0.6667,
+        "label": "v2 iter=3",
+        "is_v1": false
+      },
+      {
+        "cost": 0.131238,
+        "f1": 0.7273,
+        "label": "v2 iter=5",
+        "is_v1": false
+      },
+      {
+        "cost": 0.12809700000000002,
+        "f1": 0.7273,
+        "label": "v2 iter=15",
+        "is_v1": false
+      },
+      {
+        "cost": 0.162135,
+        "f1": 0.7273,
+        "label": "v2 iter=15",
+        "is_v1": false
+      },
+      {
+        "cost": 0.23367300000000002,
+        "f1": 0.6667,
+        "label": "v2 iter=15",
+        "is_v1": false
+      },
+      {
+        "cost": 0.128952,
+        "f1": 0.8,
+        "label": "v2 iter=1",
+        "is_v1": false
+      },
+      {
+        "cost": 0.1641,
+        "f1": 0.7273,
+        "label": "v2 iter=10",
+        "is_v1": false
+      },
+      {
+        "cost": 0.156978,
+        "f1": 0.6667,
+        "label": "v2 iter=3",
+        "is_v1": false
+      },
+      {
+        "cost": 0.162924,
+        "f1": 0.8,
+        "label": "v2 iter=5",
+        "is_v1": false
+      }
+    ],
+    "frontier": [
+      [
+        0.120759,
+        0.6
+      ],
+      [
+        0.12567599999999998,
+        0.7273
+      ],
+      [
+        0.128952,
+        0.8
+      ]
+    ]
+  },
+  "panel_5": {
+    "status": "ok",
+    "run_id": "74ca7f9f-8438-4a2d-ab17-9f7b8c2143be",
+    "n_events": 2
+  },
+  "panel_6": {
+    "status": "ok",
+    "data": {
+      "Primary baseline. All features enabled.": 0.6667,
+      "Ablation: self_correction=false. All other features on.": 0.7273,
+      "Ablation: correlation=false. All other features on.": 0.7273,
+      "v1 baseline for prompt ablation.": 0.9091
+    }
+  },
+  "panel_7": {
+    "status": "stub",
+    "task": "Task 8"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "case_id": "TEST-001",
+  "agent_id": "siftguard-openai-fc",
+  "gt_version": "1.1.0",
+  "run_id": "9e763fd8-e0b7-40be-823b-9d9e3423ad96",
+  "f1_applicable": null,
+  "precision_applicable": null,
+  "recall_applicable": 0.0,
+  "f1_total": null,
+  "precision_total": null,
+  "recall_total": 0.0,
+  "tp": 0,
+  "fp": 0,
+  "fn_applicable": 4,
+  "applicable_count": 4,
+  "total_count": 4,
+  "found_ioc_keys": []
+}

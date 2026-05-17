@@ -1,0 +1,16 @@
+{
+  "status": "ok",
+  "config": "baseline_claudecode",
+  "case_id": "TEST-001",
+  "wall_time": 139.5,
+  "hallucination_rate": null,
+  "verified_rate": null,
+  "unverifiable_rate": null,
+  "report": "/cases/TEST-001/siftguard/experiments/results/baseline_claudecode/TEST-001/report_20260513_032153.md",
+  "timestamp": "20260513_032153",
+  "methodology": {
+    "version": "1.0.0",
+    "doc": "EVAL_FRAMEWORK.md",
+    "doc_sha256": "ed5133e4b3bc3f9e307d824057298cbb690ddf03d80ebe6533dcec6b53cab30d"
+  }
+}

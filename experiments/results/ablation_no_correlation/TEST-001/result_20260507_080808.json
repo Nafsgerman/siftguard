@@ -1,0 +1,8 @@
+{
+  "status": "ok",
+  "config": "ablation_no_correlation",
+  "case_id": "TEST-001",
+  "wall_time": 46.5,
+  "report": "/cases/TEST-001/siftguard/experiments/results/ablation_no_correlation/TEST-001/report_20260507_080808.md",
+  "timestamp": "20260507_080808"
+}
