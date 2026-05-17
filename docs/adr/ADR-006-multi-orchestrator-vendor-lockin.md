@@ -5,7 +5,7 @@
 | Status | Accepted |
 | Date | 2026-05-14 |
 | Decision Owner | Nafees A. (Solution Architect, SIFTGuard) |
-| Related | ADR-001 (Empirical Eval Framework), ADR-002 (Trace Data Model), ADR-004 (Loop Instrumentation), ADR-005 (Analytics Module) |
+| Related | ADR-001 (Empirical Eval Framework), ADR-002 (Trace Data Model), ADR-003 (Loop Instrumentation), ADR-005 (Analytics Module) |
 | Supersedes | None |
 
 ---

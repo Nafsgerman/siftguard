@@ -5,14 +5,14 @@
 | Status | Accepted |
 | Date | 2026-05-07 |
 | Decision Owner | Nafees A. (Solution Architect, SIFTGuard) |
-| Related | ADR-001 (Eval Framework), ADR-002 (Trace Model), ADR-004 (Loop Instrumentation) |
+| Related | ADR-001 (Eval Framework), ADR-002 (Trace Model), ADR-003 (Loop Instrumentation) |
 
 ---
 
 ## 1. Context
 
 ADR-001 adopted an empirical evaluation framework. ADR-002 defined the Trace
-data contract. ADR-004 instrumented the agent loop to populate that contract.
+data contract. ADR-003 instrumented the agent loop to populate that contract.
 This ADR records the design of the analytics module that reads populated Traces
 and produces the seven reporting panels.
 

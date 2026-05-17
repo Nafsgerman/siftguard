@@ -3,7 +3,7 @@
 Routes to v1 (baseline, frozen) or v2 (instrumented, structured-confidence)
 based on the prompt_version config value.
 
-ADR: docs/adr/ADR-004-loop-instrumentation.md
+ADR: docs/adr/ADR-003-loop-instrumentation.md
 """
 from __future__ import annotations
 

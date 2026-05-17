@@ -8,7 +8,7 @@ Key differences from v1:
   iteration snapshots, and experiment_run records
 - run_id links all audit rows to a single experiment run
 
-ADR: docs/adr/ADR-004-loop-instrumentation.md
+ADR: docs/adr/ADR-003-loop-instrumentation.md
 """
 from __future__ import annotations
 

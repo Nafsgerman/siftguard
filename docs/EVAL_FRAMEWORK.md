@@ -556,8 +556,7 @@ Initial release. Defines:
 
 - `docs/adr/ADR-001-empirical-evaluation-framework.md` — Framework adoption
 - `docs/adr/ADR-002-trace-data-model.md` — Trace data contract
-- `docs/adr/ADR-003-prompt-v2-design.md` — Prompt design
-- `docs/adr/ADR-004-loop-instrumentation.md` — Loop instrumentation
+- `docs/adr/ADR-003-loop-instrumentation.md` — Loop instrumentation
 - `docs/adr/ADR-005-analytics-module-design.md` — Analytics module
 
 External references:
