@@ -399,3 +399,67 @@ Key design decisions are documented in [`docs/adr/`](docs/adr/).
 | [ADR-002](docs/adr/ADR-002-trace-data-model.md) | Trace data model — agent-agnostic contract |
 | [ADR-005](docs/adr/ADR-005-analytics-module-design.md) | Analytics module — falsifiable claims per panel |
 | [ADR-006](docs/adr/ADR-006-multi-orchestrator-vendor-lockin.md) | Multi-orchestrator — vendor lock-in as architectural property |
+
+
+## Known limitations (acknowledged, not hidden)
+
+1. **Scorer mode:** Real F1 numbers computed via report-text recall. Audit-DB extraction mode exists but is gated by a 2KB excerpt limit in the current schema. Both modes converge where validated.
+
+2. **Cross-paradigm tool gaps:** LangGraph and Claude Code adapters were optimized for memory-image cases. On disk-image (TEST-002) they fail to invoke available tools. This is a configuration gap exposed by paired-dataset testing — a feature of the eval framework, not a hidden bug.
+
+3. **TEST-002 tool infrastructure:** SCHARDT.img requires partition-offset mount before TSK tools work. The dashboard demo includes the mount step. Agents running blind (no mount) score 0.000.
+
+4. **Single-judge hackathon timeline:** Production-grade items deferred — see ADR-007 for the full list (audit-DB schema migration, formal threat model implementation, multi-evaluator scoring).
+
+**Dataset coverage.** Benchmark results are validated on SRL-2018 (TEST-001)
+and NIST CFReDS Hacking Case (TEST-002). Generalization to other memory image
+formats, OS versions, or threat actor TTPs is untested. Two datasets is a proof
+of concept, not a production signal.
+
+**Orchestrator tool config gap.** LangGraph and Claude Code (headless) score
+0.000 F1 on raw disk images. This is a tool configuration gap — the MCP server
+requires a mounted memory image path, and these orchestrators do not resolve
+the path correctly without explicit config injection. It is not a reasoning
+failure. Native loop and OpenAI FC are unaffected. Fix tracked, not shipped
+before deadline.
+
+**Scorer brittleness.** F1 scores are derived from report-text parsing, not
+from the audit DB directly. Prompt format changes can silently shift scores.
+The audit-DB scorer interface is defined (ADR-007) but not yet active.
+
+**No live disk correlation.** SIFTGuard operates on memory images only.
+Disk-vs-memory correlation (timeline reconstruction, MFT cross-reference) is
+architecturally possible via the MFT tools but not wired end-to-end.
+
+**Single-case parallelism.** The agent processes one case at a time. Multi-case
+parallel execution is not implemented.
+
+**When NOT to use SIFTGuard.** See [LIMITATIONS.md](LIMITATIONS.md) for a full
+decision matrix including environment requirements, evidence type constraints,
+and operational boundaries.
+
+**Tool path resolution is dataset-specific.**
+SIFTGuard's MCP tools require the correct Volatility profile and case directory path
+for each evidence file. The five orchestrators are validated against SANS SRL-2018
+memory images (TEST-001). Disk images with different formats or partition layouts
+(e.g., raw E01 conversions) require adapter configuration before achieving non-zero F1.
+
+**Hallucination rate is non-zero.**
+LLM-based agents can fabricate IOCs that incidentally match real data. Every finding
+in the report is traceable to a Volatility plugin output row, but field-level provenance
+(proving a finding was *derived* from data rather than *coincident* with it) is not yet
+implemented. F1 scoring against ground truth is the primary hallucination guard.
+
+**Volatility timeouts are soft.**
+The per-iteration timeout sends a soft signal to the agent loop. The underlying
+Volatility process is not hard-killed. A malformed memory image can cause the
+plugin subprocess to hang indefinitely.
+
+**Audit trail is append-only by convention, not by DB constraint.**
+`SnapshotWriter` enforces no UPDATE/DELETE code paths at the application layer.
+Direct SQL access to the SQLite file bypasses this. Cryptographic row chaining is
+planned post-hackathon.
+
+**Single-case concurrency only.**
+Two simultaneous agent runs against the same case will produce interleaved
+`iteration_snapshot` rows. Multi-case parallelism works; multi-agent-per-case does not.
