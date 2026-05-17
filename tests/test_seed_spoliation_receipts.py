@@ -11,19 +11,33 @@ from siftguard.agent.instrumentation import SnapshotWriter
 @pytest.fixture()
 def tmp_db(tmp_path: Path) -> Path:
     db_path = tmp_path / "test_audit.db"
-    # Bootstrap the blocked_mutation table (mirrors the Alembic migration schema)
     with sqlite3.connect(str(db_path)) as conn:
-        conn.execute(
+        conn.executescript(
             """
+            CREATE TABLE IF NOT EXISTS experiment_run (
+                run_id TEXT PRIMARY KEY,
+                case_id TEXT,
+                agent_id TEXT,
+                config_json TEXT,
+                ground_truth_path TEXT,
+                started_at TEXT,
+                completed_at TEXT,
+                completed_iterations INTEGER,
+                terminated_reason TEXT,
+                total_tokens_in INTEGER,
+                total_tokens_out INTEGER,
+                total_cost_usd REAL,
+                final_score REAL
+            );
             CREATE TABLE IF NOT EXISTS blocked_mutation (
-                id            INTEGER PRIMARY KEY AUTOINCREMENT,
-                receipt_id    TEXT    NOT NULL UNIQUE,
-                case_id       TEXT    NOT NULL,
-                attempted_action TEXT NOT NULL,
-                reason        TEXT    NOT NULL,
-                actor         TEXT    NOT NULL DEFAULT 'siftguard-agent',
-                timestamp     TEXT    NOT NULL
-            )
+                id               INTEGER PRIMARY KEY AUTOINCREMENT,
+                receipt_id       TEXT    NOT NULL UNIQUE,
+                case_id          TEXT    NOT NULL,
+                attempted_action TEXT    NOT NULL,
+                reason           TEXT    NOT NULL,
+                actor            TEXT    NOT NULL DEFAULT 'siftguard-agent',
+                timestamp        TEXT    NOT NULL
+            );
             """
         )
     return db_path
@@ -36,7 +50,7 @@ def test_emit_blocked_mutation_returns_uuid(tmp_db: Path) -> None:
         attempted_action="DELETE FROM iteration_snapshot WHERE id=1",
         reason="Append-only violation",
     )
-    assert len(rid) == 36  # UUID4 canonical form
+    assert len(rid) == 36
     assert rid.count("-") == 4
 
 
@@ -60,7 +74,6 @@ def test_emit_blocked_mutation_persists_row(tmp_db: Path) -> None:
 
 
 def test_three_seed_receipts_written(tmp_db: Path) -> None:
-    """Mirrors what seed_spoliation_receipts.py does — 3 receipts, all unique."""
     from scripts.seed_spoliation_receipts import RECEIPTS
 
     writer = SnapshotWriter(db_path=str(tmp_db))
@@ -74,7 +87,7 @@ def test_three_seed_receipts_written(tmp_db: Path) -> None:
         for r in RECEIPTS
     ]
     assert len(ids) == 3
-    assert len(set(ids)) == 3  # all unique UUIDs
+    assert len(set(ids)) == 3
 
     with sqlite3.connect(str(tmp_db)) as conn:
         count = conn.execute("SELECT COUNT(*) FROM blocked_mutation").fetchone()[0]
