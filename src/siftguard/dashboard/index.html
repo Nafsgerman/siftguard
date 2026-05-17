@@ -680,42 +680,7 @@ async function launchInvestigation() {
   }
 }
 
-async function runMockStream() {
-  const events = [
-    {tag:'tool', msg:'volatility3 windows.pslist · scanning kernel structures', t:140, m:'tool'},
-    {tag:'tool', msg:'volatility3 windows.netstat · enumerating TCP/UDP', t:210, m:'tool'},
-    {tag:'find', msg:'Suspicious process: rundll32.exe (PID 4892) loaded from %TEMP%', m:'find'},
-    {tag:'tool', msg:'volatility3 windows.cmdline · extracting command lines', t:95, m:'tool'},
-    {tag:'find', msg:'powershell.exe invoking encoded payload (base64)', m:'find'},
-    {tag:'ioc', msg:'Outbound C2 to 185.234.219.11:443 detected', m:'ioc'},
-    {tag:'sys', msg:'Self-correction: tool retry on malformed plugin args', m:'retry'},
-    {tag:'tool', msg:'volatility3 windows.dlllist · DLL injection check', t:180, m:'tool'},
-    {tag:'find', msg:'beacon.dll injected into lsass.exe (PID 624) via T1055', m:'find'},
-    {tag:'ioc', msg:'Hash match: beacon.dll → known Cobalt Strike payload', m:'ioc'},
-    {tag:'tool', msg:'volatility3 windows.malfind · scanning suspicious VAD ranges', t:240, m:'tool'},
-    {tag:'sys', msg:'Self-correction: path correction · image offset adjusted', m:'path'},
-    {tag:'find', msg:'mimikatz.exe execution traces in svchost memory', m:'find'},
-    {tag:'ioc', msg:'Credential dump artifact: passwords.txt written to %TEMP%', m:'ioc'},
-    {tag:'tool', msg:'MITRE mapping · linking findings to ATT&CK matrix', t:130, m:'tool'},
-    {tag:'find', msg:'MITRE T1003 (Credential Dump) + T1071 (C2/HTTP) confirmed', m:'find'},
-    {tag:'sys', msg:'Self-correction: confidence recovery after evidence cross-check', m:'conf'},
-    {tag:'tool', msg:'Audit DB · sealing evidence chain · SHA-256 verified', t:90, m:'tool'},
-    {tag:'info', msg:'Investigation complete · 5 findings · 3 IOCs · MITRE chain mapped', m:null},
-  ];
-  for (const e of events) {
-    if (!state.running) return;
-    await new Promise(r => setTimeout(r, 900 + Math.random()*600));
-    state.iter++;
-    if (e.t) { state.tools++; state.toolTimes.push(e.t); }
-    if (e.tag === 'find') state.find++;
-    if (e.tag === 'ioc') state.ioc++;
-    if (e.m === 'retry') state.tax.retry++;
-    if (e.m === 'path') state.tax.path++;
-    if (e.m === 'hall') state.tax.hall++;
-    if (e.m === 'conf') state.tax.conf++;
-    pushTrail(e.tag, e.msg);
-    updateMetrics(); updateTax();
-  }
+async
   stopTimer();
   state.running = false;
   setStatus('complete', 'Complete');

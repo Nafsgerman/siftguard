@@ -4,7 +4,7 @@ This is the original loop.py code extracted verbatim.
 DO NOT modify this file. It is the v1.0.0 baseline for ablation comparisons.
 Any behavioural changes belong in loop_v2.py.
 
-ADR: docs/adr/ADR-004-loop-instrumentation.md
+ADR: docs/adr/ADR-003-loop-instrumentation.md
 """
 from __future__ import annotations
 
