@@ -658,11 +658,23 @@ async function launchInvestigation() {
     });
     if (!r.ok) throw new Error('backend ' + r.status);
     pushTrail('info', 'Connected to backend · streaming live trail');
-    // TODO Sonnet: subscribe to /api/stream EventSource or poll /api/state
+    const { session_id } = await r.json();
+    const es = new EventSource('/api/stream/' + session_id);
+    es.onmessage = function(e) {
+      const ev = JSON.parse(e.data);
+      if (ev.type === 'start') { pushTrail('sys', 'Case ' + ev.case_id + ' started'); }
+      else if (ev.type === 'iteration') { state.iter = ev.iteration; setM('iter', ev.iteration); setM('max', ev.max); updateMetrics(); }
+      else if (ev.type === 'tool_call') { state.tools++; updateMetrics(); pushTrail('tool', ev.tool); }
+      else if (ev.type === 'tool_result') { state.find += ev.findings_count || 0; updateMetrics(); if (ev.duration_ms) state.toolTimes.push(ev.duration_ms); pushTrail('find', ev.tool + ': ' + (ev.summary || '')); }
+      else if (ev.type === 'ioc') { state.ioc++; updateMetrics(); pushTrail('ioc', (ev.ioc_type || 'ioc') + ' · ' + (ev.value || '')); }
+      else if (ev.type === 'report') { state.reportText = typeof ev.content === 'string' ? ev.content : JSON.stringify(ev.content, null, 2); pushTrail('info', 'Report generated'); const btn = document.getElementById('btnLaunch'); btn.textContent = '📋 View Report'; btn.disabled = false; btn.onclick = showReport; }
+      else if (ev.type === 'complete') { pushTrail('sys', '✓ Investigation complete · evidence sealed'); setStatus('Done', 'green'); es.close(); }
+      else if (ev.type === 'error') { pushTrail('sys', '✗ Error: ' + (ev.message || '')); es.close(); resetBtn(); }
+    };
+    es.onerror = function() { es.close(); pushTrail('sys', '✗ Stream disconnected'); resetBtn(); };
   } catch (e) {
-    pushTrail('sys', '⚠ Backend unreachable — running MOCK MODE for demo');
-    state.mockMode = true;
-    runMockStream();
+    pushTrail('sys', '✗ Backend error: ' + e.message);
+    resetBtn();
   }
 }
 
