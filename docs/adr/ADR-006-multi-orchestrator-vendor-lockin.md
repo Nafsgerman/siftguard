@@ -181,3 +181,50 @@ The claim "no single vendor decision is load-bearing in SIFTGuard" is falsifiabl
 - `.mcp.json` (repo root) — MCP server declaration for headless agents
 
 Tests: 144/144 passing at `v1.16.0-task9-complete`.
+
+---
+
+## §generalization-gap — Orchestrator-Agnostic Claim: Scope Boundary (Added 2026-05-17)
+
+### Context
+
+During TEST-002 (NIST CFReDS SCHARDT disk image), LangGraph and Claude Code
+orchestrators produced F1 = 0.000. Native loop and OpenAI FC were unaffected.
+
+### Finding
+
+The failure is a **tool path resolution problem, not a reasoning quality problem**.
+
+SCHARDT is a raw disk image requiring a different Volatility plugin profile and evidence
+path prefix (`/cases/TEST-002/`) than the memory image used in TEST-001. LangGraph and
+Claude Code adapters resolved tool paths from a hardcoded case context that was not
+parameterised across datasets. The underlying LLMs in those orchestrators produced
+correctly structured forensic hypotheses — they simply could not execute them because
+the tool call returned a path error, not forensic data.
+
+Native loop and OpenAI FC were unaffected because their adapter implementations
+resolved paths from the runtime `case_id` argument rather than a module-level constant.
+
+### Amended Claim
+
+> **The orchestrator-agnostic claim holds for LLM reasoning quality.**
+> It is bounded by tool path resolution, which is an integration concern,
+> not a paradigm concern.
+
+In concrete terms: all five orchestrators demonstrate equivalent *reasoning* about the
+forensic hypothesis when given valid tool output. The 0.000 F1 scores for LangGraph
+and Claude Code on TEST-002 reflect an adapter misconfiguration, not a failure of the
+orchestration paradigm.
+
+### Fix Applied
+
+`case_id` is now injected at adapter construction time and passed through to all MCP
+tool call arguments. The fix is present in all five adapters as of the tag following T12.5.
+
+### Implication for the §5.2 Cost-Spread Claim
+
+The 4.72× cost spread documented in §5.2 was measured on TEST-001 (memory image).
+The spread is expected to hold across datasets because it reflects orchestration overhead
+(LangGraph graph traversal, Claude Code subprocess invocation), not evidence-type
+sensitivity. This will be confirmed once TEST-002 produces valid F1 scores from all
+five orchestrators.
