@@ -286,7 +286,7 @@ body.mode-results .nav-item[data-panel="p0"]{display:none !important}
           <option value="claude_code">Claude Code</option>
         </select>
       </div>
-      <button class="launch" id="launch-btn" onclick="launchInvestigation()">
+      <button class="launch" id="launch-btn" onclick="handleLaunchBtn()">
         <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
         Launch Investigation
       </button>
@@ -538,7 +538,7 @@ body.mode-results .nav-item[data-panel="p0"]{display:none !important}
 <div class="ioc-tip" id="tooltip"></div>
 
 <script>
-const state = { running: false, mockMode: false, startedAt: null, timerId: null, iter: 0, tools: 0, find: 0, ioc: 0, toolTimes: [], tax: { retry: 0, path: 0, hall: 0, conf: 0 } };
+const state = { running: false, viewReport: false, mockMode: false, startedAt: null, timerId: null, iter: 0, tools: 0, find: 0, ioc: 0, toolTimes: [], tax: { retry: 0, path: 0, hall: 0, conf: 0 } };
 
 function setMode(mode) {
   document.body.className = 'mode-' + mode;
@@ -617,6 +617,8 @@ function pushTrail(tag, msg) {
   trail.appendChild(line);
   trail.scrollTop = trail.scrollHeight;
 }
+function showReport() { if (!state.reportText) { alert("Report not ready yet."); return; } const w = window.open("", "_blank"); w.document.write('<pre style="font-family:monospace;padding:20px;white-space:pre-wrap">' + state.reportText + '</pre>'); w.document.close(); }
+function handleLaunchBtn() { if (state.viewReport) { showReport(); } else { launchInvestigation(); } }
 
 async function launchInvestigation() {
   if (state.running) return;
@@ -654,7 +656,7 @@ async function launchInvestigation() {
     const r = await fetch('/api/investigate', {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ case_id: caseId, image_path: imgPath, briefing, orchestrator: orch })
+      body: JSON.stringify({ case_id: caseId, memory_image: imgPath, briefing, orchestrator: orch })
     });
     if (!r.ok) throw new Error('backend ' + r.status);
     pushTrail('info', 'Connected to backend · streaming live trail');
@@ -667,9 +669,9 @@ async function launchInvestigation() {
       else if (ev.type === 'tool_call') { state.tools++; updateMetrics(); pushTrail('tool', ev.tool); }
       else if (ev.type === 'tool_result') { state.find += ev.findings_count || 0; updateMetrics(); if (ev.duration_ms) state.toolTimes.push(ev.duration_ms); pushTrail('find', ev.tool + ': ' + (ev.summary || '')); }
       else if (ev.type === 'ioc') { state.ioc++; updateMetrics(); pushTrail('ioc', (ev.ioc_type || 'ioc') + ' · ' + (ev.value || '')); }
-      else if (ev.type === 'report') { state.reportText = typeof ev.content === 'string' ? ev.content : JSON.stringify(ev.content, null, 2); pushTrail('info', 'Report generated'); const btn = document.getElementById('btnLaunch'); btn.textContent = '📋 View Report'; btn.disabled = false; btn.onclick = showReport; }
-      else if (ev.type === 'complete') { pushTrail('sys', '✓ Investigation complete · evidence sealed'); setStatus('Done', 'green'); es.close(); }
-      else if (ev.type === 'error') { pushTrail('sys', '✗ Error: ' + (ev.message || '')); es.close(); resetBtn(); }
+      else if (ev.type === 'report') { state.viewReport = true; state.reportText = typeof ev.content === 'string' ? ev.content : JSON.stringify(ev.content, null, 2); pushTrail('info', 'Report generated'); const btn = document.getElementById('launch-btn'); btn.textContent = '📋 View Report'; btn.disabled = false; btn.onclick = showReport; }
+      else if (ev.type === 'complete') { pushTrail('sys', '✓ Investigation complete · evidence sealed'); setStatus('done', 'Done'); es.close(); state.running = false; clearInterval(state.timerId); }
+      else if (ev.type === 'error') { pushTrail('sys', '✗ Error: ' + (ev.message || '')); es.close(); setStatus('', 'Standby'); state.running = false; clearInterval(state.timerId); document.getElementById('launch-btn').disabled = false; document.getElementById('launch-btn').textContent = '▶ Launch Investigation'; }
     };
     es.onerror = function() { es.close(); pushTrail('sys', '✗ Stream disconnected'); resetBtn(); };
   } catch (e) {
