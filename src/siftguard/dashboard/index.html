@@ -668,7 +668,7 @@ async function launchInvestigation() {
       else if (ev.type === 'iteration') { state.iter = ev.iteration; setM('iter', ev.iteration); setM('max', ev.max); updateMetrics(); }
       else if (ev.type === 'tool_call') { state.tools++; updateMetrics(); pushTrail('tool', ev.tool); }
       else if (ev.type === 'tool_result') { state.find += ev.findings_count || 0; updateMetrics(); if (ev.duration_ms) state.toolTimes.push(ev.duration_ms); pushTrail('find', ev.tool + ': ' + (ev.summary || '')); }
-      else if (ev.type === 'ioc') { state.ioc++; updateMetrics(); pushTrail('ioc', (ev.ioc_type || 'ioc') + ' · ' + (ev.value || '')); }
+      else if (ev.type === 'ioc') { state.ioc++; updateMetrics(); pushTrail('ioc', (ev.ioc_type || 'ioc') + ' · ' + (ev.value || '')); if (typeof addGraphNode === 'function') addGraphNode(ev.ioc_type || 'other', ev.value || '', 'ioc'); }
       else if (ev.type === 'report') { state.viewReport = true; state.reportText = typeof ev.content === 'string' ? ev.content : JSON.stringify(ev.content, null, 2); pushTrail('info', 'Report generated'); const btn = document.getElementById('launch-btn'); btn.textContent = '📋 View Report'; btn.disabled = false; btn.onclick = showReport; }
       else if (ev.type === 'complete') { pushTrail('sys', '✓ Investigation complete · evidence sealed'); setStatus('done', 'Done'); es.close(); state.running = false; clearInterval(state.timerId); }
       else if (ev.type === 'error') { pushTrail('sys', '✗ Error: ' + (ev.message || '')); es.close(); setStatus('', 'Standby'); state.running = false; clearInterval(state.timerId); document.getElementById('launch-btn').disabled = false; document.getElementById('launch-btn').textContent = '▶ Launch Investigation'; }
