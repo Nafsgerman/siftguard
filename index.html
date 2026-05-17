@@ -24,17 +24,32 @@
 }
 body{font-family:var(--font);background:var(--gray-50);color:var(--gray-900);height:100vh;display:flex;flex-direction:column;overflow:hidden}
 
+/* Mode toggle */
+.mode-toggle{display:flex;background:var(--gray-100);border-radius:20px;padding:3px;gap:2px;margin-left:auto}
+.mode-btn{padding:5px 14px;border-radius:18px;font-size:12px;font-weight:500;border:none;cursor:pointer;background:transparent;color:var(--gray-700);font-family:var(--font);transition:background .12s,color .12s}
+.mode-btn.active{background:var(--white);color:var(--blue);box-shadow:0 1px 2px rgba(60,64,67,.15)}
+.mode-btn:hover:not(.active){color:var(--gray-900)}
+
+/* Results mode hides live-investigation chrome */
+body.mode-results .hdr-case,
+body.mode-results .hdr-timer,
+body.mode-results .hdr-status,
+body.mode-results .metrics,
+body.mode-results .form,
+body.mode-results .form-sec,
+body.mode-results .nav-item[data-panel="p0"]{display:none !important}
+
 /* Header */
-.hdr{height:var(--header-h);background:var(--white);border-bottom:1px solid var(--gray-200);display:flex;align-items:center;padding:0 20px;gap:16px;flex-shrink:0;box-shadow:0 1px 3px rgba(60,64,67,.12);z-index:10}
+.hdr{height:var(--header-h);background:var(--white);border-bottom:1px solid var(--gray-200);display:flex;align-items:center;padding:0 20px;gap:14px;flex-shrink:0;box-shadow:0 1px 3px rgba(60,64,67,.12);z-index:10}
 .hdr-logo{display:flex;align-items:center;gap:8px}
 .hdr-mark{width:28px;height:28px;background:var(--blue);border-radius:6px;display:flex;align-items:center;justify-content:center}
 .hdr-mark svg{width:15px;height:15px;fill:white}
 .hdr-title{font-family:var(--display);font-size:18px;font-weight:700;color:var(--gray-900);letter-spacing:-.2px}
 .hdr-title span{color:var(--blue)}
-.hdr-case{display:flex;align-items:center;gap:10px;margin-left:24px;padding:6px 12px;background:var(--gray-50);border:1px solid var(--gray-200);border-radius:20px}
+.hdr-case{display:flex;align-items:center;gap:8px;margin-left:16px;padding:5px 12px;background:var(--gray-50);border:1px solid var(--gray-200);border-radius:20px}
 .hdr-case-lbl{font-size:11px;color:var(--gray-600)}
 .hdr-case-id{font-family:var(--mono);font-size:12px;font-weight:500;color:var(--gray-900)}
-.hdr-timer{font-family:var(--mono);font-size:13px;font-weight:500;color:var(--gray-700);margin-left:auto}
+.hdr-timer{font-family:var(--mono);font-size:13px;font-weight:500;color:var(--gray-700)}
 .hdr-status{display:flex;align-items:center;gap:6px;padding:5px 12px;border-radius:20px;font-size:12px;font-weight:500}
 .hdr-status .dot{width:8px;height:8px;border-radius:50%}
 .hdr-status.standby{background:var(--gray-100);color:var(--gray-700)} .hdr-status.standby .dot{background:var(--gray-400)}
@@ -62,20 +77,11 @@ body{font-family:var(--font);background:var(--gray-50);color:var(--gray-900);hei
 .form{padding:0 14px 14px;border-bottom:1px solid var(--gray-200)}
 .form-row{margin-bottom:9px}
 .form-row label{display:block;font-size:11px;color:var(--gray-700);font-weight:500;margin-bottom:3px}
-.form-row input,.form-row textarea,.form-row select{
-  width:100%;font-family:var(--font);font-size:12px;color:var(--gray-900);
-  background:var(--white);border:1px solid var(--gray-200);border-radius:6px;
-  padding:7px 10px;outline:none;transition:border-color .12s
-}
+.form-row input,.form-row textarea,.form-row select{width:100%;font-family:var(--font);font-size:12px;color:var(--gray-900);background:var(--white);border:1px solid var(--gray-200);border-radius:6px;padding:7px 10px;outline:none;transition:border-color .12s}
 .form-row input:focus,.form-row textarea:focus,.form-row select:focus{border-color:var(--blue);box-shadow:0 0 0 2px rgba(26,115,232,.15)}
 .form-row textarea{resize:vertical;min-height:60px;font-family:var(--font)}
 .form-row input.mono,.form-row select{font-family:var(--mono);font-size:11px}
-.launch{
-  width:100%;padding:10px;background:var(--blue);color:white;
-  border:none;border-radius:6px;font-family:var(--font);font-size:13px;
-  font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;
-  transition:background .12s,transform .08s;margin-top:4px
-}
+.launch{width:100%;padding:10px;background:var(--blue);color:white;border:none;border-radius:6px;font-family:var(--font);font-size:13px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:background .12s,transform .08s;margin-top:4px}
 .launch:hover{background:var(--blue-dark)}
 .launch:active{transform:scale(.98)}
 .launch:disabled{background:var(--gray-400);cursor:not-allowed}
@@ -226,12 +232,9 @@ body{font-family:var(--font);background:var(--gray-50);color:var(--gray-900);hei
 .ds-block{background:var(--gray-50);border:1px solid var(--gray-200);border-radius:var(--r);padding:14px}
 .ds-block h4{font-size:10px;font-weight:500;color:var(--gray-600);margin-bottom:8px;text-transform:uppercase;letter-spacing:.4px}
 .ds-block p{font-size:12px;color:var(--gray-600);line-height:1.6}
-
-.demo-banner{background:var(--blue-light);border:1px solid #c5d9f9;color:var(--blue-dark);padding:8px 14px;border-radius:var(--r);font-size:11px;margin-bottom:12px;display:flex;align-items:center;gap:8px}
-.demo-banner svg{width:14px;height:14px;fill:var(--blue);flex-shrink:0}
 </style>
 </head>
-<body>
+<body class="mode-results">
 
 <!-- Header -->
 <header class="hdr">
@@ -245,36 +248,20 @@ body{font-family:var(--font);background:var(--gray-50);color:var(--gray-900);hei
   </div>
   <span class="hdr-timer" id="hdr-timer">00:00</span>
   <span class="hdr-status standby" id="hdr-status"><span class="dot"></span><span id="hdr-status-txt">Standby</span></span>
+  <div class="mode-toggle">
+    <button class="mode-btn active" data-mode="results" onclick="setMode('results')">Results</button>
+    <button class="mode-btn" data-mode="live" onclick="setMode('live')">Run Live</button>
+  </div>
   <span class="hdr-tag">v1.19.1-task125</span>
 </header>
 
 <!-- Metrics strip -->
 <div class="metrics">
-  <div class="metric">
-    <div class="metric-lbl">Iterations</div>
-    <div class="metric-val" id="m-iter">0</div>
-    <div class="metric-sub">of 15 max</div>
-  </div>
-  <div class="metric">
-    <div class="metric-lbl">Tools Fired</div>
-    <div class="metric-val" id="m-tools">0</div>
-    <div class="metric-sub">forensic calls</div>
-  </div>
-  <div class="metric">
-    <div class="metric-lbl">Findings</div>
-    <div class="metric-val" id="m-find">0</div>
-    <div class="metric-sub">artifacts</div>
-  </div>
-  <div class="metric">
-    <div class="metric-lbl">IOCs</div>
-    <div class="metric-val" id="m-ioc">0</div>
-    <div class="metric-sub">indicators</div>
-  </div>
-  <div class="metric">
-    <div class="metric-lbl">Avg Tool Time</div>
-    <div class="metric-val" id="m-time">—</div>
-    <div class="metric-sub">milliseconds</div>
-  </div>
+  <div class="metric"><div class="metric-lbl">Iterations</div><div class="metric-val" id="m-iter">0</div><div class="metric-sub">of 15 max</div></div>
+  <div class="metric"><div class="metric-lbl">Tools Fired</div><div class="metric-val" id="m-tools">0</div><div class="metric-sub">forensic calls</div></div>
+  <div class="metric"><div class="metric-lbl">Findings</div><div class="metric-val" id="m-find">0</div><div class="metric-sub">artifacts</div></div>
+  <div class="metric"><div class="metric-lbl">IOCs</div><div class="metric-val" id="m-ioc">0</div><div class="metric-sub">indicators</div></div>
+  <div class="metric"><div class="metric-lbl">Avg Tool Time</div><div class="metric-val" id="m-time">—</div><div class="metric-sub">milliseconds</div></div>
 </div>
 
 <div class="body">
@@ -282,25 +269,15 @@ body{font-family:var(--font);background:var(--gray-50);color:var(--gray-900);hei
   <!-- Sidebar -->
   <nav class="sidebar">
 
-    <div class="sb-sec">
+    <div class="sb-sec form-sec">
       <svg viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
       New Investigation
     </div>
     <div class="form">
-      <div class="form-row">
-        <label>Case ID</label>
-        <input class="mono" id="f-case" value="TEST-001" />
-      </div>
-      <div class="form-row">
-        <label>Memory Image Path</label>
-        <input class="mono" id="f-img" value="/cases/TEST-001/base-hunt-memory.img" />
-      </div>
-      <div class="form-row">
-        <label>Briefing</label>
-        <textarea id="f-brief">Windows 10 x64 memory image. APT hunt scenario. Suspected compromise. Find evil.</textarea>
-      </div>
-      <div class="form-row">
-        <label>Orchestrator</label>
+      <div class="form-row"><label>Case ID</label><input class="mono" id="f-case" value="TEST-001" /></div>
+      <div class="form-row"><label>Memory Image Path</label><input class="mono" id="f-img" value="/cases/TEST-001/base-hunt-memory.img" /></div>
+      <div class="form-row"><label>Briefing</label><textarea id="f-brief">Windows 10 x64 memory image. APT hunt scenario. Suspected compromise. Find evil.</textarea></div>
+      <div class="form-row"><label>Orchestrator</label>
         <select id="f-orch">
           <option value="native">Native Claude Loop</option>
           <option value="openai_fc">OpenAI Function Calling</option>
@@ -315,66 +292,63 @@ body{font-family:var(--font);background:var(--gray-50);color:var(--gray-900);hei
       </button>
     </div>
 
-    <div class="sb-sec">
-      <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
-      Panels
-    </div>
+    <div class="sb-sec"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>Panels</div>
 
-    <div class="nav-item active" onclick="showPanel('p0',this)">
+    <div class="nav-item" data-panel="p0" onclick="showPanel('p0',this)">
       <span class="nav-num">00</span>
       <div class="nav-icon ni-live"><svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div>
       <span class="nav-label">Live Run</span>
       <span class="nav-badge nb-gray" id="nav-live-badge">Idle</span>
     </div>
-    <div class="nav-item" onclick="showPanel('p1',this)">
+    <div class="nav-item active" data-panel="p1" onclick="showPanel('p1',this)">
       <span class="nav-num">01</span>
       <div class="nav-icon ni-blue"><svg viewBox="0 0 24 24"><path d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/></svg></div>
       <span class="nav-label">Accuracy — F1</span>
       <span class="nav-badge nb-green">Verified</span>
     </div>
-    <div class="nav-item" onclick="showPanel('p7',this)">
+    <div class="nav-item" data-panel="p7" onclick="showPanel('p7',this)">
       <span class="nav-num">07</span>
       <div class="nav-icon ni-teal"><svg viewBox="0 0 24 24"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg></div>
       <span class="nav-label">Model Comparison</span>
       <span class="nav-badge nb-blue">0.900</span>
     </div>
-    <div class="nav-item" onclick="showPanel('p8',this)">
+    <div class="nav-item" data-panel="p8" onclick="showPanel('p8',this)">
       <span class="nav-num">08</span>
       <div class="nav-icon ni-green"><svg viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg></div>
       <span class="nav-label">Spoliation</span>
       <span class="nav-badge nb-green">100%</span>
     </div>
-    <div class="nav-item" onclick="showPanel('p9',this)">
+    <div class="nav-item" data-panel="p9" onclick="showPanel('p9',this)">
       <span class="nav-num">09</span>
       <div class="nav-icon ni-indigo"><svg viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg></div>
       <span class="nav-label">IOC Graph</span>
       <span class="nav-badge nb-amber">Live</span>
     </div>
-    <div class="nav-item" onclick="showPanel('p2',this)">
+    <div class="nav-item" data-panel="p2" onclick="showPanel('p2',this)">
       <span class="nav-num">02</span>
       <div class="nav-icon ni-blue"><svg viewBox="0 0 24 24"><path d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg></div>
       <span class="nav-label">Dataset Overview</span>
       <span class="nav-badge nb-gray">2</span>
     </div>
-    <div class="nav-item" onclick="showPanel('p3',this)">
+    <div class="nav-item" data-panel="p3" onclick="showPanel('p3',this)">
       <span class="nav-num">03</span>
       <div class="nav-icon ni-purple"><svg viewBox="0 0 24 24"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg></div>
       <span class="nav-label">Orchestrator Config</span>
       <span class="nav-badge nb-gray">5</span>
     </div>
-    <div class="nav-item" onclick="showPanel('p4',this)">
+    <div class="nav-item" data-panel="p4" onclick="showPanel('p4',this)">
       <span class="nav-num">04</span>
       <div class="nav-icon ni-amber"><svg viewBox="0 0 24 24"><path d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg></div>
       <span class="nav-label">Evidence Chain</span>
       <span class="nav-badge nb-green">Intact</span>
     </div>
-    <div class="nav-item" onclick="showPanel('p5',this)">
+    <div class="nav-item" data-panel="p5" onclick="showPanel('p5',this)">
       <span class="nav-num">05</span>
       <div class="nav-icon ni-gray"><svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg></div>
       <span class="nav-label">Eval Methodology</span>
       <span class="nav-badge nb-amber">Fallback</span>
     </div>
-    <div class="nav-item" onclick="showPanel('p6',this)">
+    <div class="nav-item" data-panel="p6" onclick="showPanel('p6',this)">
       <span class="nav-num">06</span>
       <div class="nav-icon ni-red"><svg viewBox="0 0 24 24"><path d="M12 9v2m0 4h.01"/></svg></div>
       <span class="nav-label">Known Limitations</span>
@@ -392,40 +366,22 @@ body{font-family:var(--font);background:var(--gray-50);color:var(--gray-900);hei
   <main class="content">
 
     <!-- P0: Live Run -->
-    <div class="panel active" id="p0">
-      <div class="panel-hdr">
-        <h1>Live Run</h1>
-        <p>Active investigation feed · self-correction taxonomy · audit trail</p>
-      </div>
-
+    <div class="panel" id="p0">
+      <div class="panel-hdr"><h1>Live Run</h1><p>Active investigation feed · self-correction taxonomy · audit trail</p></div>
       <div class="card" id="run-idle-card">
         <div class="card-title">No active investigation</div>
         <p style="font-size:13px;color:var(--gray-600);line-height:1.6">Configure a case in the left sidebar and click <strong style="color:var(--blue);font-weight:500">Launch Investigation</strong>. The agent's audit trail, self-correction events, and live IOC discovery will stream here in real time.</p>
       </div>
-
       <div class="card" id="run-active-card" style="display:none">
         <div class="card-title">Active case</div>
         <div class="run-case-hdr">
-          <div class="run-case-field">
-            <label>Case ID</label>
-            <div class="val" id="run-case-id">—</div>
-          </div>
-          <div class="run-case-field">
-            <label>Image</label>
-            <div class="val" id="run-case-img">—</div>
-          </div>
-          <div class="run-case-field">
-            <label>Orchestrator</label>
-            <div class="val" id="run-case-orch">—</div>
-          </div>
+          <div class="run-case-field"><label>Case ID</label><div class="val" id="run-case-id">—</div></div>
+          <div class="run-case-field"><label>Image</label><div class="val" id="run-case-img">—</div></div>
+          <div class="run-case-field"><label>Orchestrator</label><div class="val" id="run-case-orch">—</div></div>
         </div>
       </div>
-
       <div class="card" id="run-tax-card" style="display:none">
-        <div class="card-title-row">
-          <div class="card-title">Self-Correction Taxonomy</div>
-          <span class="badge badge-blue" id="tax-total">0 events</span>
-        </div>
+        <div class="card-title-row"><div class="card-title">Self-Correction Taxonomy</div><span class="badge badge-blue" id="tax-total">0 events</span></div>
         <div class="taxonomy-grid">
           <div class="tax-card"><div class="lbl">Tool retries</div><div class="val" id="tax-retry">0</div></div>
           <div class="tax-card warn"><div class="lbl">Path corrections</div><div class="val" id="tax-path">0</div></div>
@@ -433,17 +389,14 @@ body{font-family:var(--font);background:var(--gray-50);color:var(--gray-900);hei
           <div class="tax-card ok"><div class="lbl">Confidence recoveries</div><div class="val" id="tax-conf">0</div></div>
         </div>
       </div>
-
       <div class="card" id="run-trail-card" style="display:none">
         <div class="card-title">Audit Trail</div>
-        <div class="trail" id="trail">
-          <div class="trail-empty">Waiting for events…</div>
-        </div>
+        <div class="trail" id="trail"><div class="trail-empty">Waiting for events…</div></div>
       </div>
     </div>
 
     <!-- P1: Accuracy -->
-    <div class="panel" id="p1">
+    <div class="panel active" id="p1">
       <div class="panel-hdr"><h1>Accuracy — Real F1 Scores</h1><p>Per-orchestrator detection accuracy across both test datasets · T13 + T12.5 verified</p></div>
       <div class="card">
         <div class="case-tabs">
@@ -478,16 +431,8 @@ body{font-family:var(--font);background:var(--gray-50);color:var(--gray-900);hei
       <div class="panel-hdr"><h1>Model Comparison — Cross-Dataset Mean F1</h1><p>Ranking across TEST-001 + TEST-002 NIST CFReDS · 5 orchestrators · 10 runs total</p></div>
       <div class="card">
         <div class="mean-row">
-          <div class="mean-hero-card">
-            <div class="mean-hero-lbl">Cross-dataset leader</div>
-            <div class="mean-hero-val">0.900</div>
-            <div class="mean-hero-sub">OpenAI Function Calling</div>
-          </div>
-          <div class="mean-runner">
-            <div style="font-size:10px;color:var(--gray-600);font-weight:500;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Runner-up</div>
-            <div style="font-family:var(--display);font-size:28px;font-weight:700;color:var(--gray-900);letter-spacing:-1px;line-height:1">0.800</div>
-            <div style="font-size:12px;color:var(--gray-600);margin-top:3px;font-weight:500">Native Claude</div>
-          </div>
+          <div class="mean-hero-card"><div class="mean-hero-lbl">Cross-dataset leader</div><div class="mean-hero-val">0.900</div><div class="mean-hero-sub">OpenAI Function Calling</div></div>
+          <div class="mean-runner"><div style="font-size:10px;color:var(--gray-600);font-weight:500;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Runner-up</div><div style="font-family:var(--display);font-size:28px;font-weight:700;color:var(--gray-900);letter-spacing:-1px;line-height:1">0.800</div><div style="font-size:12px;color:var(--gray-600);margin-top:3px;font-weight:500">Native Claude</div></div>
         </div>
         <table class="rank-table">
           <thead><tr><th>#</th><th>Orchestrator</th><th>TEST-001</th><th>TEST-002</th><th>Bar</th><th style="text-align:right">Mean</th></tr></thead>
@@ -593,14 +538,22 @@ body{font-family:var(--font);background:var(--gray-50);color:var(--gray-900);hei
 <div class="ioc-tip" id="tooltip"></div>
 
 <script>
-// ── State ──
-const state = {
-  running: false, mockMode: false, startedAt: null, timerId: null,
-  iter: 0, tools: 0, find: 0, ioc: 0, toolTimes: [],
-  tax: { retry: 0, path: 0, hall: 0, conf: 0 }
-};
+const state = { running: false, mockMode: false, startedAt: null, timerId: null, iter: 0, tools: 0, find: 0, ioc: 0, toolTimes: [], tax: { retry: 0, path: 0, hall: 0, conf: 0 } };
 
-// ── Panel switcher ──
+function setMode(mode) {
+  document.body.className = 'mode-' + mode;
+  document.querySelectorAll('.mode-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
+  if (mode === 'results') {
+    if (document.getElementById('p0').classList.contains('active')) {
+      const p1Nav = document.querySelector('.nav-item[data-panel="p1"]');
+      showPanel('p1', p1Nav);
+    }
+  } else {
+    const p0Nav = document.querySelector('.nav-item[data-panel="p0"]');
+    showPanel('p0', p0Nav);
+  }
+}
+
 function showPanel(id, el) {
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -616,7 +569,6 @@ function switchCase(id, btn) {
   btn.classList.add('active');
 }
 
-// ── Header/status update ──
 function setStatus(s, txt) {
   const el = document.getElementById('hdr-status');
   el.className = 'hdr-status ' + s;
@@ -638,14 +590,12 @@ function startTimer() {
 }
 function stopTimer() { clearInterval(state.timerId); }
 
-// ── Metric setters ──
 function updateMetrics() {
   document.getElementById('m-iter').textContent = state.iter;
   document.getElementById('m-tools').textContent = state.tools;
   document.getElementById('m-find').textContent = state.find;
   document.getElementById('m-ioc').textContent = state.ioc;
-  document.getElementById('m-time').textContent = state.toolTimes.length
-    ? Math.round(state.toolTimes.reduce((a,b)=>a+b,0)/state.toolTimes.length) : '—';
+  document.getElementById('m-time').textContent = state.toolTimes.length ? Math.round(state.toolTimes.reduce((a,b)=>a+b,0)/state.toolTimes.length) : '—';
 }
 function updateTax() {
   document.getElementById('tax-retry').textContent = state.tax.retry;
@@ -655,8 +605,6 @@ function updateTax() {
   const total = state.tax.retry + state.tax.path + state.tax.hall + state.tax.conf;
   document.getElementById('tax-total').textContent = total + ' events';
 }
-
-// ── Trail ──
 function pushTrail(tag, msg) {
   const trail = document.getElementById('trail');
   if (trail.querySelector('.trail-empty')) trail.innerHTML = '';
@@ -670,7 +618,6 @@ function pushTrail(tag, msg) {
   trail.scrollTop = trail.scrollHeight;
 }
 
-// ── Launch ──
 async function launchInvestigation() {
   if (state.running) return;
   const caseId = document.getElementById('f-case').value.trim();
@@ -689,11 +636,8 @@ async function launchInvestigation() {
   setNavLiveBadge('Running', 'nb-amber');
   startTimer();
 
-  // Switch to Live Run panel
-  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  document.getElementById('p0').classList.add('active');
-  document.querySelector('.nav-item').classList.add('active');
+  const p0Nav = document.querySelector('.nav-item[data-panel="p0"]');
+  showPanel('p0', p0Nav);
 
   document.getElementById('run-idle-card').style.display = 'none';
   document.getElementById('run-active-card').style.display = 'block';
@@ -706,7 +650,6 @@ async function launchInvestigation() {
   updateMetrics(); updateTax();
   pushTrail('sys', `Investigation launched · case=${caseId} · orchestrator=${orch}`);
 
-  // Try real backend; fall through to mock if unreachable
   try {
     const r = await fetch('/api/investigate', {
       method: 'POST',
@@ -723,7 +666,6 @@ async function launchInvestigation() {
   }
 }
 
-// ── Mock stream (when backend is offline) ──
 async function runMockStream() {
   const events = [
     {tag:'tool', msg:'volatility3 windows.pslist · scanning kernel structures', t:140, m:'tool'},
@@ -746,7 +688,6 @@ async function runMockStream() {
     {tag:'tool', msg:'Audit DB · sealing evidence chain · SHA-256 verified', t:90, m:'tool'},
     {tag:'info', msg:'Investigation complete · 5 findings · 3 IOCs · MITRE chain mapped', m:null},
   ];
-
   for (const e of events) {
     if (!state.running) return;
     await new Promise(r => setTimeout(r, 900 + Math.random()*600));
@@ -761,8 +702,6 @@ async function runMockStream() {
     pushTrail(e.tag, e.msg);
     updateMetrics(); updateTax();
   }
-
-  // Complete
   stopTimer();
   state.running = false;
   setStatus('complete', 'Complete');
@@ -771,7 +710,6 @@ async function runMockStream() {
   pushTrail('sys', '✓ Investigation finalized · all evidence sealed in audit DB');
 }
 
-// ── IOC Force Graph ──
 let iocInited = false;
 function initIOC() {
   if (iocInited) return;
