@@ -3,7 +3,7 @@
 All writes are best-effort: failures are logged but never abort the agent loop.
 Principle: investigation > telemetry.
 
-ADR: docs/adr/ADR-004-loop-instrumentation.md
+ADR: docs/adr/ADR-003-loop-instrumentation.md
 """
 from __future__ import annotations
 
