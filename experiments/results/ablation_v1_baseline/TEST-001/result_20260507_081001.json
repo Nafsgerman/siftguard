@@ -1,0 +1,8 @@
+{
+  "status": "ok",
+  "config": "ablation_v1_baseline",
+  "case_id": "TEST-001",
+  "wall_time": 41.8,
+  "report": "/cases/TEST-001/siftguard/experiments/results/ablation_v1_baseline/TEST-001/report_20260507_081001.md",
+  "timestamp": "20260507_081001"
+}

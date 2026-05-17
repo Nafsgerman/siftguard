@@ -1,0 +1,15 @@
+{
+  "generated_at": "2026-05-10T08:34:17.976860+00:00",
+  "case_id": "TEST-004",
+  "schema_version": "1.0.0",
+  "panels": [
+    "siftguard.eval.analytics.panel_1_accuracy",
+    "siftguard.eval.analytics.panel_2_calibration",
+    "siftguard.eval.analytics.panel_3_info_gain",
+    "siftguard.eval.analytics.panel_4_pareto",
+    "siftguard.eval.analytics.panel_5_hypothesis",
+    "siftguard.eval.analytics.panel_6_ablation",
+    "siftguard.eval.analytics.panel_6b_stability",
+    "siftguard.eval.analytics.panel_7_models"
+  ]
+}

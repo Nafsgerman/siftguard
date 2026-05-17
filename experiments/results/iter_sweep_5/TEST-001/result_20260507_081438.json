@@ -1,0 +1,8 @@
+{
+  "status": "ok",
+  "config": "iter_sweep_5",
+  "case_id": "TEST-001",
+  "wall_time": 53.1,
+  "report": "/cases/TEST-001/siftguard/experiments/results/iter_sweep_5/TEST-001/report_20260507_081438.md",
+  "timestamp": "20260507_081438"
+}

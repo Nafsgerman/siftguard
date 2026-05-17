@@ -246,11 +246,12 @@ def extract_findings_from_db(
         tool_placeholders = ",".join("?" * len(IOC_PRODUCING_TOOLS))
         evt_placeholders = ",".join("?" * len(_TOOL_OUTPUT_EVENT_TYPES))
 
+        # event_type column may not exist in older schemas — skip that filter
         cur.execute(
             f"SELECT tool_name, {output_col} FROM auditentry "
             f"WHERE run_id=? AND tool_name IN ({tool_placeholders}) "
-            f"AND event_type IN ({evt_placeholders}) AND {output_col} IS NOT NULL",
-            [run_id, *IOC_PRODUCING_TOOLS, *_TOOL_OUTPUT_EVENT_TYPES],
+            f"AND {output_col} IS NOT NULL",
+            [run_id, *IOC_PRODUCING_TOOLS],
         )
         rows = cur.fetchall()
 

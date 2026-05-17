@@ -1,0 +1,8 @@
+{
+  "status": "error",
+  "config": "baseline_claudecode",
+  "case_id": "TEST-001",
+  "error": "analyze_mft() missing 1 required keyword-only argument: 'memory_image'",
+  "wall_time": 48.6,
+  "timestamp": "20260513_034406"
+}
