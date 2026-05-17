@@ -286,3 +286,26 @@ class SnapshotWriter:
                     )
         except Exception as exc:
             logger.warning("SnapshotWriter.write_hypothesis_events failed: %s", exc)
+    def emit_blocked_mutation(
+        self,
+        case_id: str,
+        attempted_action: str,
+        reason: str,
+        actor: str = "siftguard-agent",
+    ) -> str:
+        import uuid
+        receipt_id = str(uuid.uuid4())
+        timestamp = datetime.now(timezone.utc).isoformat()
+        try:
+            with self._conn() as conn:
+                conn.execute(
+                    """
+                    INSERT INTO blocked_mutation
+                        (receipt_id, case_id, attempted_action, reason, actor, timestamp)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                    """,
+                    (receipt_id, case_id, attempted_action, reason, actor, timestamp),
+                )
+        except Exception as exc:
+            logger.warning("SnapshotWriter.emit_blocked_mutation failed: %s", exc)
+        return receipt_id

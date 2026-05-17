@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from siftguard.audit.snapshot_writer import SnapshotWriter
+from siftguard.agent.instrumentation import SnapshotWriter
 
 
 @pytest.fixture()
