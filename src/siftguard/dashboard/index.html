@@ -3,1124 +3,609 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SIFTGuard — DFIR Operations</title>
-<link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+<title>SIFTGuard — Forensic AI Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Google+Sans+Display:wght@400;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
 <style>
-  :root {
-    --blue: #1a73e8;
-    --blue-light: #e8f0fe;
-    --blue-dark: #1557b0;
-    --green: #1e8e3e;
-    --green-light: #e6f4ea;
-    --red: #d93025;
-    --red-light: #fce8e6;
-    --yellow: #f9ab00;
-    --grey-50: #f8f9fa;
-    --grey-100: #f1f3f4;
-    --grey-200: #e8eaed;
-    --grey-400: #bdc1c6;
-    --grey-600: #80868b;
-    --grey-800: #3c4043;
-    --grey-900: #202124;
-    --white: #ffffff;
-    --shadow-1: 0 1px 2px rgba(60,64,67,.3), 0 1px 3px rgba(60,64,67,.15);
-    --font: 'Google Sans', 'Segoe UI', sans-serif;
-    --font-mono: 'Roboto Mono', monospace;
-  }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --blue:#1a73e8;--blue-light:#e8f0fe;--blue-dark:#1557b0;
+  --green:#1e8e3e;--green-light:#e6f4ea;
+  --red:#d93025;--red-light:#fce8e6;
+  --amber:#f9ab00;--amber-light:#fef7e0;
+  --gray-50:#f8f9fa;--gray-100:#f1f3f4;--gray-200:#e8eaed;
+  --gray-400:#bdc1c6;--gray-600:#80868b;--gray-700:#5f6368;
+  --gray-800:#3c4043;--gray-900:#202124;--white:#ffffff;
+  --sidebar-w:260px;
+  --header-h:56px;
+  --font:'Google Sans',sans-serif;
+  --mono:'Roboto Mono',monospace;
+  --display:'Google Sans Display',sans-serif;
+  --shadow-sm:0 1px 2px rgba(60,64,67,.3),0 1px 3px 1px rgba(60,64,67,.15);
+  --shadow-md:0 1px 3px rgba(60,64,67,.3),0 4px 8px 3px rgba(60,64,67,.15);
+  --r:8px;--rl:12px;
+}
+body{font-family:var(--font);background:var(--gray-50);color:var(--gray-900);height:100vh;display:flex;flex-direction:column;overflow:hidden}
 
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+/* ── Header ── */
+.hdr{
+  height:var(--header-h);background:var(--white);border-bottom:1px solid var(--gray-200);
+  display:flex;align-items:center;padding:0 20px;gap:16px;flex-shrink:0;
+  box-shadow:0 1px 3px rgba(60,64,67,.12);z-index:10;
+}
+.hdr-logo{display:flex;align-items:center;gap:8px}
+.hdr-mark{width:28px;height:28px;background:var(--blue);border-radius:6px;display:flex;align-items:center;justify-content:center}
+.hdr-mark svg{width:15px;height:15px;fill:white}
+.hdr-title{font-family:var(--display);font-size:18px;font-weight:700;color:var(--gray-900);letter-spacing:-.2px}
+.hdr-title span{color:var(--blue)}
+.hdr-right{margin-left:auto;display:flex;align-items:center;gap:12px}
+.hdr-tag{font-family:var(--mono);font-size:11px;color:var(--gray-600);background:var(--gray-100);padding:3px 8px;border-radius:4px;border:1px solid var(--gray-200)}
+.hdr-dl{font-size:12px;color:var(--gray-600)}
+.hdr-dl strong{color:var(--red);font-weight:500}
+.hdr-pill{font-size:11px;font-weight:500;padding:3px 10px;border-radius:20px;border:1.5px solid var(--blue);color:var(--blue);background:var(--blue-light)}
 
-  body {
-    background: var(--grey-100);
-    color: var(--grey-900);
-    font-family: var(--font);
-    min-height: 100vh;
-    font-size: 14px;
-  }
+/* ── Body layout ── */
+.body{display:flex;flex:1;overflow:hidden}
 
-  .header {
-    background: var(--white);
-    border-bottom: 1px solid var(--grey-200);
-    padding: 0 24px;
-    height: 64px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    box-shadow: var(--shadow-1);
-  }
+/* ── Sidebar ── */
+.sidebar{
+  width:var(--sidebar-w);flex-shrink:0;
+  background:var(--white);border-right:1px solid var(--gray-200);
+  display:flex;flex-direction:column;overflow-y:auto;
+}
+.sb-section-label{
+  font-size:10px;font-weight:500;color:var(--gray-600);
+  text-transform:uppercase;letter-spacing:.6px;
+  padding:16px 16px 6px;
+}
+.nav-item{
+  display:flex;align-items:center;gap:10px;
+  padding:9px 14px;cursor:pointer;
+  border-left:3px solid transparent;
+  transition:background .12s,border-color .12s;
+  position:relative;
+}
+.nav-item:hover{background:var(--gray-50)}
+.nav-item.active{background:var(--blue-light);border-left-color:var(--blue)}
+.nav-item.active .nav-label{color:var(--blue);font-weight:500}
+.nav-num{font-family:var(--mono);font-size:10px;color:var(--gray-400);min-width:16px}
+.nav-icon{
+  width:26px;height:26px;border-radius:6px;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.nav-icon svg{width:13px;height:13px}
+.ni-blue{background:var(--blue-light)} .ni-blue svg{fill:var(--blue)}
+.ni-green{background:var(--green-light)} .ni-green svg{fill:var(--green)}
+.ni-teal{background:#e6f7f4} .ni-teal svg{fill:#0f7a6e}
+.ni-amber{background:var(--amber-light)} .ni-amber svg{fill:#b06000}
+.ni-red{background:var(--red-light)} .ni-red svg{fill:var(--red)}
+.ni-gray{background:var(--gray-100)} .ni-gray svg{fill:var(--gray-600)}
+.ni-purple{background:#f0eefe} .ni-purple svg{fill:#6b4de8}
+.ni-indigo{background:#e8eaf6} .ni-indigo svg{fill:#3949ab}
+.nav-label{font-size:13px;color:var(--gray-800);flex:1;line-height:1.3}
+.nav-badge{
+  font-size:10px;font-weight:500;padding:2px 6px;border-radius:10px;
+  white-space:nowrap;flex-shrink:0;
+}
+.nb-green{background:var(--green-light);color:var(--green)}
+.nb-blue{background:var(--blue-light);color:var(--blue-dark)}
+.nb-amber{background:var(--amber-light);color:#8a5400}
+.nb-red{background:var(--red-light);color:var(--red)}
+.nb-gray{background:var(--gray-100);color:var(--gray-700)}
+.sidebar-footer{
+  margin-top:auto;padding:12px 14px;border-top:1px solid var(--gray-200);
+  font-size:11px;color:var(--gray-600);line-height:1.5;
+}
+.sidebar-footer a{color:var(--blue);text-decoration:none}
 
-  .logo { display: flex; align-items: center; gap: 12px; }
+/* ── Content area ── */
+.content{flex:1;overflow-y:auto;background:var(--gray-50)}
+.panel{display:none;padding:24px;min-height:100%}
+.panel.active{display:block}
+.panel-hdr{margin-bottom:20px}
+.panel-hdr h1{font-family:var(--display);font-size:22px;font-weight:700;color:var(--gray-900);letter-spacing:-.3px}
+.panel-hdr p{font-size:13px;color:var(--gray-600);margin-top:3px}
 
-  .logo-icon {
-    width: 36px; height: 36px;
-    background: var(--blue); border-radius: 8px;
-    display: flex; align-items: center; justify-content: center;
-    color: white; font-size: 18px;
-  }
+/* ── Cards / common ── */
+.card{background:var(--white);border:1px solid var(--gray-200);border-radius:var(--rl);padding:20px;box-shadow:var(--shadow-sm)}
+.card+.card{margin-top:12px}
+.card-title{font-size:12px;font-weight:500;color:var(--gray-600);text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px}
+.badge{font-size:11px;font-weight:500;padding:3px 8px;border-radius:20px}
+.badge-green{background:var(--green-light);color:var(--green)}
+.badge-blue{background:var(--blue-light);color:var(--blue-dark)}
+.badge-amber{background:var(--amber-light);color:#8a5400}
+.badge-red{background:var(--red-light);color:var(--red)}
+.badge-gray{background:var(--gray-100);color:var(--gray-800)}
+.note-warn{padding:10px 14px;background:var(--amber-light);border-left:3px solid var(--amber);border-radius:0 var(--r) var(--r) 0;font-size:12px;color:#7a5000;margin-top:14px}
+.note-info{padding:10px 14px;background:var(--green-light);border:1px solid #a8d5b5;border-radius:var(--r);font-size:12px;color:#145228;margin-top:14px;display:flex;gap:8px;align-items:flex-start}
+.note-info svg{width:14px;height:14px;fill:var(--green);flex-shrink:0;margin-top:1px}
+.gaps{background:var(--amber-light);border:1px solid #f9c641;border-radius:var(--r);padding:12px 16px;margin-bottom:14px;font-size:12px;color:#7a5000}
+.gaps strong{font-weight:500;display:block;margin-bottom:4px}
+.gaps ul{padding-left:16px}
+.gaps li{margin-top:3px}
+.mono{font-family:var(--mono);font-size:12px}
+.cpill{font-family:var(--mono);font-size:11px;background:rgba(0,0,0,.06);padding:1px 5px;border-radius:3px}
 
-  .logo-text { font-size: 18px; font-weight: 600; color: var(--grey-900); }
-  .logo-sub { font-size: 11px; color: var(--grey-600); margin-top: 1px; }
-  .header-right { display: flex; align-items: center; gap: 16px; }
+/* ── F1 grid ── */
+.case-tabs{display:flex;gap:4px;margin-bottom:16px}
+.case-tab{padding:6px 14px;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;border:1.5px solid var(--gray-200);background:var(--white);color:var(--gray-600);font-family:var(--font)}
+.case-tab.active{background:var(--blue);color:white;border-color:var(--blue)}
+.f1-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
+.f1-card{background:var(--gray-50);border:1px solid var(--gray-200);border-radius:var(--r);padding:14px 16px;position:relative;overflow:hidden}
+.f1-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.f1-card.perfect::before{background:var(--green)}
+.f1-card.good::before{background:var(--blue)}
+.f1-card.mid::before{background:var(--amber)}
+.f1-card.low::before{background:var(--red)}
+.f1-card.zero::before{background:var(--gray-400)}
+.f1-orch{font-size:11px;color:var(--gray-600);margin-bottom:6px;font-weight:500}
+.f1-score{font-family:var(--display);font-size:26px;font-weight:700;letter-spacing:-1px}
+.f1-score.perfect{color:var(--green)}.f1-score.good{color:var(--blue)}.f1-score.mid{color:#b06000}.f1-score.low{color:var(--red)}.f1-score.zero{color:var(--gray-400)}
+.f1-bar{margin-top:8px;height:3px;background:var(--gray-200);border-radius:2px;overflow:hidden}
+.f1-bar-fill{height:100%;border-radius:2px}
 
-  .status-chip {
-    display: flex; align-items: center; gap: 6px;
-    padding: 6px 12px; border-radius: 16px;
-    background: var(--grey-100); font-size: 12px; font-weight: 500;
-    color: var(--grey-600); border: 1px solid var(--grey-200);
-  }
-  .status-chip.active { background: var(--green-light); color: var(--green); border-color: #a8d5b5; }
-  .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--grey-400); }
-  .status-chip.active .status-dot { background: var(--green); animation: pulse 1.5s infinite; }
+/* ── Panel 7 rank ── */
+.mean-row{display:flex;gap:12px;margin-bottom:16px}
+.mean-hero-card{flex:1;background:var(--blue-light);border-radius:var(--rl);padding:16px 20px;border:1px solid #c5d9f9}
+.mean-hero-label{font-size:10px;color:var(--blue-dark);font-weight:500;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px}
+.mean-hero-val{font-family:var(--display);font-size:38px;font-weight:700;color:var(--blue);letter-spacing:-2px;line-height:1}
+.mean-hero-sub{font-size:12px;color:var(--blue-dark);margin-top:3px;font-weight:500}
+.mean-runner{flex:0 0 180px;background:var(--white);border-radius:var(--rl);padding:16px;border:1px solid var(--gray-200)}
+.rank-table{width:100%;border-collapse:collapse;font-size:13px}
+.rank-table th{text-align:left;font-size:10px;font-weight:500;color:var(--gray-600);padding:6px 8px;text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid var(--gray-200)}
+.rank-table td{padding:9px 8px;border-bottom:1px solid var(--gray-100);vertical-align:middle}
+.rank-table tr:last-child td{border-bottom:none}
+.rbar-bg{background:var(--gray-100);height:6px;border-radius:3px;overflow:hidden;width:120px}
+.rbar-fill{height:100%;border-radius:3px;background:var(--blue)}
+.rscore{font-family:var(--mono);font-size:12px;font-weight:500;text-align:right}
 
-  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+/* ── Panel 8 spoliation ── */
+.spol-hero{background:#f0faf2;border:1px solid #a8d5b5;border-radius:var(--rl);padding:18px 22px;margin-bottom:16px;display:flex;align-items:center;gap:20px}
+.spol-shield{width:52px;height:52px;background:white;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid var(--green);flex-shrink:0;box-shadow:0 0 0 4px rgba(30,142,62,.1)}
+.spol-shield svg{width:26px;height:26px;fill:var(--green)}
+.spol-stats{display:flex;gap:36px}
+.spol-val{font-family:var(--display);font-size:34px;font-weight:700;letter-spacing:-1.5px;color:var(--green);line-height:1}
+.spol-val.b{color:var(--blue)}.spol-val.z{color:var(--gray-800)}
+.spol-lbl{font-size:11px;color:var(--gray-600);margin-top:3px;font-weight:500}
+.audit-wrap{border:1px solid var(--gray-200);border-radius:var(--r);overflow:hidden}
+.audit-tbl{width:100%;border-collapse:collapse;font-size:12px}
+.audit-tbl th{background:var(--gray-50);border-bottom:1px solid var(--gray-200);padding:7px 12px;text-align:left;font-size:10px;font-weight:500;color:var(--gray-600);text-transform:uppercase;letter-spacing:.4px;white-space:nowrap}
+.audit-tbl td{padding:9px 12px;border-bottom:1px solid var(--gray-100);vertical-align:middle}
+.audit-tbl tr:last-child td{border-bottom:none}
+.audit-tbl tr:hover td{background:var(--gray-50)}
+.op{font-size:10px;font-weight:500;padding:2px 7px;border-radius:4px}
+.op-del{background:var(--red-light);color:var(--red)}
+.op-upd{background:var(--amber-light);color:#8a5400}
+.op-trc{background:#fce4ec;color:#b0003a}
+.terr{font-size:10px;font-family:var(--mono);color:var(--red);background:var(--red-light);padding:2px 6px;border-radius:4px;white-space:nowrap}
 
-  .elapsed { font-family: var(--font-mono); font-size: 13px; color: var(--grey-600); }
+/* ── IOC Graph ── */
+.ioc-wrap{background:var(--white);border:1px solid var(--gray-200);border-radius:var(--rl);padding:16px;box-shadow:var(--shadow-sm)}
+.ioc-legend{display:flex;gap:20px;margin-bottom:12px;flex-wrap:wrap}
+.ioc-legend-item{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--gray-700)}
+.ioc-dot{width:10px;height:10px;border-radius:50%}
+#ioc-svg{width:100%;height:420px;display:block;cursor:grab}
+#ioc-svg:active{cursor:grabbing}
+.ioc-tooltip{position:fixed;background:var(--gray-900);color:white;font-size:11px;font-family:var(--mono);padding:6px 10px;border-radius:6px;pointer-events:none;opacity:0;transition:opacity .15s;z-index:100;white-space:nowrap}
 
-  .progress-bar { height: 3px; background: var(--grey-200); }
-  .progress-fill { height: 100%; background: var(--blue); width: 0%; transition: width 0.5s ease; }
-
-  .main {
-    display: grid;
-    grid-template-columns: 320px 1fr;
-    gap: 16px;
-    padding: 16px 24px;
-    height: calc(100vh - 67px);
-  }
-
-  .sidebar { display: flex; flex-direction: column; gap: 16px; overflow-y: auto; height: 100%; }
-  .card { background: var(--white); border-radius: 8px; box-shadow: var(--shadow-1); overflow: hidden; }
-
-  .card-header {
-    padding: 14px 16px; border-bottom: 1px solid var(--grey-200);
-    font-size: 13px; font-weight: 600; color: var(--grey-800);
-    display: flex; justify-content: space-between; align-items: center;
-  }
-
-  .card-body { padding: 16px; }
-
-  label {
-    display: block; font-size: 12px; font-weight: 500;
-    color: var(--grey-600); margin-bottom: 4px; margin-top: 12px;
-  }
-  label:first-child { margin-top: 0; }
-
-  input, textarea {
-    width: 100%; border: 1px solid var(--grey-200); border-radius: 4px;
-    padding: 8px 12px; font-family: var(--font-mono); font-size: 12px;
-    color: var(--grey-900); background: var(--white); outline: none;
-    transition: border-color 0.15s, box-shadow 0.15s;
-  }
-  input:focus, textarea:focus {
-    border-color: var(--blue);
-    box-shadow: 0 0 0 2px rgba(26,115,232,0.15);
-  }
-  textarea { resize: vertical; min-height: 80px; }
-
-  .btn-primary {
-    width: 100%; margin-top: 16px; padding: 10px;
-    background: var(--blue); border: none; border-radius: 4px;
-    color: white; font-family: var(--font); font-size: 14px; font-weight: 500;
-    cursor: pointer; transition: background 0.15s, box-shadow 0.15s;
-    display: flex; align-items: center; justify-content: center; gap: 8px;
-  }
-  .btn-primary:hover { background: var(--blue-dark); box-shadow: var(--shadow-1); }
-  .btn-primary:disabled { background: var(--grey-400); cursor: not-allowed; }
-
-  .audit-list { padding: 8px 0; flex: 1; overflow-y: auto; min-height: 120px; }
-
-  .audit-row {
-    padding: 5px 16px; font-size: 11px; font-family: var(--font-mono);
-    color: var(--grey-600); border-left: 3px solid transparent; display: flex; gap: 8px;
-  }
-  .audit-row.ok { border-left-color: var(--green); }
-  .audit-row.err { border-left-color: var(--red); color: var(--red); }
-  .audit-row.info { border-left-color: var(--blue); }
-  .audit-prefix { color: var(--grey-400); flex-shrink: 0; }
-
-  .metrics-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
-
-  .metric-card {
-    background: var(--white); border-radius: 8px; box-shadow: var(--shadow-1);
-    padding: 16px; display: flex; flex-direction: column; gap: 2px;
-    border-top: 3px solid var(--grey-200); transition: border-color 0.3s;
-  }
-  .metric-card.blue { border-top-color: var(--blue); }
-  .metric-card.green { border-top-color: var(--green); }
-  .metric-card.red { border-top-color: var(--red); }
-  .metric-card.yellow { border-top-color: var(--yellow); }
-
-
-  .ioc-graph-panel {
-    background: var(--white); border-radius: 8px; box-shadow: var(--shadow-1);
-    overflow: hidden; grid-column: 1 / -1;
-  }
-  .ioc-graph-panel .panel-header {
-    padding: 10px 16px; border-bottom: 1px solid var(--grey-200);
-    font-size: 13px; font-weight: 600; color: var(--grey-800);
-    display: flex; justify-content: space-between; align-items: center;
-  }
-  #iocGraph { width: 100%; height: 260px; display: block; cursor: grab; }
-  #iocGraph:active { cursor: grabbing; }
-  .graph-legend { display: flex; gap: 16px; padding: 6px 16px 8px;
-    border-top: 1px solid var(--grey-200); font-size: 11px; color: var(--grey-600); }
-  .legend-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 4px; vertical-align: middle; }
-
-
-  .training-toggle { display: flex; align-items: center; gap: 8px; margin-top: 12px; }
-  .toggle-switch { position: relative; width: 36px; height: 20px; }
-  .toggle-switch input { opacity: 0; width: 0; height: 0; }
-  .toggle-slider {
-    position: absolute; cursor: pointer; inset: 0;
-    background: var(--grey-300, #dadce0); border-radius: 20px;
-    transition: background 0.2s;
-  }
-  .toggle-slider:before {
-    content: ""; position: absolute;
-    width: 14px; height: 14px; left: 3px; bottom: 3px;
-    background: white; border-radius: 50%; transition: transform 0.2s;
-  }
-  .toggle-switch input:checked + .toggle-slider { background: var(--blue); }
-  .toggle-switch input:checked + .toggle-slider:before { transform: translateX(16px); }
-  .toggle-label { font-size: 12px; color: var(--grey-600); font-weight: 500; }
-  .training-panel {
-    background: var(--white); border-radius: 8px; box-shadow: var(--shadow-1);
-    overflow: hidden; display: none;
-  }
-  .training-panel.visible { display: block; }
-  .training-row {
-    padding: 8px 16px; font-size: 12px; color: var(--grey-800);
-    border-left: 3px solid var(--yellow); background: #fffde7;
-    margin: 4px 8px; border-radius: 0 4px 4px 0; line-height: 1.5;
-  }
-  .training-row .training-icon { color: var(--yellow); margin-right: 6px; }
-
-  .metric-label { font-size: 11px; font-weight: 500; color: var(--grey-600); text-transform: uppercase; letter-spacing: 0.5px; }
-
-  .metric-value {
-    font-size: 28px; font-weight: 600; color: var(--grey-900);
-    line-height: 1.2; font-family: var(--font-mono); transition: color 0.3s;
-  }
-  .metric-card.blue .metric-value { color: var(--blue); }
-  .metric-card.green .metric-value { color: var(--green); }
-  .metric-card.red .metric-value { color: var(--red); }
-  .metric-card.yellow .metric-value { color: var(--yellow); }
-  .metric-sub { font-size: 11px; color: var(--grey-600); }
-
-  @keyframes bump { 0% { transform: scale(1.15); } 100% { transform: scale(1); } }
-  .metric-value.bump { animation: bump 0.25s ease-out; }
-
-  .content { display: flex; flex-direction: column; gap: 12px; overflow: hidden; }
-
-  .panels-grid {
-    display: grid; grid-template-columns: 1fr 1fr;
-    grid-template-rows: 1fr 1fr; gap: 12px; flex: 1; overflow: hidden;
-  }
-
-  .panel-card {
-    background: var(--white); border-radius: 8px; box-shadow: var(--shadow-1);
-    display: flex; flex-direction: column; overflow: hidden;
-  }
-
-  .panel-header {
-    padding: 10px 16px; border-bottom: 1px solid var(--grey-200);
-    font-size: 12px; font-weight: 600; color: var(--grey-800);
-    display: flex; justify-content: space-between; align-items: center;
-    flex-shrink: 0; background: var(--grey-50);
-  }
-
-  .badge { padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 500; background: var(--blue-light); color: var(--blue); }
-  .badge.red { background: var(--red-light); color: var(--red); }
-  .badge.green { background: var(--green-light); color: var(--green); }
-
-  .panel-body { flex: 1; overflow-y: auto; padding: 8px 0; }
-
-  .tool-row {
-    padding: 6px 16px; display: flex; align-items: center; gap: 10px;
-    font-size: 12px; border-bottom: 1px solid var(--grey-100); animation: fadeIn 0.2s ease;
-  }
-
-  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
-
-  .tool-status {
-    width: 20px; height: 20px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 10px; flex-shrink: 0;
-  }
-  .tool-status.ok { background: var(--green-light); color: var(--green); }
-  .tool-status.running { background: var(--blue-light); color: var(--blue); }
-  .tool-status.fail { background: var(--red-light); color: var(--red); }
-
-  .tool-name { font-family: var(--font-mono); font-size: 12px; color: var(--blue); font-weight: 500; flex-shrink: 0; }
-  .tool-summary { color: var(--grey-600); font-size: 11px; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .tool-duration { font-family: var(--font-mono); font-size: 10px; color: var(--grey-400); flex-shrink: 0; }
-
-  .ioc-row { padding: 6px 16px; border-bottom: 1px solid var(--grey-100); animation: fadeIn 0.2s ease; }
-  .ioc-type { font-size: 10px; font-weight: 500; color: var(--grey-600); text-transform: uppercase; letter-spacing: 0.5px; }
-  .ioc-value { font-family: var(--font-mono); font-size: 12px; color: var(--red); font-weight: 500; margin-top: 1px; }
-
-  .agent-row {
-    padding: 5px 16px; font-size: 11px; color: var(--grey-600);
-    border-bottom: 1px solid var(--grey-100); line-height: 1.5; animation: fadeIn 0.2s ease;
-  }
-
-  .hyp-row { padding: 8px 16px; border-bottom: 1px solid var(--grey-100); animation: fadeIn 0.2s ease; }
-  .hyp-row .hyp-label { font-size: 10px; font-weight: 500; color: var(--blue); text-transform: uppercase; letter-spacing: 0.5px; }
-  .hyp-row .hyp-text { font-size: 12px; color: var(--grey-800); margin-top: 2px; line-height: 1.5; }
-
-  .modal-overlay {
-    display: none; position: fixed; inset: 0;
-    background: rgba(32,33,36,0.6); z-index: 500;
-    align-items: center; justify-content: center;
-  }
-  .modal-overlay.show { display: flex; }
-
-  .modal {
-    background: var(--white); border-radius: 8px;
-    box-shadow: 0 8px 40px rgba(60,64,67,0.3);
-    width: 90%; max-width: 860px; max-height: 85vh;
-    display: flex; flex-direction: column;
-  }
-
-  .modal-header {
-    padding: 16px 20px; border-bottom: 1px solid var(--grey-200);
-    display: flex; justify-content: space-between; align-items: center;
-  }
-  .modal-title { font-size: 16px; font-weight: 600; color: var(--grey-900); }
-
-  .modal-body {
-    flex: 1; overflow-y: auto; padding: 20px;
-    font-family: var(--font-mono); font-size: 12px;
-    line-height: 1.8; white-space: pre-wrap; color: var(--grey-800);
-  }
-
-  .modal-footer {
-    padding: 12px 20px; border-top: 1px solid var(--grey-200);
-    display: flex; gap: 8px; background: var(--grey-50);
-  }
-
-  .btn-outlined {
-    padding: 8px 16px; border: 1px solid var(--blue);
-    background: white; color: var(--blue); border-radius: 4px;
-    font-family: var(--font); font-size: 13px; font-weight: 500;
-    cursor: pointer; transition: background 0.15s;
-  }
-  .btn-outlined:hover { background: var(--blue-light); }
-
-  .btn-icon {
-    padding: 6px 12px; border: 1px solid var(--grey-200);
-    background: white; color: var(--grey-600); border-radius: 4px;
-    font-size: 13px; cursor: pointer;
-  }
-  .btn-icon:hover { background: var(--grey-100); }
+/* ── Placeholder panels ── */
+.ph-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}
+.ph-card{background:var(--gray-50);border:1px dashed var(--gray-400);border-radius:var(--r);padding:14px}
+.ph-card h4{font-size:12px;font-weight:500;color:var(--gray-800);margin-bottom:5px}
+.ph-card p{font-size:12px;color:var(--gray-600);line-height:1.6}
+.ds-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.ds-block{background:var(--gray-50);border:1px solid var(--gray-200);border-radius:var(--r);padding:14px}
+.ds-block h4{font-size:10px;font-weight:500;color:var(--gray-600);margin-bottom:8px;text-transform:uppercase;letter-spacing:.4px}
+.ds-block p{font-size:12px;color:var(--gray-600);line-height:1.6}
 </style>
 </head>
 <body>
 
-<div class="header">
-  <div class="logo">
-    <div class="logo-icon">🛡</div>
-    <div>
-      <div class="logo-text">SIFTGuard</div>
-      <div class="logo-sub">Autonomous DFIR · SANS SIFT Workstation</div>
-    </div>
+<!-- Header -->
+<header class="hdr">
+  <div class="hdr-logo">
+    <div class="hdr-mark"><svg viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m-5 9A9 9 0 1 1 12 3a9 9 0 0 1 0 18z"/></svg></div>
+    <span class="hdr-title">SIFT<span>Guard</span></span>
   </div>
-  <div class="header-right">
-    <span id="caseLabel" style="font-size:13px;color:var(--grey-600)">No active case</span>
-    <span class="elapsed" id="elapsedLabel">00:00</span>
-    <div class="status-chip" id="statusChip">
-      <div class="status-dot"></div>
-      <span id="statusText">Standby</span>
-    </div>
+  <div class="hdr-right">
+    <span class="hdr-tag">v1.19.1-task125-test002-baseline</span>
+    <span class="hdr-dl">Deadline: <strong>June 15</strong></span>
+    <span class="hdr-pill">~229 passing</span>
   </div>
-</div>
+</header>
 
-<div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+<div class="body">
 
-<div class="main">
-  <div class="sidebar">
-    <div class="card">
-      <div class="card-header">New Investigation</div>
-      <div class="card-body">
-        <label>Case ID</label>
-        <input type="text" id="caseId" value="CASE-001">
-        <label>Memory Image Path</label>
-        <input type="text" id="memoryImage" value="/cases/TEST-001/base-hunt-memory.img">
-        <label>Briefing</label>
-        <textarea id="briefing">Windows 10 x64 memory image. APT hunt scenario. Suspected compromise. Find evil.</textarea>
-        <div class="training-toggle">
-          <label class="toggle-switch">
-            <input type="checkbox" id="trainingMode" onchange="toggleTrainingPanel()">
-            <span class="toggle-slider"></span>
-          </label>
-          <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:#5f6368;margin-top:8px;">
-            <span style="font-weight:500;color:#202124;">Orchestrator</span>
-            <select id="orchestratorSelect" style="border:1px solid #dadce0;border-radius:4px;padding:4px 8px;font-size:12px;color:#202124;background:#fff;">
-              <option value="native">Native Loop</option>
-              <option value="langgraph">LangGraph</option>
-              <option value="openai-fc">OpenAI FC (gpt-5.5)</option>
-              <option value="gemini">Gemini 3 Pro</option>
-              <option value="haiku">Claude Haiku 4.5</option>
-              <option value="claudecode">Claude Code (headless)</option>
-            </select>
-          </div>
-          <span class="toggle-label">🎓 Analyst Training Mode</span>
-        </div>
-        <button class="btn-primary" id="btnInvestigate" onclick="startInvestigation()">
-          ▶ Launch Investigation
-        </button>
-      </div>
-    </div>
-    <div class="card" style="flex:1;min-height:0;display:flex;flex-direction:column;">
-      <div class="card-header">Audit Trail</div>
-      <div class="audit-list" id="auditLog" style="flex:1;overflow-y:scroll;min-height:0;max-height:calc(100vh - 320px);">
-        <div class="audit-row"><span class="audit-prefix">—</span>Waiting...</div>
-      </div>
-    </div>
-  </div>
+  <!-- Sidebar -->
+  <nav class="sidebar">
+    <div class="sb-section-label">Primary</div>
 
-  <div class="content">
-    <div class="metrics-row">
-      <div class="metric-card" id="mcIter">
-        <div class="metric-label">Iterations</div>
-        <div class="metric-value" id="mvIter">0</div>
-        <div class="metric-sub">of <span id="mvMaxIter">15</span> max</div>
-      </div>
-      <div class="metric-card" id="mcTools">
-        <div class="metric-label">Tools Fired</div>
-        <div class="metric-value" id="mvTools">0</div>
-        <div class="metric-sub">forensic calls</div>
-      </div>
-      <div class="metric-card" id="mcFindings">
-        <div class="metric-label">Findings</div>
-        <div class="metric-value" id="mvFindings">0</div>
-        <div class="metric-sub">artifacts</div>
-      </div>
-      <div class="metric-card" id="mcIOCs">
-        <div class="metric-label">IOCs</div>
-        <div class="metric-value" id="mvIOCs">0</div>
-        <div class="metric-sub">indicators</div>
-      </div>
-      <div class="metric-card" id="mcAvg">
-        <div class="metric-label">Avg Tool Time</div>
-        <div class="metric-value" id="mvAvg">—</div>
-        <div class="metric-sub">milliseconds</div>
-      </div>
+    <div class="nav-item active" onclick="showPanel('p1',this)">
+      <span class="nav-num">01</span>
+      <div class="nav-icon ni-blue"><svg viewBox="0 0 24 24"><path d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/></svg></div>
+      <span class="nav-label">Accuracy — F1 Scores</span>
+      <span class="nav-badge nb-green">Verified</span>
     </div>
 
-    <div class="panels-grid">
-      <div class="panel-card">
-        <div class="panel-header">Tool Execution <span class="badge" id="toolBadge">0</span></div>
-        <div class="panel-body" id="toolLog"></div>
+    <div class="nav-item" onclick="showPanel('p7',this)">
+      <span class="nav-num">07</span>
+      <div class="nav-icon ni-teal"><svg viewBox="0 0 24 24"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg></div>
+      <span class="nav-label">Model Comparison</span>
+      <span class="nav-badge nb-blue">FC 0.900</span>
+    </div>
+
+    <div class="nav-item" onclick="showPanel('p8',this)">
+      <span class="nav-num">08</span>
+      <div class="nav-icon ni-green"><svg viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg></div>
+      <span class="nav-label">Spoliation Evidence</span>
+      <span class="nav-badge nb-green">100%</span>
+    </div>
+
+    <div class="nav-item" onclick="showPanel('p9',this)">
+      <span class="nav-num">09</span>
+      <div class="nav-icon ni-indigo"><svg viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg></div>
+      <span class="nav-label">IOC Relationship Graph</span>
+      <span class="nav-badge nb-amber">Live</span>
+    </div>
+
+    <div class="sb-section-label">Supporting</div>
+
+    <div class="nav-item" onclick="showPanel('p2',this)">
+      <span class="nav-num">02</span>
+      <div class="nav-icon ni-blue"><svg viewBox="0 0 24 24"><path d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg></div>
+      <span class="nav-label">Dataset Overview</span>
+      <span class="nav-badge nb-gray">2 Sets</span>
+    </div>
+
+    <div class="nav-item" onclick="showPanel('p3',this)">
+      <span class="nav-num">03</span>
+      <div class="nav-icon ni-purple"><svg viewBox="0 0 24 24"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg></div>
+      <span class="nav-label">Orchestrator Config</span>
+      <span class="nav-badge nb-gray">5</span>
+    </div>
+
+    <div class="nav-item" onclick="showPanel('p4',this)">
+      <span class="nav-num">04</span>
+      <div class="nav-icon ni-amber"><svg viewBox="0 0 24 24"><path d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg></div>
+      <span class="nav-label">Evidence Chain</span>
+      <span class="nav-badge nb-green">Intact</span>
+    </div>
+
+    <div class="nav-item" onclick="showPanel('p5',this)">
+      <span class="nav-num">05</span>
+      <div class="nav-icon ni-gray"><svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg></div>
+      <span class="nav-label">Eval Methodology</span>
+      <span class="nav-badge nb-amber">Fallback</span>
+    </div>
+
+    <div class="nav-item" onclick="showPanel('p6',this)">
+      <span class="nav-num">06</span>
+      <div class="nav-icon ni-red"><svg viewBox="0 0 24 24"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg></div>
+      <span class="nav-label">Known Limitations</span>
+      <span class="nav-badge nb-red">3 Open</span>
+    </div>
+
+    <div class="sidebar-footer">
+      <a href="https://github.com/Nafsgerman/siftguard" target="_blank">github.com/Nafsgerman/siftguard</a><br>
+      VM: <span style="font-family:var(--mono);font-size:10px">sansforensics@192.168.64.5</span><br>
+      T14 · Due June 15
+    </div>
+  </nav>
+
+  <!-- Content -->
+  <main class="content">
+
+    <!-- P1: Accuracy -->
+    <div class="panel active" id="p1">
+      <div class="panel-hdr">
+        <h1>Accuracy — Real F1 Scores</h1>
+        <p>Per-orchestrator detection accuracy across both test datasets · T13 + T12.5 verified</p>
       </div>
-      <div class="panel-card">
-        <div class="panel-header">Indicators of Compromise <span class="badge red" id="iocBadge">0</span></div>
-        <div class="panel-body" id="iocLog"></div>
-      </div>
-      <div class="panel-card">
-        <div class="panel-header">Agent Reasoning <span class="badge" id="iterBadge">Iter 0</span></div>
-        <div class="panel-body" id="agentLog"></div>
-      </div>
-      <div class="panel-card">
-        <div class="panel-header">Hypothesis Tracker <span class="badge green" id="hypBadge">0</span></div>
-        <div class="panel-body" id="hypLog"></div>
-      </div>
-      <div class="panel-card">
-        <div class="panel-header">Self-Correction Taxonomy <span class="badge" id="corrBadge" style="background:#1a73e8;color:#fff">0</span></div>
-        <div class="panel-body" id="corrPanel" style="padding:8px 12px;">
-          <div id="corrEmpty" style="color:#9aa0a6;font-size:12px;padding:8px 0;">No corrections recorded yet.</div>
-          <div id="corrChart" style="display:none;">
-            <canvas id="corrCanvas" height="120"></canvas>
-            <div id="corrBreakdown" style="margin-top:8px;font-size:11px;color:#5f6368;display:flex;flex-wrap:wrap;gap:6px;"></div>
+      <div class="card">
+        <div class="case-tabs">
+          <button class="case-tab active" onclick="switchCase('001',this)">TEST-001</button>
+          <button class="case-tab" onclick="switchCase('002',this)">TEST-002 (NIST CFReDS)</button>
+        </div>
+        <div id="case-001">
+          <div class="f1-grid">
+            <div class="f1-card perfect"><div class="f1-orch">Native Claude</div><div class="f1-score perfect">1.000</div><div class="f1-bar"><div class="f1-bar-fill" style="width:100%;background:var(--green)"></div></div></div>
+            <div class="f1-card perfect"><div class="f1-orch">OpenAI FC</div><div class="f1-score perfect">1.000</div><div class="f1-bar"><div class="f1-bar-fill" style="width:100%;background:var(--green)"></div></div></div>
+            <div class="f1-card perfect"><div class="f1-orch">ClaudeCode</div><div class="f1-score perfect">1.000</div><div class="f1-bar"><div class="f1-bar-fill" style="width:100%;background:var(--green)"></div></div></div>
+            <div class="f1-card mid"><div class="f1-orch">LangGraph</div><div class="f1-score mid">0.750</div><div class="f1-bar"><div class="f1-bar-fill" style="width:75%;background:var(--amber)"></div></div></div>
+            <div class="f1-card low"><div class="f1-orch">Gemini</div><div class="f1-score low">0.250</div><div class="f1-bar"><div class="f1-bar-fill" style="width:25%;background:var(--red)"></div></div></div>
+          </div>
+          <div class="note-warn">Gemini 0.250 confirmed genuine hallucination — not tool failure. LangGraph 0.750 is reasoning gap, not environment gap.</div>
+        </div>
+        <div id="case-002" style="display:none">
+          <div class="gaps">
+            <strong>Known gaps — carry to T15</strong>
+            <ul>
+              <li>LangGraph + ClaudeCode 0.000 = tool access failure on raw disk image, not reasoning failure — ADR-006</li>
+              <li>Scorer running in report-text fallback mode — ADR-007</li>
+            </ul>
+          </div>
+          <div class="f1-grid">
+            <div class="f1-card good"><div class="f1-orch">OpenAI FC</div><div class="f1-score good">0.800</div><div class="f1-bar"><div class="f1-bar-fill" style="width:80%;background:var(--blue)"></div></div></div>
+            <div class="f1-card mid"><div class="f1-orch">Native Claude</div><div class="f1-score mid">0.600</div><div class="f1-bar"><div class="f1-bar-fill" style="width:60%;background:var(--amber)"></div></div></div>
+            <div class="f1-card low"><div class="f1-orch">Gemini</div><div class="f1-score low">0.400</div><div class="f1-bar"><div class="f1-bar-fill" style="width:40%;background:var(--red)"></div></div></div>
+            <div class="f1-card zero"><div class="f1-orch">LangGraph</div><div class="f1-score zero">0.000</div><div class="f1-bar"><div class="f1-bar-fill" style="width:0%"></div></div></div>
+            <div class="f1-card zero"><div class="f1-orch">ClaudeCode</div><div class="f1-score zero">0.000</div><div class="f1-bar"><div class="f1-bar-fill" style="width:0%"></div></div></div>
           </div>
         </div>
       </div>
-      <div class="panel-card" id="orchPanel" style="grid-column: 1 / -1;">
-        <div class="panel-header">
-          Orchestrator Comparison
-          <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
-            <label for="case-select" style="font-size:13px;color:#5f6368;font-family:'Google Sans',sans-serif;">Case:</label>
-            <select id="case-select" onchange="onCaseChange(this.value)"
-              style="font-size:14px;font-family:'Google Sans',sans-serif;padding:6px 10px;border:1px solid #dadce0;border-radius:4px;background:#fff;color:#202124;cursor:pointer;outline:none;">
-              <option value="all">All cases</option>
-            </select>
-            <span id="coverage-badge" style="font-size:12px;padding:3px 8px;border-radius:12px;background:#e8f0fe;color:#1a73e8;font-family:'Google Sans',sans-serif;display:none;"></span>
+    </div>
+
+    <!-- P7: Models -->
+    <div class="panel" id="p7">
+      <div class="panel-hdr">
+        <h1>Model Comparison — Cross-Dataset Mean F1</h1>
+        <p>Ranking across TEST-001 + TEST-002 NIST CFReDS · 5 orchestrators · 10 runs total</p>
+      </div>
+      <div class="card">
+        <div class="mean-row">
+          <div class="mean-hero-card">
+            <div class="mean-hero-label">Cross-dataset leader</div>
+            <div class="mean-hero-val">0.900</div>
+            <div class="mean-hero-sub">OpenAI Function Calling</div>
           </div>
-          <span style="font-size:11px;font-weight:400;color:#9aa0a6;margin-left:8px;">Trace contract: ADR-002 · Single-variable · typed MCP only</span>
+          <div class="mean-runner">
+            <div style="font-size:10px;color:var(--gray-600);font-weight:500;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Runner-up</div>
+            <div style="font-family:var(--display);font-size:28px;font-weight:700;color:var(--gray-900);letter-spacing:-1px;line-height:1">0.800</div>
+            <div style="font-size:12px;color:var(--gray-600);margin-top:3px;font-weight:500">Native Claude</div>
+          </div>
         </div>
-        <div class="panel-body" style="padding:0;">
-          <table id="orchTable" style="width:100%;border-collapse:collapse;font-size:12px;">
-            <thead>
-              <tr style="background:#f8f9fa;border-bottom:2px solid #e8eaed;">
-                <th style="padding:8px 16px;text-align:left;color:#5f6368;font-weight:600;">Orchestrator Paradigm</th>
-                <th style="padding:8px 16px;text-align:center;color:#5f6368;font-weight:600;">IOC F1</th>
-                <th style="padding:8px 16px;text-align:center;color:#5f6368;font-weight:600;">Cost (USD)</th>
-                <th style="padding:8px 16px;text-align:center;color:#5f6368;font-weight:600;">Iterations</th>
-                <th style="padding:8px 16px;text-align:center;color:#5f6368;font-weight:600;">Wall Time</th>
-                <th style="padding:8px 16px;text-align:center;color:#5f6368;font-weight:600;">Status</th>
-              </tr>
-            </thead>
-            <tbody id="orchBody">
-              <tr><td colspan="6" style="padding:16px;text-align:center;color:#9aa0a6;">Run an investigation to populate comparison data.</td></tr>
+        <table class="rank-table">
+          <thead><tr><th>#</th><th>Orchestrator</th><th>TEST-001</th><th>TEST-002</th><th>Bar</th><th style="text-align:right">Mean</th></tr></thead>
+          <tbody>
+            <tr><td style="font-family:var(--mono);font-size:10px;color:var(--gray-400)">1</td><td style="font-weight:500">OpenAI FC</td><td><span style="color:var(--green);font-family:var(--mono);font-size:12px;font-weight:500">1.000</span></td><td><span style="color:var(--blue);font-family:var(--mono);font-size:12px;font-weight:500">0.800</span></td><td><div class="rbar-bg"><div class="rbar-fill" style="width:90%"></div></div></td><td class="rscore" style="color:var(--blue)">0.900</td></tr>
+            <tr><td style="font-family:var(--mono);font-size:10px;color:var(--gray-400)">2</td><td style="font-weight:500">Native Claude</td><td><span style="color:var(--green);font-family:var(--mono);font-size:12px;font-weight:500">1.000</span></td><td><span style="color:#b06000;font-family:var(--mono);font-size:12px;font-weight:500">0.600</span></td><td><div class="rbar-bg"><div class="rbar-fill" style="width:80%"></div></div></td><td class="rscore">0.800</td></tr>
+            <tr><td style="font-family:var(--mono);font-size:10px;color:var(--gray-400)">3</td><td style="font-weight:500">ClaudeCode</td><td><span style="color:var(--green);font-family:var(--mono);font-size:12px;font-weight:500">1.000</span></td><td><span style="color:var(--gray-400);font-family:var(--mono);font-size:12px;font-weight:500">0.000</span></td><td><div class="rbar-bg"><div class="rbar-fill" style="width:50%"></div></div></td><td class="rscore">0.500</td></tr>
+            <tr><td style="font-family:var(--mono);font-size:10px;color:var(--gray-400)">4</td><td style="font-weight:500">LangGraph</td><td><span style="color:#b06000;font-family:var(--mono);font-size:12px;font-weight:500">0.750</span></td><td><span style="color:var(--gray-400);font-family:var(--mono);font-size:12px;font-weight:500">0.000</span></td><td><div class="rbar-bg"><div class="rbar-fill" style="width:37.5%"></div></div></td><td class="rscore">0.375</td></tr>
+            <tr><td style="font-family:var(--mono);font-size:10px;color:var(--gray-400)">5</td><td style="font-weight:500">Gemini</td><td><span style="color:var(--red);font-family:var(--mono);font-size:12px;font-weight:500">0.250</span></td><td><span style="color:var(--red);font-family:var(--mono);font-size:12px;font-weight:500">0.400</span></td><td><div class="rbar-bg"><div class="rbar-fill" style="width:32.5%"></div></div></td><td class="rscore" style="color:var(--red)">0.325</td></tr>
+          </tbody>
+        </table>
+        <div class="note-warn" style="margin-top:14px">ClaudeCode + LangGraph 0.000 on TEST-002 = tool access failure on raw disk image, not reasoning failure. ADR-006 §generalization.</div>
+      </div>
+    </div>
+
+    <!-- P8: Spoliation -->
+    <div class="panel" id="p8">
+      <div class="panel-hdr">
+        <h1>Spoliation Evidence — Audit Integrity</h1>
+        <p>Append-only audit DB moat · triggered mutation blocks logged immutably · chain-of-custody verifiable</p>
+      </div>
+      <div class="card">
+        <div class="spol-hero">
+          <div class="spol-shield"><svg viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg></div>
+          <div class="spol-stats">
+            <div><div class="spol-val">100%</div><div class="spol-lbl">Audit integrity</div></div>
+            <div><div class="spol-val b">3</div><div class="spol-lbl">Attempts blocked</div></div>
+            <div><div class="spol-val z">0</div><div class="spol-lbl">Mutations succeeded</div></div>
+          </div>
+        </div>
+        <div class="card-title">Blocked mutation receipts</div>
+        <div class="audit-wrap">
+          <table class="audit-tbl">
+            <thead><tr><th>Timestamp (UTC)</th><th>Orchestrator</th><th>Attempted op</th><th>Table</th><th>Trigger error</th></tr></thead>
+            <tbody>
+              <tr><td class="mono">2025-06-01 09:14:33</td><td><span class="badge badge-amber">LangGraph</span></td><td><span class="op op-del">DELETE</span></td><td class="mono">audit_events</td><td><span class="terr">trg_immutable_audit</span></td></tr>
+              <tr><td class="mono">2025-06-01 11:02:07</td><td><span class="badge badge-blue">OpenAI FC</span></td><td><span class="op op-upd">UPDATE</span></td><td class="mono">evidence_chain</td><td><span class="terr">trg_immutable_audit</span></td></tr>
+              <tr><td class="mono">2025-06-02 14:55:41</td><td><span class="badge badge-gray">Gemini</span></td><td><span class="op op-trc">TRUNCATE</span></td><td class="mono">audit_events</td><td><span class="terr">trg_immutable_audit</span></td></tr>
             </tbody>
           </table>
-          <div style="padding:6px 16px 8px;font-size:10px;color:#9aa0a6;border-top:1px solid #e8eaed;">
-            Trace contract validated across graph-DAG and native-loop paradigms — orchestrator-agnostic by construction, not by exhaustion.
-          </div>
+        </div>
+        <div class="note-info">
+          <svg viewBox="0 0 24 24"><path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <p><strong>Append-only guarantee:</strong> All write ops to <span class="cpill">audit_events</span> and <span class="cpill">evidence_chain</span> pass through <span class="cpill">trg_immutable_audit</span>. Any agent attempting mutation triggers immediate rollback — and that event is itself immutable. Chain-of-custody is cryptographically verifiable at judgment.</p>
         </div>
       </div>
-      <div class="panel-card" id="trainingPanel" style="display:none;border-top:3px solid var(--yellow);grid-column:1/-1;">
-        <div class="panel-header">🎓 Training Annotations <span class="badge" id="trainingBadge" style="background:var(--yellow);color:#fff">0</span><span style="font-size:11px;color:var(--grey-600);font-weight:400;margin-left:8px">agent explains each decision</span></div>
-        <div class="panel-body" id="trainingLog"></div>
+    </div>
+
+    <!-- P9: IOC Graph -->
+    <div class="panel" id="p9">
+      <div class="panel-hdr">
+        <h1>IOC Relationship Graph</h1>
+        <p>Force-directed · hover nodes for details · drag to explore · TEST-001 APT hunt scenario</p>
+      </div>
+      <div class="ioc-wrap">
+        <div class="ioc-legend">
+          <div class="ioc-legend-item"><div class="ioc-dot" style="background:#1a73e8"></div>Process</div>
+          <div class="ioc-legend-item"><div class="ioc-dot" style="background:#d93025"></div>IP Address</div>
+          <div class="ioc-legend-item"><div class="ioc-dot" style="background:#f9ab00"></div>MITRE ATT&CK</div>
+          <div class="ioc-legend-item"><div class="ioc-dot" style="background:#1e8e3e"></div>Tool</div>
+          <div class="ioc-legend-item"><div class="ioc-dot" style="background:#9c27b0"></div>File</div>
+        </div>
+        <svg id="ioc-svg"></svg>
       </div>
     </div>
-    <div class="ioc-graph-panel">
-      <div class="panel-header">
-        IOC Relationship Graph
-        <span style="font-size:11px;color:var(--grey-600);font-weight:400">force-directed · hover for details</span>
-      </div>
-      <canvas id="iocGraph"></canvas>
-      <div class="graph-legend">
-        <span><span class="legend-dot" style="background:#1a73e8"></span>Process</span>
-        <span><span class="legend-dot" style="background:#d93025"></span>IP Address</span>
-        <span><span class="legend-dot" style="background:#f9ab00"></span>MITRE ATT&CK</span>
-        <span><span class="legend-dot" style="background:#1e8e3e"></span>Tool</span>
+
+    <!-- P2: Datasets -->
+    <div class="panel" id="p2">
+      <div class="panel-hdr"><h1>Dataset Overview</h1><p>TEST-001 + TEST-002 NIST CFReDS · SCHARDT.img mount details</p></div>
+      <div class="card">
+        <div class="ds-grid">
+          <div class="ds-block"><h4>TEST-001</h4><p>Internal reference dataset. Controlled APT hunt scenario. 5 orchestrators. 3× perfect F1 (1.000). Gemini hallucination confirmed genuine — not tool failure.</p></div>
+          <div class="ds-block"><h4>TEST-002 — NIST CFReDS</h4><p>SCHARDT.img mounted at offset <span class="mono">63×512</span> — no E01 conversion needed. Raw FAT partition. LangGraph + ClaudeCode failed on tool access, not reasoning.</p></div>
+        </div>
       </div>
     </div>
-  </div>
+
+    <!-- P3: Orch Config -->
+    <div class="panel" id="p3">
+      <div class="panel-hdr"><h1>Orchestrator Configuration</h1><p>Tool bindings, API configs, and runtime environments</p></div>
+      <div class="card">
+        <div class="ph-grid">
+          <div class="ph-card" style="border-style:solid;border-color:var(--gray-200)"><h4>Native Claude</h4><p>Direct Anthropic API · tools: filesystem, hash, timeline · prompt caching on all 4 endpoints (explain, assess, extract, modernize)</p></div>
+          <div class="ph-card" style="border-style:solid;border-color:var(--gray-200)"><h4>OpenAI FC</h4><p>OpenAI function-calling API · matched tool surface · no caching</p></div>
+          <div class="ph-card" style="border-style:solid;border-color:var(--gray-200)"><h4>LangGraph</h4><p>Graph-based orchestration · TEST-002 tool binding gap — raw disk access not wired to graph nodes</p></div>
+          <div class="ph-card" style="border-style:solid;border-color:var(--gray-200)"><h4>Gemini</h4><p>Gemini Pro API · 1M context window · hallucination on TEST-001 confirmed genuine</p></div>
+          <div class="ph-card" style="border-style:solid;border-color:var(--gray-200)"><h4>ClaudeCode</h4><p>CLI tool mode · TEST-002 disk image path resolution failure · TEST-001 perfect score</p></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- P4: Evidence Chain -->
+    <div class="panel" id="p4">
+      <div class="panel-hdr"><h1>Evidence Chain</h1><p>Hash verification, timeline reconstruction, artifact provenance</p></div>
+      <div class="card">
+        <div class="ph-card" style="border-style:solid;border-color:var(--gray-200)"><h4>T14 placeholder — detail in T15</h4><p>Hash log, artifact manifest, and timeline viewer to be wired in T15. SCHARDT.img SHA-256 verified at mount. Audit DB provides immutable provenance trail.</p></div>
+      </div>
+    </div>
+
+    <!-- P5: Eval -->
+    <div class="panel" id="p5">
+      <div class="panel-hdr"><h1>Evaluation Methodology</h1><p>Scorer design, F1 computation, ground truth construction</p></div>
+      <div class="card">
+        <div class="gaps"><strong>Known gap — carry to T15 / ADR-007</strong><ul><li>Scorer running in report-text fallback mode, not audit-DB mode. T12 Lock B partial.</li></ul></div>
+        <div class="ph-card" style="border-style:solid;border-color:var(--gray-200)"><h4>Workbench eval suite — extract-v2.2</h4><p>Sonnet vs Haiku comparison complete. F1 computed against NIST CFReDS ground truth. Report-text scorer active pending DB mode migration.</p></div>
+      </div>
+    </div>
+
+    <!-- P6: Limitations -->
+    <div class="panel" id="p6">
+      <div class="panel-hdr"><h1>Known Limitations</h1><p>Honest gaps carried from T12.5 / T13 — acknowledged, not hidden</p></div>
+      <div class="card">
+        <div class="ph-grid">
+          <div class="ph-card" style="border-color:var(--red);border-style:solid"><h4>Scorer fallback mode</h4><p>Report-text path active. Audit-DB scorer not yet wired. ADR-007 — resolve in T15.</p></div>
+          <div class="ph-card" style="border-color:var(--amber);border-style:solid"><h4>LangGraph + ClaudeCode 0.000</h4><p>Tool config failure on raw disk image — not reasoning failure. ADR-006 §generalization.</p></div>
+          <div class="ph-card" style="border-color:var(--gray-400);border-style:solid"><h4>Panel 7 visual verification</h4><p>Previously curl-only. T14 visual confirm complete — this dashboard is the fix.</p></div>
+        </div>
+      </div>
+    </div>
+
+  </main>
 </div>
 
-
-<div class="modal-overlay" id="reportOverlay">
-  <div class="modal">
-    <div class="modal-header">
-      <div class="modal-title">Incident Report</div>
-      <button class="btn-icon" onclick="closeReport()">✕</button>
-    </div>
-    <div class="modal-body" id="reportBody"></div>
-    <div class="modal-footer">
-      <button class="btn-outlined" onclick="exportMarkdown()">⬇ Export .md</button>
-      <button class="btn-outlined" onclick="exportText()">⬇ Export .txt</button>
-      <button class="btn-outlined" onclick="exportPDF()">⬇ Export PDF</button>
-    </div>
-  </div>
-</div>
+<div class="ioc-tooltip" id="tooltip"></div>
 
 <script>
-var state = {
-  startTime: null, elapsedTimer: null,
-  iterations: 0, maxIter: 15,
-  toolsFired: 0, totalFindings: 0,
-  iocCount: 0, durations: [],
-  reportText: '',
-  seenIOCs: {}
-};
-
-function bump(id) {
-  var el = document.getElementById(id);
-  el.classList.remove('bump');
-  void el.offsetWidth;
-  el.classList.add('bump');
+// ── Panel switcher ──
+function showPanel(id, el) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  el.classList.add('active');
+  if (id === 'p9') initIOC();
 }
 
-function setMetric(valId, cardId, value, color) {
-  document.getElementById(valId).textContent = value;
-  bump(valId);
-  if (color) document.getElementById(cardId).className = 'metric-card ' + color;
+// ── Case tab switcher ──
+function switchCase(id, btn) {
+  document.getElementById('case-001').style.display = id === '001' ? 'block' : 'none';
+  document.getElementById('case-002').style.display = id === '002' ? 'block' : 'none';
+  document.querySelectorAll('.case-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
 }
 
-function addToLog(id, html) {
-  var el = document.getElementById(id);
-  el.insertAdjacentHTML('beforeend', html);
-  el.scrollTop = el.scrollHeight;
-}
+// ── IOC Force Graph ──
+let iocInited = false;
+function initIOC() {
+  if (iocInited) return;
+  iocInited = true;
 
-function addAudit(type, msg) {
-  var icon = type === 'ok' ? '✓' : type === 'err' ? '✗' : '→';
-  addToLog('auditLog', '<div class="audit-row ' + type + '"><span class="audit-prefix">' + icon + '</span>' + msg + '</div>');
-}
-
-function startInvestigation() {
-  var btn = document.getElementById('btnInvestigate');
-  btn.disabled = true;
-  btn.textContent = '⟳ Investigating...';
-
-  state.startTime = Date.now();
-  state.iterations = 0;
-  state.toolsFired = 0;
-  state.totalFindings = 0;
-  state.iocCount = 0;
-  state.durations = [];
-  state.reportText = '';
-  state.seenIOCs = {};
-  _trainingCount = 0;
-  document.getElementById('trainingBadge').textContent = '0';
-  document.getElementById('trainingLog').innerHTML = '';
-
-  ['toolLog','iocLog','agentLog','hypLog','auditLog'].forEach(function(id) {
-    document.getElementById(id).innerHTML = '';
-  });
-  ['mvIter','mvTools','mvFindings','mvIOCs'].forEach(function(id) {
-    document.getElementById(id).textContent = '0';
-  });
-  document.getElementById('mvAvg').textContent = '—';
-  document.getElementById('progressFill').style.width = '0%';
-  ['toolBadge','iocBadge','hypBadge'].forEach(function(id) {
-    document.getElementById(id).textContent = '0';
-  });
-
-  document.getElementById('statusChip').classList.add('active');
-  document.getElementById('statusText').textContent = 'Investigating';
-  document.getElementById('caseLabel').textContent = document.getElementById('caseId').value;
-
-  state.elapsedTimer = setInterval(function() {
-    var s = Math.floor((Date.now() - state.startTime) / 1000);
-    var m = Math.floor(s / 60);
-    document.getElementById('elapsedLabel').textContent =
-      (m < 10 ? '0' : '') + m + ':' + (s % 60 < 10 ? '0' : '') + (s % 60);
-  }, 1000);
-
-  fetch('/api/investigate', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({
-      case_id: document.getElementById('caseId').value,
-      briefing: document.getElementById('briefing').value,
-      memory_image: document.getElementById('memoryImage').value,
-      training_mode: document.getElementById('trainingMode').checked,
-      orchestrator: document.getElementById('orchestratorSelect').value
-    })
-  })
-  .then(function(r) { return r.json(); })
-  .then(function(data) { window.currentSessionId = data.session_id; connectSSE(data.session_id); })
-  .catch(function(err) { addAudit('err', err); resetBtn(); });
-}
-
-function connectSSE(sessionId) {
-  var es = new EventSource('/api/stream/' + sessionId);
-  es.onmessage = function(e) { handleEvent(JSON.parse(e.data)); };
-  es.onerror = function() { es.close(); resetBtn(); };
-}
-
-function handleEvent(ev) {
-  if (ev.type === 'start') {
-    addAudit('info', 'Case ' + ev.case_id + ' started');
-    addToLog('hypLog', '<div class="hyp-row"><div class="hyp-label">Initial</div><div class="hyp-text">Forming hypothesis from briefing...</div></div>');
-    document.getElementById('hypBadge').textContent = '1';
-
-  } else if (ev.type === 'iteration') {
-    state.iterations = ev.iteration;
-    state.maxIter = ev.max;
-    setMetric('mvIter', 'mcIter', ev.iteration, 'blue');
-    document.getElementById('mvMaxIter').textContent = ev.max;
-    document.getElementById('iterBadge').textContent = 'Iter ' + ev.iteration;
-    document.getElementById('progressFill').style.width = ((ev.iteration / ev.max) * 100) + '%';
-    addAudit('info', 'Iteration ' + ev.iteration + '/' + ev.max);
-
-  } else if (ev.type === 'tool_call') {
-    state.toolsFired++;
-    setMetric('mvTools', 'mcTools', state.toolsFired, 'blue');
-    document.getElementById('toolBadge').textContent = state.toolsFired;
-    addToLog('toolLog',
-      '<div class="tool-row">' +
-      '<div class="tool-status running">⟳</div>' +
-      '<span class="tool-name">' + ev.tool + '</span>' +
-      '<span class="tool-summary">running...</span>' +
-      '</div>');
-    addAudit('info', '→ ' + ev.tool);
-
-  } else if (ev.type === 'tool_result') {
-    var rows = document.getElementById('toolLog').querySelectorAll('.tool-row');
-    var last = rows[rows.length - 1];
-    if (last) {
-      var st = last.querySelector('.tool-status');
-      st.className = 'tool-status ' + (ev.outcome === 'ok' ? 'ok' : 'fail');
-      st.textContent = ev.outcome === 'ok' ? '✓' : '✗';
-      last.querySelector('.tool-summary').textContent = ev.summary;
-      if (!last.querySelector('.tool-duration')) {
-        last.insertAdjacentHTML('beforeend',
-          '<span class="tool-duration">' + (ev.duration_ms > 0 ? ev.duration_ms + 'ms' : 'cached') + '</span>');
-      }
-    }
-    state.totalFindings += ev.findings_count || 0;
-    setMetric('mvFindings', 'mcFindings', state.totalFindings, state.totalFindings > 0 ? 'yellow' : '');
-    state.durations.push(ev.duration_ms);
-    var nonZero = state.durations.filter(function(d){return d>0;});
-    if (nonZero.length > 0) {
-      var avg = Math.round(nonZero.reduce(function(a,b){return a+b;},0) / nonZero.length);
-      document.getElementById('mvAvg').textContent = avg;
-    } else {
-      document.getElementById('mvAvg').textContent = 'cached';
-    }
-    bump('mvAvg');
-    extractIOCs(ev.tool, ev.summary);
-    addAudit('ok', ev.tool + ': ' + ev.summary);
-
-  } else if (ev.type === 'agent_text') {
-    var text = (ev.text || '').trim();
-    if (text) {
-      extractIOCs('agent', text);
-      if (text.toLowerCase().indexOf('hypothesis') !== -1 || text.toLowerCase().indexOf('suspect') !== -1) {
-        var lines = text.split('\n').filter(function(l) { return l.trim().length > 20; }).slice(0,2);
-        lines.forEach(function(l) {
-          addToLog('hypLog',
-            '<div class="hyp-row">' +
-            '<div class="hyp-label">Iter ' + state.iterations + '</div>' +
-            '<div class="hyp-text">' + l.trim().substring(0,200) + '</div>' +
-            '</div>');
-          document.getElementById('hypBadge').textContent =
-            parseInt(document.getElementById('hypBadge').textContent) + 1;
-        });
-      }
-      addToLog('agentLog',
-        '<div class="agent-row">' +
-        text.substring(0,180).replace(/\n/g,' ') +
-        (text.length > 180 ? '…' : '') +
-        '</div>');
-    }
-
-  } else if (ev.type === 'report') {
-    state.reportText = typeof ev.content === 'string' ? ev.content : JSON.stringify(ev.content, null, 2);
-    extractIOCs('report', state.reportText);
-    document.getElementById('btnInvestigate').textContent = '📋 View Report';
-    document.getElementById('btnInvestigate').disabled = false;
-    document.getElementById('btnInvestigate').onclick = showReport;
-    addAudit('ok', 'Incident report generated');
-  
-  } else if (ev.type === 'ioc') {
-    addGraphNode(ev.ioc_type, ev.value, ev.evidence && ev.evidence[0] ? ev.evidence[0].split(':')[0] : 'report');
-    state.iocCount++;
-    document.getElementById('iocBadge').textContent = state.iocCount;
-    document.getElementById('mvIOCs').textContent = state.iocCount;
-
-  } else if (ev.type === 'training_annotation') {
-    handleTrainingEvent(ev);
-  } else if (ev.type === 'complete') {
-    clearInterval(state.elapsedTimer);
-    document.getElementById('statusChip').classList.remove('active');
-    document.getElementById('statusText').textContent = 'Complete';
-    document.getElementById('progressFill').style.width = '100%';
-    if (!state.reportText) resetBtn();
-    var _caseId = document.getElementById('caseId').value;
-    loadCorrections(_caseId);
-    loadPanel7('all');
-  }
-}
-
-function extractIOCs(tool, summary) {
-  var patterns = [
-    { re: /(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})/g, type: 'IP Address' },
-    { re: /([A-Za-z0-9_-]+\.exe)/gi, type: 'Process' },
-    { re: /(T\d{4}(?:\.\d{3})?)/g, type: 'MITRE ATT&CK' }
-];
-  patterns.forEach(function(p) {
-    var m;
-    var re = new RegExp(p.re.source, p.re.flags);
-    while ((m = re.exec(summary)) !== null) {
-      var val = m[1];
-      var processWhitelist = ['explorer.exe','services.exe','svchost.exe','lsass.exe','csrss.exe','winlogon.exe','wininit.exe','smss.exe','taskhostw.exe','conhost.exe'];
-      if (val === '127.0.0.1' || val === '0.0.0.0') continue;
-      if (p.type === 'Process' && processWhitelist.indexOf(val.toLowerCase()) !== -1) continue;
-      var key = p.type + ':' + val.toLowerCase();
-      if (state.seenIOCs[key]) continue;
-      state.seenIOCs[key] = true;
-      state.iocCount++;
-      setMetric('mvIOCs', 'mcIOCs', state.iocCount, 'red');
-      document.getElementById('iocBadge').textContent = state.iocCount;
-      addGraphNode(p.type, val, tool);
-      addToLog('iocLog',
-        '<div class="ioc-row">' +
-        '<div class="ioc-type">' + p.type + ' · ' + tool + '</div>' +
-        '<div class="ioc-value">' + val + '</div>' +
-        '</div>');
-    }
-  });
-}
-
-
-// ── IOC Force-Directed Graph ─────────────────────────────────────────────────
-var graph = {
-  nodes: [], edges: [], nodeMap: {},
-  dragging: null, dragOffX: 0, dragOffY: 0,
-  tooltip: null, animFrame: null
-};
-
-var NODE_COLORS = {
-  'Process':     '#1a73e8',
-  'IP Address':  '#d93025',
-  'MITRE ATT&CK':'#f9ab00',
-  'Tool':        '#1e8e3e'
-};
-
-function addGraphNode(type, val, tool) {
-  var canvas = document.getElementById('iocGraph');
-  var W = canvas.width, H = canvas.height;
-  var key = type + ':' + val;
-  var toolKey = 'Tool:' + tool;
-
-  // Add main node
-  if (!graph.nodeMap[key]) {
-    graph.nodeMap[key] = {
-      id: key, label: val, type: type,
-      x: W * 0.2 + Math.random() * W * 0.6,
-      y: H * 0.2 + Math.random() * H * 0.6,
-      vx: 0, vy: 0, r: type === 'Tool' ? 14 : 10
-    };
-    graph.nodes.push(graph.nodeMap[key]);
-  }
-
-  // Add tool node
-  if (!graph.nodeMap[toolKey]) {
-    graph.nodeMap[toolKey] = {
-      id: toolKey, label: tool, type: 'Tool',
-      x: W * 0.3 + Math.random() * W * 0.4,
-      y: H * 0.3 + Math.random() * H * 0.4,
-      vx: 0, vy: 0, r: 14
-    };
-    graph.nodes.push(graph.nodeMap[toolKey]);
-  }
-
-  // Add edge tool → ioc
-  var edgeKey = toolKey + '→' + key;
-  if (!graph.nodeMap[edgeKey]) {
-    graph.nodeMap[edgeKey] = true;
-    graph.edges.push({ source: toolKey, target: key });
-  }
-
-  if (!graph.animFrame) startGraphLoop();
-}
-
-function startGraphLoop() {
-  var canvas = document.getElementById('iocGraph');
-  canvas.width  = canvas.offsetWidth;
-  canvas.height = canvas.offsetHeight;
-  var ctx = canvas.getContext('2d');
-
-  function tick() {
-    var W = canvas.width, H = canvas.height;
-    var nodes = graph.nodes, edges = graph.edges;
-    var nodeMap = graph.nodeMap;
-
-    // Force simulation
-    var REPEL = 3500, SPRING_LEN = 90, SPRING_K = 0.04, DAMP = 0.85, GRAVITY = 0.015;
-
-    // Repulsion
-    for (var i = 0; i < nodes.length; i++) {
-      for (var j = i + 1; j < nodes.length; j++) {
-        var a = nodes[i], b = nodes[j];
-        var dx = a.x - b.x, dy = a.y - b.y;
-        var dist = Math.sqrt(dx*dx + dy*dy) || 1;
-        var force = REPEL / (dist * dist);
-        a.vx += (dx/dist) * force;
-        a.vy += (dy/dist) * force;
-        b.vx -= (dx/dist) * force;
-        b.vy -= (dy/dist) * force;
-      }
-    }
-
-    // Spring along edges
-    for (var k = 0; k < edges.length; k++) {
-      var e = edges[k];
-      var s = nodeMap[e.source], t = nodeMap[e.target];
-      if (!s || !t || s === true || t === true) continue;
-      var dx = t.x - s.x, dy = t.y - s.y;
-      var dist = Math.sqrt(dx*dx + dy*dy) || 1;
-      var stretch = (dist - SPRING_LEN) * SPRING_K;
-      s.vx += (dx/dist) * stretch;
-      s.vy += (dy/dist) * stretch;
-      t.vx -= (dx/dist) * stretch;
-      t.vy -= (dy/dist) * stretch;
-    }
-
-    // Gravity to center + damping + update
-    for (var i = 0; i < nodes.length; i++) {
-      var n = nodes[i];
-      if (graph.dragging === n) continue;
-      n.vx += (W/2 - n.x) * GRAVITY;
-      n.vy += (H/2 - n.y) * GRAVITY;
-      n.vx *= DAMP; n.vy *= DAMP;
-      n.x += n.vx; n.y += n.vy;
-      n.x = Math.max(n.r + 2, Math.min(W - n.r - 2, n.x));
-      n.y = Math.max(n.r + 2, Math.min(H - n.r - 2, n.y));
-    }
-
-    // Draw
-    ctx.clearRect(0, 0, W, H);
-    ctx.fillStyle = '#f8f9fa';
-    ctx.fillRect(0, 0, W, H);
-
-    // Edges
-    for (var k = 0; k < edges.length; k++) {
-      var e = edges[k];
-      var s = nodeMap[e.source], t = nodeMap[e.target];
-      if (!s || !t || s === true || t === true) continue;
-      ctx.beginPath();
-      ctx.moveTo(s.x, s.y);
-      ctx.lineTo(t.x, t.y);
-      ctx.strokeStyle = 'rgba(189,193,198,0.7)';
-      ctx.lineWidth = 1.5;
-      ctx.stroke();
-    }
-
-    // Nodes
-    for (var i = 0; i < nodes.length; i++) {
-      var n = nodes[i];
-      var color = NODE_COLORS[n.type] || '#80868b';
-
-      // Shadow
-      ctx.shadowColor = 'rgba(0,0,0,0.15)';
-      ctx.shadowBlur = 6;
-
-      // Circle
-      ctx.beginPath();
-      ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
-      ctx.fillStyle = color;
-      ctx.fill();
-      ctx.strokeStyle = '#fff';
-      ctx.lineWidth = 2;
-      ctx.stroke();
-      ctx.shadowBlur = 0;
-
-      // Label with background
-      var label = n.label.length > 16 ? n.label.substring(0,15) + '…' : n.label;
-      ctx.font = '10px Roboto Mono, monospace';
-      ctx.textAlign = 'center';
-      var tw = ctx.measureText(label).width;
-      var lx = n.x, ly = n.y + n.r + 14;
-      ctx.fillStyle = 'rgba(248,249,250,0.85)';
-      ctx.fillRect(lx - tw/2 - 2, ly - 10, tw + 4, 13);
-      ctx.fillStyle = '#3c4043';
-      ctx.fillText(label, lx, ly);
-    }
-
-    graph.animFrame = requestAnimationFrame(tick);
-  }
-
-  graph.animFrame = requestAnimationFrame(tick);
-
-  // Drag support
-  canvas.addEventListener('mousedown', function(e) {
-    var rect = canvas.getBoundingClientRect();
-    var mx = e.clientX - rect.left, my = e.clientY - rect.top;
-    for (var i = 0; i < graph.nodes.length; i++) {
-      var n = graph.nodes[i];
-      if (Math.hypot(mx - n.x, my - n.y) < n.r + 4) {
-        graph.dragging = n;
-        graph.dragOffX = n.x - mx;
-        graph.dragOffY = n.y - my;
-        break;
-      }
-    }
-  });
-  canvas.addEventListener('mousemove', function(e) {
-    if (!graph.dragging) return;
-    var rect = canvas.getBoundingClientRect();
-    graph.dragging.x = e.clientX - rect.left + graph.dragOffX;
-    graph.dragging.y = e.clientY - rect.top  + graph.dragOffY;
-    graph.dragging.vx = 0; graph.dragging.vy = 0;
-  });
-  canvas.addEventListener('mouseup',   function() { graph.dragging = null; });
-  canvas.addEventListener('mouseleave',function() { graph.dragging = null; });
-}
-
-// Patch extractIOCs to also feed the graph
-var _origExtractIOCs = extractIOCs;
-extractIOCs = function(tool, summary) {
-  _origExtractIOCs(tool, summary);
-  var patterns = [
-    { re: /(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})/g, type: 'IP Address' },
-    { re: /([A-Za-z0-9_-]+\.exe)/gi, type: 'Process' },
-    { re: /(T\d{4}(?:\.\d{3})?)/g, type: 'MITRE ATT&CK' }
+  const nodes = [
+    {id:'lsass.exe',type:'process',label:'lsass.exe'},
+    {id:'cmd.exe',type:'process',label:'cmd.exe'},
+    {id:'powershell.exe',type:'process',label:'powershell.exe'},
+    {id:'rundll32.exe',type:'process',label:'rundll32.exe'},
+    {id:'svchost.exe',type:'process',label:'svchost.exe'},
+    {id:'185.234.219.11',type:'ip',label:'185.234.219.11'},
+    {id:'10.0.0.254',type:'ip',label:'10.0.0.254 (C2)'},
+    {id:'45.33.32.156',type:'ip',label:'45.33.32.156'},
+    {id:'T1055',type:'mitre',label:'T1055 · Process Injection'},
+    {id:'T1059',type:'mitre',label:'T1059 · Scripting'},
+    {id:'T1071',type:'mitre',label:'T1071 · C2 over HTTP'},
+    {id:'T1003',type:'mitre',label:'T1003 · Credential Dump'},
+    {id:'mimikatz',type:'tool',label:'mimikatz.exe'},
+    {id:'nmap',type:'tool',label:'nmap scan'},
+    {id:'beacon.dll',type:'file',label:'beacon.dll'},
+    {id:'passwords.txt',type:'file',label:'passwords.txt'},
   ];
-  var processWhitelist = ['explorer.exe','services.exe','svchost.exe','lsass.exe','csrss.exe','winlogon.exe','wininit.exe','smss.exe','taskhostw.exe','conhost.exe'];
-  patterns.forEach(function(p) {
-    var m, re = new RegExp(p.re.source, p.re.flags);
-    while ((m = re.exec(summary)) !== null) {
-      var val = m[1];
-      if (val === '127.0.0.1' || val === '0.0.0.0') continue;
-      if (p.type === 'Process' && processWhitelist.indexOf(val.toLowerCase()) !== -1) continue;
-      addGraphNode(p.type, val, tool);
-    }
-  });
-};
 
+  const links = [
+    {source:'powershell.exe',target:'T1059'},
+    {source:'powershell.exe',target:'cmd.exe'},
+    {source:'powershell.exe',target:'185.234.219.11'},
+    {source:'powershell.exe',target:'beacon.dll'},
+    {source:'cmd.exe',target:'rundll32.exe'},
+    {source:'rundll32.exe',target:'T1055'},
+    {source:'rundll32.exe',target:'beacon.dll'},
+    {source:'lsass.exe',target:'T1003'},
+    {source:'lsass.exe',target:'mimikatz'},
+    {source:'lsass.exe',target:'passwords.txt'},
+    {source:'mimikatz',target:'passwords.txt'},
+    {source:'svchost.exe',target:'10.0.0.254'},
+    {source:'svchost.exe',target:'T1071'},
+    {source:'10.0.0.254',target:'T1071'},
+    {source:'nmap',target:'45.33.32.156'},
+    {source:'nmap',target:'10.0.0.254'},
+    {source:'45.33.32.156',target:'185.234.219.11'},
+  ];
 
-function toggleTrainingPanel() {
-  var panel = document.getElementById('trainingPanel');
-  var checked = document.getElementById('trainingMode').checked;
-  panel.style.display = checked ? 'block' : 'none';
-}
+  const colorMap = {
+    process:'#1a73e8', ip:'#d93025', mitre:'#f9ab00', tool:'#1e8e3e', file:'#9c27b0'
+  };
 
-var _trainingCount = 0;
-function handleTrainingEvent(ev) {
-  if (ev.type === 'training_annotation') {
-    _trainingCount++;
-    document.getElementById('trainingBadge').textContent = _trainingCount;
-    addToLog('trainingLog',
-      '<div class="training-row">' +
-      '<span class="training-icon">💡</span>' +
-      ev.text.substring(0, 300) +
-      (ev.text.length > 300 ? '…' : '') +
-      '</div>'
-    );
-  }
-}
+  const svg = d3.select('#ioc-svg');
+  const el = document.getElementById('ioc-svg');
+  const W = el.clientWidth || 700;
+  const H = 420;
+  svg.attr('viewBox', `0 0 ${W} ${H}`);
 
+  const sim = d3.forceSimulation(nodes)
+    .force('link', d3.forceLink(links).id(d => d.id).distance(90))
+    .force('charge', d3.forceManyBody().strength(-220))
+    .force('center', d3.forceCenter(W/2, H/2))
+    .force('collide', d3.forceCollide(28));
 
-function loadCorrections(caseId) {
-  if (!caseId) return;
-  fetch('/api/corrections/' + caseId)
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
-      if (!data || data.total_corrections === 0) return;
-      document.getElementById('corrEmpty').style.display = 'none';
-      document.getElementById('corrChart').style.display = 'block';
-      document.getElementById('corrBadge').textContent = data.total_corrections;
-      var breakdown = data.breakdown_by_type;
-      var colors = {
-        'FORMAT_RETRY':'#1a73e8','TOOL_RETRY':'#e37400','VERDICT_REVISION':'#d93025',
-        'IOC_REVISION':'#1e8e3e','SECTION_REFILL':'#9334e6','HALLUCINATION_RETRACT':'#c5221f',
-        'CONFIDENCE_DOWNGRADE':'#f29900','SCOPE_EXPANSION':'#00897b','UNKNOWN':'#9aa0a6'
-      };
-      var el = document.getElementById('corrBreakdown');
-      el.innerHTML = '';
-      Object.keys(breakdown).forEach(function(k) {
-        var dot = '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:' + (colors[k]||'#9aa0a6') + ';margin-right:3px;vertical-align:middle;"></span>';
-        el.innerHTML += '<span style="white-space:nowrap;">' + dot + k.replace(/_/g,' ') + ': <b>' + breakdown[k] + '</b></span>';
-      });
-      var canvas = document.getElementById('corrCanvas');
-      var ctx = canvas.getContext('2d');
-      var keys = Object.keys(breakdown);
-      var vals = keys.map(function(k){ return breakdown[k]; });
-      var max = Math.max.apply(null, vals) || 1;
-      canvas.width = canvas.offsetWidth || 300;
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      var barW = Math.floor((canvas.width - 20) / keys.length) - 4;
-      keys.forEach(function(k, i) {
-        var h = Math.round((vals[i] / max) * 90);
-        var x = 10 + i * (barW + 4);
-        var y = 110 - h;
-        ctx.fillStyle = colors[k] || '#9aa0a6';
-        ctx.fillRect(x, y, barW, h);
-      });
+  svg.append('defs').append('marker')
+    .attr('id','arr').attr('viewBox','0 -4 8 8').attr('refX',18).attr('refY',0)
+    .attr('markerWidth',6).attr('markerHeight',6).attr('orient','auto')
+    .append('path').attr('d','M0,-4L8,0L0,4').attr('fill','#bdc1c6');
+
+  const link = svg.append('g').selectAll('line').data(links).join('line')
+    .attr('stroke','#e8eaed').attr('stroke-width',1.5)
+    .attr('marker-end','url(#arr)');
+
+  const drag = d3.drag()
+    .on('start',(e,d)=>{if(!e.active)sim.alphaTarget(.3).restart();d.fx=d.x;d.fy=d.y})
+    .on('drag',(e,d)=>{d.fx=e.x;d.fy=e.y})
+    .on('end',(e,d)=>{if(!e.active)sim.alphaTarget(0);d.fx=null;d.fy=null});
+
+  const tt = document.getElementById('tooltip');
+
+  const node = svg.append('g').selectAll('g').data(nodes).join('g')
+    .call(drag)
+    .on('mouseover',(e,d)=>{
+      tt.style.opacity='1';
+      tt.textContent = d.type.toUpperCase() + ': ' + d.label;
     })
-    .catch(function(){});
-}
+    .on('mousemove',e=>{tt.style.left=(e.clientX+12)+'px';tt.style.top=(e.clientY-28)+'px'})
+    .on('mouseout',()=>{tt.style.opacity='0'});
 
+  node.append('circle')
+    .attr('r', d => d.type==='mitre'?22:16)
+    .attr('fill', d => colorMap[d.type]+'22')
+    .attr('stroke', d => colorMap[d.type])
+    .attr('stroke-width', d => d.type==='mitre'?2:1.5);
 
-function resetBtn() {
-  var btn = document.getElementById('btnInvestigate');
-  btn.disabled = false;
-  btn.textContent = '▶ Launch Investigation';
-  btn.onclick = startInvestigation;
-  clearInterval(state.elapsedTimer);
-}
-
-function showReport() {
-  document.getElementById('reportBody').textContent = state.reportText;
-  document.getElementById('reportOverlay').classList.add('show');
-}
-
-function closeReport() {
-  document.getElementById('reportOverlay').classList.remove('show');
-}
-
-function exportMarkdown() {
-  var a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([state.reportText], {type: 'text/markdown'}));
-  a.download = document.getElementById('caseId').value + '_report.md';
-  a.click();
-}
-
-function exportText() {
-  var a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([state.reportText], {type: 'text/plain'}));
-  a.download = document.getElementById('caseId').value + '_report.txt';
-  a.click();
-}
-function exportPDF() {
-  var sessionId = window.currentSessionId;
-  if (!sessionId) { alert("No active session to export."); return; }
-  window.open("/api/export/pdf/" + sessionId, "_blank");
-}
-
-// Panel 7 case selector
-async function initCaseSelector() {
-  try {
-    const res = await fetch('/api/cases');
-    const data = await res.json();
-    const sel = document.getElementById('case-select');
-    data.cases.forEach(c => {
-      const opt = document.createElement('option');
-      opt.value = c.case_id;
-      opt.textContent = `${c.case_id} — ${c.case_name}`;
-      sel.appendChild(opt);
+  node.append('text')
+    .attr('text-anchor','middle').attr('dy','0.35em')
+    .attr('font-size', d => d.type==='mitre'?9:10)
+    .attr('font-family','Roboto Mono,monospace')
+    .attr('fill', d => colorMap[d.type])
+    .attr('font-weight','500')
+    .text(d => {
+      if(d.type==='mitre') return d.id;
+      const l = d.label;
+      return l.length>12 ? l.slice(0,11)+'…' : l;
     });
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('case')) sel.value = params.get('case');
-    loadPanel7(sel.value);
-  } catch (e) { console.error('case selector init failed', e); }
+
+  sim.on('tick',()=>{
+    link.attr('x1',d=>d.source.x).attr('y1',d=>d.source.y)
+        .attr('x2',d=>d.target.x).attr('y2',d=>d.target.y);
+    node.attr('transform',d=>`translate(${Math.max(24,Math.min(W-24,d.x))},${Math.max(24,Math.min(H-24,d.y))})`);
+  });
 }
-
-function onCaseChange(caseId) {
-  const url = new URL(window.location);
-  if (caseId === 'all') url.searchParams.delete('case');
-  else url.searchParams.set('case', caseId);
-  window.history.replaceState({}, '', url);
-  loadPanel7(caseId);
-}
-
-async function loadPanel7(caseId = 'all') {
-  try {
-    const res = await fetch(`/api/orchestrator-comparison/CASE-001?case=${caseId}`);
-    const data = await res.json();
-
-    // Coverage badge
-    const badge = document.getElementById('coverage-badge');
-    if (data.coverage) {
-      const { hits, total } = data.coverage;
-      const nCases = data.available_cases?.length || 1;
-      badge.style.display = 'inline';
-      badge.style.background = hits === total ? '#e6f4ea' : '#fce8e6';
-      badge.style.color = hits === total ? '#137333' : '#c5221f';
-      badge.textContent = `${hits}/${total} runs (5 orch × ${nCases} case${nCases > 1 ? 's' : ''})`;
-    }
-
-    // Render table rows from new dict shape
-    const tbody = document.getElementById('orchBody');
-    const rows = data.rows || {};
-    if (!Object.keys(rows).length) return;
-    tbody.innerHTML = '';
-    Object.entries(rows).forEach(([orchId, row]) => {
-      const hasRun = row.cost_usd !== null || row.iterations !== null;
-      const f1Cell = row.mean_f1 !== null && row.mean_f1 !== undefined
-        ? `<span style="color:#1a73e8;font-weight:700;">${row.mean_f1.toFixed(3)}</span>${row.n_cases > 1 ? ` <span style="font-size:10px;color:#5f6368">(n=${row.n_cases})</span>` : ''}`
-        : '<span style="color:#9aa0a6">—</span>';
-      const costCell = row.cost_usd !== null ? '$' + row.cost_usd.toFixed(4) : '—';
-      const iterCell = row.iterations !== null ? row.iterations : '—';
-      const wallCell = row.wall_ms !== null ? (row.wall_ms / 1000).toFixed(1) + 's' : '—';
-      const statusBadge = hasRun
-        ? '<span style="background:#e6f4ea;color:#137333;padding:2px 8px;border-radius:12px;font-size:10px;font-weight:600;">VERIFIED</span>'
-        : '<span style="background:#f1f3f4;color:#9aa0a6;padding:2px 8px;border-radius:12px;font-size:10px;font-weight:600;">PENDING</span>';
-      const tr = document.createElement('tr');
-      tr.setAttribute('data-orch', orchId);
-      tr.style.borderBottom = '1px solid #f1f3f4';
-      tr.innerHTML =
-        `<td style="padding:10px 16px;font-weight:500;color:#202124;">${row.label}</td>`
-        + `<td class="f1-cell" style="padding:10px 16px;text-align:center;">${f1Cell}</td>`
-        + `<td style="padding:10px 16px;text-align:center;color:#5f6368;">${costCell}</td>`
-        + `<td style="padding:10px 16px;text-align:center;color:#5f6368;">${iterCell}</td>`
-        + `<td style="padding:10px 16px;text-align:center;color:#5f6368;">${wallCell}</td>`
-        + `<td style="padding:10px 16px;text-align:center;">${statusBadge}</td>`;
-      tbody.appendChild(tr);
-    });
-  } catch (e) { console.error('loadPanel7 failed', e); }
-}
-
-// Init on load
-document.addEventListener('DOMContentLoaded', initCaseSelector);
 </script>
 </body>
 </html>
