@@ -1,0 +1,99 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint:
+    name: Lint — ruff check + format
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - run: pip install -e ".[dev]"
+      - run: ruff check src/ tests/
+      - run: ruff format --check src/ tests/
+
+  type:
+    name: Type — mypy (non-blocking until T20)
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - run: pip install -e ".[dev]"
+      - name: mypy report
+        run: mypy src/siftguard 2>&1 | tee mypy-report.txt; echo "mypy exit code: $?"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mypy-report-${{ github.sha }}
+          path: mypy-report.txt
+
+  test:
+    name: Tests + Coverage (fail < 38%)
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - run: pip install -e ".[dev]"
+      - run: pytest --cov=src/siftguard --cov-report=term --cov-report=xml
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-xml-py${{ matrix.python-version }}-${{ github.sha }}
+          path: coverage.xml
+
+  spoliation:
+    name: Spoliation integrity
+    runs-on: ubuntu-latest
+    env:
+      SIFTGUARD_AUDIT_DB: /tmp/ci-spoliation.db
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - run: pip install -e ".[dev]"
+      - name: Apply all 3 migrations
+        run: python3 scripts/migrate.py --db /tmp/ci-spoliation.db
+      - name: Seed spoliation receipts
+        run: python3 scripts/seed_spoliation_receipts.py --db /tmp/ci-spoliation.db
+      - name: Assert receipts + immutability guard
+        run: pytest tests/spoliation/ tests/test_seed_spoliation_receipts.py -v
+
+  benchmark:
+    name: Benchmark — F1 fixture assertion (zero API cost)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - run: pip install -e ".[dev]"
+      - run: pytest tests/benchmark/ -v
