@@ -14,7 +14,7 @@ import os
 import uuid
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
-from enum import StrEnum
+from enum import Enum
 
 import anthropic
 from dotenv import load_dotenv
@@ -118,10 +118,7 @@ TOOL_SCHEMAS = [
     },
     {
         "name": "run_regripper",
-        "description": (
-            "Run regripper plugin against registry hive. Plugins: autoruns,services,run,"
-            "userassist,shellbags,recentdocs,networklist,timezone,samparse. READ-ONLY."
-        ),
+        "description": "Run regripper plugin against registry hive. Plugins: autoruns,services,run,userassist,shellbags,recentdocs,networklist,timezone,samparse. READ-ONLY.",
         "input_schema": {
             "type": "object",
             "properties": {
@@ -161,7 +158,7 @@ TOOL_SCHEMAS = [
 ]
 
 
-class HypothesisStatus(StrEnum):
+class HypothesisStatus(str, Enum):
     FORMING = "forming"
     ACTIVE = "active"
     CONFIRMED = "confirmed"
@@ -200,7 +197,7 @@ async def _dispatch_tool(name: str, args: dict) -> ForensicResult:
             duration_ms=0,
             error="tool not found in registry",
         )
-    return await fn(**args)  # type: ignore[operator, no-any-return]
+    return await fn(**args)  # type: ignore[no-any-return, operator]
 
 
 async def run_case_v1(

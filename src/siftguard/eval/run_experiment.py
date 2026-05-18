@@ -107,12 +107,13 @@ async def _dispatch(
 
         adapter = ClaudeCodeAdapter()
         result = await asyncio.get_running_loop().run_in_executor(
-            None, lambda: adapter.run(case_id, preamble + briefing)
+            None,
+            lambda: adapter.run(case_id, preamble + briefing),  # type: ignore[arg-type, return-value]
         )
     elif agent_id == "siftguard-v2":
         from siftguard.agent.loop import run_case
 
-        result = await run_case(
+        result = await run_case(  # type: ignore[assignment]
             case_id=case_id,
             evidence_files=evidence,
             briefing=briefing,
