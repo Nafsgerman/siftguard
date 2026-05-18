@@ -8,7 +8,7 @@ on:
 
 jobs:
   lint:
-    name: Lint — ruff check + format
+    name: Lint - ruff check + format
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -25,7 +25,7 @@ jobs:
       - run: ruff format --check src/ tests/
 
   type:
-    name: Type — mypy (non-blocking until T20)
+    name: Type - mypy (non-blocking until T20)
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -37,7 +37,7 @@ jobs:
           cache-dependency-path: pyproject.toml
       - run: pip install -e ".[dev]"
       - name: mypy report
-        run: mypy src/siftguard 2>&1 | tee mypy-report.txt; echo "mypy exit code: $?"
+        run: mypy src/siftguard 2>&1 | tee mypy-report.txt; echo "mypy exit code $?"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -86,7 +86,7 @@ jobs:
         run: pytest tests/spoliation/ tests/test_seed_spoliation_receipts.py -v
 
   benchmark:
-    name: Benchmark — F1 fixture assertion (zero API cost)
+    name: Benchmark - F1 fixture assertion (zero API cost)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
