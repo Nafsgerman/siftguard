@@ -463,3 +463,31 @@ planned post-hackathon.
 **Single-case concurrency only.**
 Two simultaneous agent runs against the same case will produce interleaved
 `iteration_snapshot` rows. Multi-case parallelism works; multi-agent-per-case does not.
+
+## Quickstart — Reviewer Path (≤ 5 minutes)
+
+```bash
+git clone https://github.com/Nafsgerman/siftguard.git
+cd siftguard
+make demo
+# → http://localhost:8080
+```
+
+`make demo` builds a `linux/amd64` image, embeds Volatility3, and launches the
+dashboard against committed benchmark data — no API keys required, no
+memory image required, zero spend.
+
+### Building on Apple Silicon
+
+The image is `linux/amd64` only (matches SIFT Workstation + CI runners).
+`make build` already passes `--platform=linux/amd64`; no extra flags needed
+on macOS — Docker Desktop handles emulation transparently.
+
+### Running real analysis (evidence required)
+
+```bash
+docker run --rm -p 8080:8080 \
+  -v /path/to/evidence:/cases \
+  -e ANTHROPIC_API_KEY=$ANTHROPIC_API_KEY \
+  siftguard:demo
+```
