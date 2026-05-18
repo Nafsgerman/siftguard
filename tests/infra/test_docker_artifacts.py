@@ -3,6 +3,7 @@
 Cheap structural checks — does not execute docker build. The wall-clock
 5-minute gate is enforced separately by scripts/cold_clone_test.sh.
 """
+
 from pathlib import Path
 
 import pytest
@@ -52,26 +53,35 @@ class TestDockerfile:
 
 class TestDockerignore:
     EXPECTED = [
-        "cases/", ".venv", "*.img", "agent_audit.db",
-        "siftguard_cache/", ".git", "tests/",
+        "cases/",
+        ".venv",
+        "*.img",
+        "agent_audit.db",
+        "siftguard_cache/",
+        ".git",
+        "tests/",
     ]
 
     @pytest.mark.parametrize("pattern", EXPECTED)
     def test_excludes(self, pattern):
-        assert pattern in _read(".dockerignore"), \
-            f".dockerignore must exclude {pattern}"
+        assert pattern in _read(".dockerignore"), f".dockerignore must exclude {pattern}"
 
 
 class TestMakefile:
     REQUIRED_TARGETS = [
-        "build:", "demo:", "demo-stop:", "test:",
-        "lint:", "type:", "lock:", "clean:",
+        "build:",
+        "demo:",
+        "demo-stop:",
+        "test:",
+        "lint:",
+        "type:",
+        "lock:",
+        "clean:",
     ]
 
     @pytest.mark.parametrize("target", REQUIRED_TARGETS)
     def test_target_exists(self, target):
-        assert target in _read("Makefile"), \
-            f"Makefile missing target {target}"
+        assert target in _read("Makefile"), f"Makefile missing target {target}"
 
     def test_demo_uses_port_8080(self):
         assert "8080" in _read("Makefile")
