@@ -17,3 +17,4 @@ src/siftguard/dashboard/tools/
 *.log.gz
 !experiments/analysis/
 !experiments/analysis/**
+.claude/
