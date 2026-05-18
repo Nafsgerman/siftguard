@@ -19,6 +19,7 @@ from siftguard.eval.trace import (
 )
 
 __all__ = [
+    "SCHEMA_VERSION",
     "CorrectionEvent",
     "ExperimentConfig",
     "Finding",
@@ -28,10 +29,9 @@ __all__ = [
     "IterationSnapshot",
     "Orchestrator",
     "TerminatedReason",
+    "ToolCall",
     "Trace",
     "TraceMeta",
-    "ToolCall",
     "UsageTotals",
     "Verdict",
-    "SCHEMA_VERSION",
 ]

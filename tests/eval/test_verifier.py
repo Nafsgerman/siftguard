@@ -9,9 +9,9 @@ from siftguard.eval.verifier_models import VerificationMethod, VerificationStatu
 
 
 def _make_db(tool_outputs: list) -> str:
-    db = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
-    db.close()
-    con = sqlite3.connect(db.name)
+    with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as db:
+        db_name = db.name
+    con = sqlite3.connect(db_name)
     con.execute(
         "CREATE TABLE auditentry (id INTEGER PRIMARY KEY AUTOINCREMENT, run_id TEXT, tool_output TEXT, correction_event TEXT)"
     )

@@ -12,6 +12,7 @@ import os
 import uuid
 
 from dotenv import load_dotenv
+from collections.abc import Callable
 
 load_dotenv()
 
@@ -19,7 +20,7 @@ try:
     from google import genai
     from google.genai import types as gtypes
 except ImportError:
-    raise ImportError("pip install google-genai")
+    raise ImportError("pip install google-genai") from None
 
 from siftguard.agent.instrumentation import SnapshotWriter, token_cost
 from siftguard.agent.loop_v2 import (
@@ -39,7 +40,8 @@ GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.5-pro")
 def _to_gemini_tools() -> list:
     tools = []
     for t in TOOL_SCHEMAS:
-        schema = t.get("input_schema", {})
+        t_any: Any = t
+        schema = t_any.get("input_schema", {})
         props = {}
         for k, v in schema.get("properties", {}).items():
             props[k] = gtypes.Schema(
@@ -50,8 +52,8 @@ def _to_gemini_tools() -> list:
             gtypes.Tool(
                 function_declarations=[
                     gtypes.FunctionDeclaration(
-                        name=t["name"],
-                        description=t["description"],
+                        name=t_any["name"],
+                        description=t_any["description"],
                         parameters=gtypes.Schema(
                             type=gtypes.Type.OBJECT,
                             properties=props,
@@ -76,7 +78,7 @@ async def run_case_gemini(
     model: str = GEMINI_MODEL,
     config_override: dict | None = None,
     ground_truth_path: str | None = None,
-    on_event: callable | None = None,
+    on_event: Callable[..., Any] | None = None,
     system_prompt_prefix: str = "",
 ) -> tuple[str, str]:
     run_id = str(uuid.uuid4())

@@ -94,7 +94,11 @@ async def run_benchmark_case(
 
         console.print(
             Panel(
-                f"Case: [yellow]{case_id}[/yellow]\nThreat: [cyan]{gt['threat_type']}[/cyan]\nEvidence: {list(evidence.keys())}",
+                (
+                    f"Case: [yellow]{case_id}[/yellow]\n"
+                    f"Threat: [cyan]{gt['threat_type']}[/cyan]\n"
+                    f"Evidence: {list(evidence.keys())}"
+                ),
                 title="Running Benchmark Case",
             )
         )

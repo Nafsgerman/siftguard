@@ -285,7 +285,7 @@ class TestPRF:
         assert f1 == pytest.approx(0.0)
 
     def test_no_predictions(self):
-        p, r, f1 = _prf(tp=0, fp=0, fn=5)
+        p, r, _f1 = _prf(tp=0, fp=0, fn=5)
         assert p is None  # no predictions → precision undefined
         assert r == pytest.approx(0.0)
 

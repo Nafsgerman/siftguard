@@ -83,7 +83,11 @@ TOOLS = [
     ),
     Tool(
         name="run_regripper",
-        description="Run a regripper plugin against a registry hive. Approved plugins: autoruns, services, run, userassist, shellbags, recentdocs, networklist, timezone, samparse. READ-ONLY.",
+        description=(
+            "Run a regripper plugin against a registry hive. Approved plugins: "
+            "autoruns, services, run, userassist, shellbags, recentdocs, "
+            "networklist, timezone, samparse. READ-ONLY."
+        ),
         inputSchema={
             "type": "object",
             "properties": {

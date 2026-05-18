@@ -24,28 +24,28 @@ from siftguard.eval.trace import (
 
 
 def _finding(**kwargs) -> Finding:
-    defaults = dict(
-        type=FindingType.IP,
-        value="172.16.4.10",
-        evidence_excerpt="172.16.4.10:8080 CLOSE_WAIT",
-        first_seen_iteration=0,
-    )
+    defaults = {
+        "type": FindingType.IP,
+        "value": "172.16.4.10",
+        "evidence_excerpt": "172.16.4.10:8080 CLOSE_WAIT",
+        "first_seen_iteration": 0,
+    }
     defaults.update(kwargs)
     return Finding(**defaults)
 
 
 def _meta(**kwargs) -> TraceMeta:
-    defaults = dict(
-        agent_id="siftguard-v1",
-        case_id="TEST-001",
-        started_at=datetime(2026, 5, 6, 9, 0, 0, tzinfo=UTC),
-    )
+    defaults = {
+        "agent_id": "siftguard-v1",
+        "case_id": "TEST-001",
+        "started_at": datetime(2026, 5, 6, 9, 0, 0, tzinfo=UTC),
+    }
     defaults.update(kwargs)
     return TraceMeta(**defaults)
 
 
 def _config(**kwargs) -> ExperimentConfig:
-    defaults = dict(agent_id="siftguard-v1", model="claude-sonnet-4-6")
+    defaults = {"agent_id": "siftguard-v1", "model": "claude-sonnet-4-6"}
     defaults.update(kwargs)
     return ExperimentConfig(**defaults)
 

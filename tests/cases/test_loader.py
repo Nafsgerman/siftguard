@@ -74,7 +74,7 @@ def test_evidence_paths_returns_dict(case_id: str) -> None:
     paths = evidence_paths(manifest)
     assert isinstance(paths, dict)
     assert len(paths) >= 1
-    for key, val in paths.items():
+    for _key, val in paths.items():
         assert isinstance(val, Path)
 
 

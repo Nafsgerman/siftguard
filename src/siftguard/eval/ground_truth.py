@@ -1,10 +1,10 @@
-from enum import Enum
+from enum import StrEnum
 from typing import Literal
 
 from pydantic import BaseModel, Field
 
 
-class EvidenceLocation(str, Enum):
+class EvidenceLocation(StrEnum):
     MEMORY_ONLY = "memory_only"
     DISK_ONLY = "disk_only"
     BOTH = "both"

@@ -3,8 +3,9 @@
 Cheap structural checks — does not execute docker build. The wall-clock
 5-minute gate is enforced separately by scripts/cold_clone_test.sh.
 """
-
+# At top of file, add to imports:
 from pathlib import Path
+from typing import ClassVar
 
 import pytest
 
@@ -52,7 +53,7 @@ class TestDockerfile:
 
 
 class TestDockerignore:
-    EXPECTED = [
+    EXPECTED: ClassVar[list[str]] = [
         "cases/",
         ".venv",
         "*.img",
@@ -68,7 +69,7 @@ class TestDockerignore:
 
 
 class TestMakefile:
-    REQUIRED_TARGETS = [
+    REQUIRED_TARGETS: ClassVar[list[str]] = [
         "build:",
         "demo:",
         "demo-stop:",

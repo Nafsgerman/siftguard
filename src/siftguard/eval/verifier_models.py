@@ -1,17 +1,17 @@
 from __future__ import annotations
 
-from enum import Enum
+from enum import StrEnum
 
 from pydantic import BaseModel, Field
 
 
-class VerificationMethod(str, Enum):
+class VerificationMethod(StrEnum):
     SUBSTRING_MATCH = "substring_match"
     TOOL_RERUN = "tool_rerun"
     UNVERIFIABLE = "unverifiable"
 
 
-class VerificationStatus(str, Enum):
+class VerificationStatus(StrEnum):
     VERIFIED = "verified"
     REFUTED = "refuted"
     UNVERIFIABLE = "unverifiable"

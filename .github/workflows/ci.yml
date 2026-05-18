@@ -27,7 +27,7 @@ jobs:
   type:
     name: Type - mypy (non-blocking until T20)
     runs-on: ubuntu-latest
-    continue-on-error: true
+    continue-on-error: false
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5

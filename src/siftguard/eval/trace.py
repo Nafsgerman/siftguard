@@ -11,7 +11,7 @@ import hashlib
 import json
 import uuid
 from datetime import UTC, datetime
-from enum import Enum
+from enum import StrEnum
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
@@ -23,7 +23,7 @@ SCHEMA_VERSION = "1.0.0"
 # ── Enums ─────────────────────────────────────────────────────────────────────
 
 
-class FindingType(str, Enum):
+class FindingType(StrEnum):
     PROCESS = "process"
     IP = "ip"
     PORT = "port"
@@ -34,14 +34,14 @@ class FindingType(str, Enum):
     OTHER = "other"
 
 
-class HypothesisEventType(str, Enum):
+class HypothesisEventType(StrEnum):
     FORMED = "formed"
     UPDATED = "updated"
     CONFIRMED = "confirmed"
     ABANDONED = "abandoned"
 
 
-class Orchestrator(str, Enum):
+class Orchestrator(StrEnum):
     SIFTGUARD_NATIVE = "siftguard-native"
     LANGGRAPH = "langgraph"
     OPENAI_FC = "openai-fc"
@@ -50,14 +50,14 @@ class Orchestrator(str, Enum):
     CUSTOM = "custom"
 
 
-class TerminatedReason(str, Enum):
+class TerminatedReason(StrEnum):
     VERDICT_REACHED = "verdict_reached"
     MAX_ITERATIONS = "max_iterations"
     ERROR = "error"
     ABORTED = "aborted"
 
 
-class CorrectionEvent(str, Enum):
+class CorrectionEvent(StrEnum):
     TOOL_FAILURE_RECOVERY = "tool_failure_recovery"
     HYPOTHESIS_REVISION = "hypothesis_revision"
     DATA_CONFLICT = "data_conflict"
