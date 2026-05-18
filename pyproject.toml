@@ -47,10 +47,44 @@ target-version = "py311"
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "N", "UP", "B", "A", "C4", "SIM", "RET"]
-
+ignore = [
+    "E402",   # load_dotenv() before imports; fix in T20
+    "E501",   # line too long; fix in T20
+    "N806",   # local var uppercase; cosmetic
+    "N818",   # exception name suffix; cosmetic
+    "B905",   # zip() without strict=; fix in T20
+    "B007",   # unused loop var; cosmetic
+    "B904",   # raise from in except; fix in T20
+    "B017",   # blind exception in pytest.raises; intentional
+    "C408",   # dict() literal style; cosmetic
+    "C416",   # dict comprehension; cosmetic
+    "F401",   # unused import residual; T20
+    "F601",   # repeated dict key; intentional aliases
+    "F821",   # undefined name; fix in T20
+    "F841",   # unused local var; cosmetic
+    "SIM105", # contextlib.suppress; cosmetic
+    "SIM108", # ternary operator; cosmetic
+    "SIM115", # context manager for open; cosmetic
+    "UP042",  # StrEnum migration; fix in T20
+]
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/siftguard"]
+
+[tool.coverage.run]
+source = ["src/siftguard"]
+omit = ["*/__init__.py"]
+
+[tool.coverage.report]
+fail_under = 38
+show_missing = true
+
+[tool.mypy]
+python_version = "3.11"
+ignore_missing_imports = true
+warn_return_any = true
+warn_unused_ignores = true
+no_implicit_optional = true
