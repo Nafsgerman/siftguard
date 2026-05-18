@@ -10,9 +10,10 @@ import json
 import logging
 import os
 import uuid
+from collections.abc import Callable
+from typing import Any
 
 from dotenv import load_dotenv
-from collections.abc import Callable
 
 load_dotenv()
 

@@ -71,7 +71,7 @@ def load_config(name: str) -> dict:
     path = CONFIGS_DIR / f"{name}.json"
     if not path.exists():
         raise FileNotFoundError(f"Config not found: {path}")
-    return json.loads(path.read_text())
+    return json.loads(path.read_text())  # type: ignore[no-any-return]
 
 
 def list_configs() -> list[str]:

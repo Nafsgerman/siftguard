@@ -18,14 +18,15 @@ import logging
 import os
 import time
 import uuid
+from collections.abc import Callable
 from dataclasses import dataclass, field
+from typing import Any
 
 import anthropic
 from dotenv import load_dotenv
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
-from collections.abc import Callable
 
 load_dotenv()
 
@@ -138,10 +139,7 @@ TOOL_SCHEMAS = [
     },
     {
         "name": "run_regripper",
-        "description": (
-            "Run regripper plugin against registry hive. Plugins: autoruns,services,run,"
-            "userassist,shellbags,recentdocs,networklist,timezone,samparse. READ-ONLY."
-        ),
+        "description": "Run regripper plugin against registry hive. Plugins: autoruns,services,run,userassist,shellbags,recentdocs,networklist,timezone,samparse. READ-ONLY.",
         "input_schema": {
             "type": "object",
             "properties": {
@@ -208,7 +206,7 @@ async def _dispatch_tool(name: str, args: dict) -> ForensicResult:
             duration_ms=0,
             error="tool not found in registry",
         )
-    return await fn(**args)  # type: ignore[operator, no-any-return]
+    return await fn(**args)  # type: ignore[no-any-return, operator]
 
 
 def _extract_text_blocks(content: list) -> str:
@@ -411,7 +409,7 @@ async def run_case_v2(
             if agent_out is None:
                 # Single retry
                 logger.warning("v2 parse failed iter %d — retrying: %s", iteration, error)
-                retry_msg = build_retry_message(error)
+                retry_msg = build_retry_message(error or "")
                 messages.append({"role": "user", "content": retry_msg})
                 # Edit 2: line 290 (in retry client.messages.create call)
                 retry_resp = client.messages.create(
@@ -422,7 +420,7 @@ async def run_case_v2(
                     messages=messages,  # type: ignore[arg-type]
                 )
                 retry_text = _extract_text_blocks(retry_resp.content)
-                agent_out, _error2 = parse_agent_output(retry_text)
+                agent_out, error2 = parse_agent_output(retry_text)
                 if agent_out is None:
                     agent_out = _synthesize_v1_fallback(response_text, iteration)
                 else:

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import Protocol, runtime_checkable
+from collections.abc import Callable
+from typing import Any, Protocol, runtime_checkable
 
 
 @runtime_checkable
@@ -19,7 +20,7 @@ class BaseOrchestrator(Protocol):
         model: str,
         config_override: dict | None,
         ground_truth_path: str | None,
-        on_event: callable | None,
+        on_event: Callable[..., Any] | None,
     ) -> tuple[str, str]:
         """Returns (final_report, run_id)."""
         ...

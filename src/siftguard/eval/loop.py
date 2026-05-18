@@ -9,6 +9,8 @@ ADR: docs/adr/ADR-003-loop-instrumentation.md
 from __future__ import annotations
 
 import os
+from collections.abc import Callable
+from typing import Any
 
 from siftguard.agent.loop_v1 import run_case_v1
 from siftguard.agent.loop_v2 import run_case_v2
@@ -24,7 +26,7 @@ async def run_case(
     prompt_version: str | None = None,
     config_override: dict | None = None,
     ground_truth_path: str | None = None,
-    on_event: callable | None = None,
+    on_event: Callable[..., Any] | None = None,
     system_prompt_prefix: str = "",
 ) -> str:
     """
