@@ -1,6 +1,6 @@
 from enum import StrEnum
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class SelfCorrectionType(StrEnum):
@@ -16,6 +16,8 @@ class SelfCorrectionType(StrEnum):
 
 
 class SelfCorrectionEvent(BaseModel):
+    # strict=True: domain event — all fields are primitives; no LLM coercion needed
+    model_config = ConfigDict(strict=True)
     audit_id: int
     event_type: SelfCorrectionType
     original_value: str | None = None
