@@ -1,4 +1,5 @@
 """Tests for v2 structured output schema — ADR-003."""
+
 from __future__ import annotations
 
 import pytest
@@ -7,8 +8,6 @@ from pydantic import ValidationError
 from siftguard.agent.output_schema import (
     AgentOutput,
     FindingOutput,
-    NextAction,
-    VerdictOutput,
 )
 
 
@@ -41,6 +40,7 @@ def _base_output(**kwargs) -> dict:
 
 # ── Finding validation ────────────────────────────────────────────────────────
 
+
 def test_finding_rejects_below_floor():
     with pytest.raises(ValidationError, match="0.30 reporting floor"):
         FindingOutput(**{**_finding(), "confidence": 0.29})
@@ -63,11 +63,15 @@ def test_finding_rejects_long_excerpt():
 
 # ── Verdict aggregation rule ──────────────────────────────────────────────────
 
+
 def test_verdict_confidence_exceeds_min_finding_rejected():
     data = _base_output(
         findings=[_finding("f1", confidence=0.65)],
-        next_action={"decision": "verdict", "tool_to_call": None,
-                     "rationale": "Sufficient evidence."},
+        next_action={
+            "decision": "verdict",
+            "tool_to_call": None,
+            "rationale": "Sufficient evidence.",
+        },
         verdict={
             "claim": "CONFIRMED COMPROMISE",
             "confidence": 0.95,
@@ -83,8 +87,11 @@ def test_verdict_confidence_exceeds_min_finding_rejected():
 def test_verdict_confidence_equals_min_finding_accepted():
     data = _base_output(
         findings=[_finding("f1", confidence=0.75)],
-        next_action={"decision": "verdict", "tool_to_call": None,
-                     "rationale": "Sufficient evidence."},
+        next_action={
+            "decision": "verdict",
+            "tool_to_call": None,
+            "rationale": "Sufficient evidence.",
+        },
         verdict={
             "claim": "CONFIRMED COMPROMISE",
             "confidence": 0.75,
@@ -100,8 +107,11 @@ def test_verdict_confidence_equals_min_finding_accepted():
 def test_verdict_below_min_finding_accepted():
     data = _base_output(
         findings=[_finding("f1", confidence=0.80)],
-        next_action={"decision": "verdict", "tool_to_call": None,
-                     "rationale": "Sufficient evidence."},
+        next_action={
+            "decision": "verdict",
+            "tool_to_call": None,
+            "rationale": "Sufficient evidence.",
+        },
         verdict={
             "claim": "CONFIRMED COMPROMISE",
             "confidence": 0.70,
@@ -117,8 +127,7 @@ def test_verdict_below_min_finding_accepted():
 def test_verdict_unknown_finding_id_rejected():
     data = _base_output(
         findings=[_finding("f1", confidence=0.80)],
-        next_action={"decision": "verdict", "tool_to_call": None,
-                     "rationale": "Done."},
+        next_action={"decision": "verdict", "tool_to_call": None, "rationale": "Done."},
         verdict={
             "claim": "CONFIRMED",
             "confidence": 0.75,
@@ -132,6 +141,7 @@ def test_verdict_unknown_finding_id_rejected():
 
 
 # ── Correction event ──────────────────────────────────────────────────────────
+
 
 def test_valid_correction_events():
     for event in [
@@ -159,8 +169,10 @@ def test_null_correction_event_accepted():
 
 # ── Output validator ──────────────────────────────────────────────────────────
 
+
 def test_extract_json_block_found():
     from siftguard.agent.output_validator import extract_json_block
+
     text = 'Some reasoning...\n```json\n{"key": "val"}\n```'
     result = extract_json_block(text)
     assert result == '{"key": "val"}'
@@ -168,11 +180,13 @@ def test_extract_json_block_found():
 
 def test_extract_json_block_not_found():
     from siftguard.agent.output_validator import extract_json_block
+
     assert extract_json_block("no json block here") is None
 
 
 def test_parse_agent_output_missing_block():
     from siftguard.agent.output_validator import parse_agent_output
+
     out, err = parse_agent_output("Just some text, no JSON.")
     assert out is None
     assert "```json" in err
@@ -180,14 +194,17 @@ def test_parse_agent_output_missing_block():
 
 def test_parse_agent_output_invalid_json():
     from siftguard.agent.output_validator import parse_agent_output
+
     out, err = parse_agent_output("```json\n{bad json}\n```")
     assert out is None
     assert "parse error" in err.lower()
 
 
 def test_parse_agent_output_valid():
-    from siftguard.agent.output_validator import parse_agent_output
     import json
+
+    from siftguard.agent.output_validator import parse_agent_output
+
     payload = _base_output(findings=[_finding()])
     text = f"Some reasoning.\n```json\n{json.dumps(payload)}\n```"
     out, err = parse_agent_output(text)
@@ -197,7 +214,8 @@ def test_parse_agent_output_valid():
 
 
 def test_prompt_loading():
-    from siftguard.agent.prompts import load_prompt, available_versions
+    from siftguard.agent.prompts import available_versions, load_prompt
+
     for version in available_versions():
         text = load_prompt(version)
         assert len(text) > 100
@@ -205,6 +223,7 @@ def test_prompt_loading():
 
 def test_prompt_v2_contains_calibration_anchors():
     from siftguard.agent.prompts import load_prompt
+
     v2 = load_prompt("v2")
     assert "0.95" in v2
     assert "0.70" in v2
@@ -214,6 +233,7 @@ def test_prompt_v2_contains_calibration_anchors():
 
 def test_prompt_v2_contains_json_schema_marker():
     from siftguard.agent.prompts import load_prompt
+
     v2 = load_prompt("v2")
     assert "next_action" in v2
     assert "evidence_excerpt" in v2
@@ -222,5 +242,6 @@ def test_prompt_v2_contains_json_schema_marker():
 
 def test_prompt_invalid_version_raises():
     from siftguard.agent.prompts import load_prompt
+
     with pytest.raises(ValueError, match="Unknown prompt version"):
         load_prompt("v99")

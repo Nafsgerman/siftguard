@@ -1,6 +1,5 @@
 """Tests for /api/orchestrator-comparison/{case_id} endpoint."""
-import os
-import pytest
+
 from fastapi.testclient import TestClient
 
 EXPECTED_ORCH_IDS = [
@@ -14,6 +13,7 @@ EXPECTED_ORCH_IDS = [
 
 def test_comparison_returns_200():
     from siftguard.dashboard.app import app
+
     client = TestClient(app)
     r = client.get("/api/orchestrator-comparison/CASE-001")
     assert r.status_code == 200
@@ -21,6 +21,7 @@ def test_comparison_returns_200():
 
 def test_comparison_has_rows_key():
     from siftguard.dashboard.app import app
+
     client = TestClient(app)
     data = client.get("/api/orchestrator-comparison/CASE-001").json()
     assert "rows" in data
@@ -28,6 +29,7 @@ def test_comparison_has_rows_key():
 
 def test_comparison_has_five_orchestrators():
     from siftguard.dashboard.app import app
+
     client = TestClient(app)
     data = client.get("/api/orchestrator-comparison/CASE-001").json()
     assert len(data["rows"]) == 5
@@ -37,6 +39,7 @@ def test_comparison_has_five_orchestrators():
 
 def test_comparison_has_coverage():
     from siftguard.dashboard.app import app
+
     client = TestClient(app)
     data = client.get("/api/orchestrator-comparison/CASE-001").json()
     assert "coverage" in data
@@ -47,6 +50,7 @@ def test_comparison_has_coverage():
 
 def test_comparison_case_filter_default_all():
     from siftguard.dashboard.app import app
+
     client = TestClient(app)
     data = client.get("/api/orchestrator-comparison/CASE-001").json()
     assert data["case_filter"] == "all"
@@ -54,6 +58,7 @@ def test_comparison_case_filter_default_all():
 
 def test_comparison_case_filter_param():
     from siftguard.dashboard.app import app
+
     client = TestClient(app)
     data = client.get("/api/orchestrator-comparison/CASE-001?case=TEST-001").json()
     assert data["case_filter"] == "TEST-001"
@@ -61,6 +66,7 @@ def test_comparison_case_filter_param():
 
 def test_comparison_available_cases_present():
     from siftguard.dashboard.app import app
+
     client = TestClient(app)
     data = client.get("/api/orchestrator-comparison/CASE-001").json()
     assert "available_cases" in data
@@ -69,6 +75,7 @@ def test_comparison_available_cases_present():
 
 def test_comparison_row_shape():
     from siftguard.dashboard.app import app
+
     client = TestClient(app)
     data = client.get("/api/orchestrator-comparison/CASE-001").json()
     for orch_id, row in data["rows"].items():

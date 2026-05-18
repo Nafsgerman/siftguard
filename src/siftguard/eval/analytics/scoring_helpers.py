@@ -2,6 +2,7 @@
 
 Used by: panel_6_ablation, panel_6b_stability.
 """
+
 from __future__ import annotations
 
 import json
@@ -12,7 +13,7 @@ from siftguard.eval.analytics.scorer_framework import score_findings
 from siftguard.eval.trace import Finding, FindingType
 
 RES_DIR = Path(__file__).resolve().parents[4] / "experiments" / "results"
-GT_DIR  = Path(__file__).resolve().parents[4] / "tests" / "benchmark" / "ground_truth"
+GT_DIR = Path(__file__).resolve().parents[4] / "tests" / "benchmark" / "ground_truth"
 
 
 def _find_latest_result(config_name: str, case_id: str) -> dict | None:
@@ -56,15 +57,17 @@ def score_run_from_db(run: dict, db_path: Path, gt_path: Path) -> float:
         excerpt = str(raw.get("evidence_excerpt", value))[:200]
         if len(excerpt) < 10:
             excerpt = (excerpt + " " * 10)[:10]
-        findings.append(Finding(
-            id=raw.get("id", f"{ftype_str}-{value}"),
-            type=FindingType(ftype_str),
-            value=value,
-            confidence=raw.get("confidence"),
-            supporting_audit_entry_ids=[],
-            evidence_excerpt=excerpt,
-            first_seen_iteration=raw.get("first_seen_iteration", 0),
-        ))
+        findings.append(
+            Finding(
+                id=raw.get("id", f"{ftype_str}-{value}"),
+                type=FindingType(ftype_str),
+                value=value,
+                confidence=raw.get("confidence"),
+                supporting_audit_entry_ids=[],
+                evidence_excerpt=excerpt,
+                first_seen_iteration=raw.get("first_seen_iteration", 0),
+            )
+        )
     return score_findings(findings, gt_path).f1
 
 
@@ -93,15 +96,17 @@ def _score_report_text(text: str, gt_path: Path) -> float:
             matched_gt.add(val)
             ftype_str = ioc["type"] if ioc["type"] in valid_types else "other"
             excerpt = (val + " " * 10)[:10]
-            findings.append(Finding(
-                id=f"match-{val}",
-                type=FindingType(ftype_str),
-                value=ioc["value"],
-                confidence=None,
-                supporting_audit_entry_ids=[],
-                evidence_excerpt=excerpt,
-                first_seen_iteration=0,
-            ))
+            findings.append(
+                Finding(
+                    id=f"match-{val}",
+                    type=FindingType(ftype_str),
+                    value=ioc["value"],
+                    confidence=None,
+                    supporting_audit_entry_ids=[],
+                    evidence_excerpt=excerpt,
+                    first_seen_iteration=0,
+                )
+            )
     return score_findings(findings, gt_path).f1
 
 
@@ -119,7 +124,9 @@ def score_run_from_report(config_name: str, case_id: str, gt_path: Path) -> floa
         return 0.0
 
 
-def score_seed_results(seed_results: list[dict], config_name: str, case_id: str, gt_path: Path) -> list[float]:
+def score_seed_results(
+    seed_results: list[dict], config_name: str, case_id: str, gt_path: Path
+) -> list[float]:
     """Extract F1 scores from seed result dicts by scoring their saved report files."""
     scores = []
     for r in seed_results:

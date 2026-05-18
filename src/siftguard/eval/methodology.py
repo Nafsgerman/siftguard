@@ -5,10 +5,11 @@ methodology MUST embed the block returned by `current_block()`. The SHA256
 of EVAL_FRAMEWORK.md is computed at import time so doc edits force a
 version bump or an explicit checksum update.
 """
+
 from __future__ import annotations
 
 import hashlib
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
 

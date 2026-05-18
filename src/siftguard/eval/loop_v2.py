@@ -10,6 +10,7 @@ Key differences from v1:
 
 ADR: docs/adr/ADR-003-loop-instrumentation.md
 """
+
 from __future__ import annotations
 
 import json
@@ -18,8 +19,6 @@ import os
 import time
 import uuid
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
-from typing import Optional
 
 import anthropic
 from dotenv import load_dotenv
@@ -34,7 +33,7 @@ from siftguard.agent.instrumentation import (
     SnapshotWriter,
     token_cost,
 )
-from siftguard.agent.output_schema import AgentOutput, FindingOutput
+from siftguard.agent.output_schema import AgentOutput
 from siftguard.agent.output_validator import (
     build_retry_message,
     is_v2_response,
@@ -42,58 +41,155 @@ from siftguard.agent.output_validator import (
 )
 from siftguard.agent.prompts import load_prompt
 from siftguard.audit.log import AuditLog
+from siftguard.mcp_server.tools.filesystem import extract_file, list_files
 from siftguard.mcp_server.tools.mft import analyze_mft
-from siftguard.mcp_server.tools.volatility import vol_pslist, vol_netscan, vol_malfind
-from siftguard.mcp_server.tools.timeline import create_supertimeline, sort_timeline
 from siftguard.mcp_server.tools.registry import run_regripper
-from siftguard.mcp_server.tools.filesystem import list_files, extract_file
+from siftguard.mcp_server.tools.timeline import create_supertimeline, sort_timeline
+from siftguard.mcp_server.tools.volatility import vol_malfind, vol_netscan, vol_pslist
 from siftguard.models.forensic import ForensicResult, ToolOutcome
 
 logger = logging.getLogger(__name__)
 console = Console()
 
 MAX_ITERATIONS = int(os.environ.get("SIFTGUARD_MAX_AGENT_ITERATIONS", "15"))
-DEFAULT_MODEL   = os.environ.get("SIFTGUARD_MODEL", "claude-sonnet-4-6")
+DEFAULT_MODEL = os.environ.get("SIFTGUARD_MODEL", "claude-sonnet-4-6")
 
 IOC_TYPES = {"process", "ip", "port", "technique"}
 
 TOOL_REGISTRY = {
-    "analyze_mft": lambda **a: analyze_mft(**{**a, "memory_image": a.get("memory_image") or a.get("mft_path", "")}),
-    "vol_pslist":         vol_pslist,
-    "vol_netscan":        vol_netscan,
-    "vol_malfind":        vol_malfind,
+    "analyze_mft": lambda **a: analyze_mft(
+        **{**a, "memory_image": a.get("memory_image") or a.get("mft_path", "")}
+    ),
+    "vol_pslist": vol_pslist,
+    "vol_netscan": vol_netscan,
+    "vol_malfind": vol_malfind,
     "create_supertimeline": create_supertimeline,
-    "sort_timeline":      sort_timeline,
-    "run_regripper":      run_regripper,
-    "list_files":         list_files,
-    "extract_file":       extract_file,
+    "sort_timeline": sort_timeline,
+    "run_regripper": run_regripper,
+    "list_files": list_files,
+    "extract_file": extract_file,
 }
 
 TOOL_SCHEMAS = [
-    {"name": "analyze_mft", "description": "Parse Windows $MFT entries directly from a memory image via Volatility3. READ-ONLY.", "input_schema": {"type": "object", "properties": {"memory_image": {"type": "string"}, "timestomp_only": {"type": "boolean", "default": False}}, "required": ["memory_image"]}},
-    {"name": "vol_pslist", "description": "List processes from memory image. Flags suspicious names/parent-child combos. READ-ONLY.", "input_schema": {"type": "object", "properties": {"memory_image": {"type": "string"}}, "required": ["memory_image"]}},
-    {"name": "vol_netscan", "description": "Scan memory image for network connections. READ-ONLY.", "input_schema": {"type": "object", "properties": {"memory_image": {"type": "string"}}, "required": ["memory_image"]}},
-    {"name": "vol_malfind", "description": "Find injected code and suspicious memory regions. READ-ONLY.", "input_schema": {"type": "object", "properties": {"memory_image": {"type": "string"}}, "required": ["memory_image"]}},
-    {"name": "create_supertimeline", "description": "Run log2timeline to build a plaso supertimeline. READ-ONLY.", "input_schema": {"type": "object", "properties": {"evidence_path": {"type": "string"}, "output_plaso": {"type": "string", "default": "/tmp/siftguard_timeline.plaso"}}, "required": ["evidence_path"]}},
-    {"name": "sort_timeline", "description": "Run psort to produce sorted CSV timeline from plaso file. READ-ONLY.", "input_schema": {"type": "object", "properties": {"plaso_file": {"type": "string"}, "output_csv": {"type": "string", "default": "/tmp/siftguard_sorted.csv"}, "filter_date_start": {"type": "string"}}, "required": ["plaso_file"]}},
-    {"name": "run_regripper", "description": "Run regripper plugin against registry hive. Plugins: autoruns,services,run,userassist,shellbags,recentdocs,networklist,timezone,samparse. READ-ONLY.", "input_schema": {"type": "object", "properties": {"hive_path": {"type": "string"}, "plugin": {"type": "string", "default": "autoruns"}}, "required": ["hive_path"]}},
-    {"name": "list_files", "description": "List files in disk image using fls. Recovers deleted files. READ-ONLY.", "input_schema": {"type": "object", "properties": {"image_path": {"type": "string"}, "offset": {"type": "string", "default": ""}, "recursive": {"type": "boolean", "default": True}}, "required": ["image_path"]}},
-    {"name": "extract_file", "description": "Extract file from disk image by inode using icat. READ-ONLY.", "input_schema": {"type": "object", "properties": {"image_path": {"type": "string"}, "inode": {"type": "string"}, "output_path": {"type": "string"}, "offset": {"type": "string", "default": ""}}, "required": ["image_path", "inode", "output_path"]}},
+    {
+        "name": "analyze_mft",
+        "description": "Parse Windows $MFT entries directly from a memory image via Volatility3. READ-ONLY.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "memory_image": {"type": "string"},
+                "timestomp_only": {"type": "boolean", "default": False},
+            },
+            "required": ["memory_image"],
+        },
+    },
+    {
+        "name": "vol_pslist",
+        "description": "List processes from memory image. Flags suspicious names/parent-child combos. READ-ONLY.",
+        "input_schema": {
+            "type": "object",
+            "properties": {"memory_image": {"type": "string"}},
+            "required": ["memory_image"],
+        },
+    },
+    {
+        "name": "vol_netscan",
+        "description": "Scan memory image for network connections. READ-ONLY.",
+        "input_schema": {
+            "type": "object",
+            "properties": {"memory_image": {"type": "string"}},
+            "required": ["memory_image"],
+        },
+    },
+    {
+        "name": "vol_malfind",
+        "description": "Find injected code and suspicious memory regions. READ-ONLY.",
+        "input_schema": {
+            "type": "object",
+            "properties": {"memory_image": {"type": "string"}},
+            "required": ["memory_image"],
+        },
+    },
+    {
+        "name": "create_supertimeline",
+        "description": "Run log2timeline to build a plaso supertimeline. READ-ONLY.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "evidence_path": {"type": "string"},
+                "output_plaso": {"type": "string", "default": "/tmp/siftguard_timeline.plaso"},
+            },
+            "required": ["evidence_path"],
+        },
+    },
+    {
+        "name": "sort_timeline",
+        "description": "Run psort to produce sorted CSV timeline from plaso file. READ-ONLY.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "plaso_file": {"type": "string"},
+                "output_csv": {"type": "string", "default": "/tmp/siftguard_sorted.csv"},
+                "filter_date_start": {"type": "string"},
+            },
+            "required": ["plaso_file"],
+        },
+    },
+    {
+        "name": "run_regripper",
+        "description": "Run regripper plugin against registry hive. Plugins: autoruns,services,run,userassist,shellbags,recentdocs,networklist,timezone,samparse. READ-ONLY.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "hive_path": {"type": "string"},
+                "plugin": {"type": "string", "default": "autoruns"},
+            },
+            "required": ["hive_path"],
+        },
+    },
+    {
+        "name": "list_files",
+        "description": "List files in disk image using fls. Recovers deleted files. READ-ONLY.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "image_path": {"type": "string"},
+                "offset": {"type": "string", "default": ""},
+                "recursive": {"type": "boolean", "default": True},
+            },
+            "required": ["image_path"],
+        },
+    },
+    {
+        "name": "extract_file",
+        "description": "Extract file from disk image by inode using icat. READ-ONLY.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "image_path": {"type": "string"},
+                "inode": {"type": "string"},
+                "output_path": {"type": "string"},
+                "offset": {"type": "string", "default": ""},
+            },
+            "required": ["image_path", "inode", "output_path"],
+        },
+    },
 ]
 
 
 @dataclass
 class V2RunState:
     """Mutable state accumulated across iterations."""
+
     run_id: str
     case_id: str
     model: str
-    cumulative_tokens_in:  int   = 0
-    cumulative_tokens_out: int   = 0
-    cumulative_cost_usd:   float = 0.0
-    all_findings:  list[dict] = field(default_factory=list)
+    cumulative_tokens_in: int = 0
+    cumulative_tokens_out: int = 0
+    cumulative_cost_usd: float = 0.0
+    all_findings: list[dict] = field(default_factory=list)
     all_hypotheses: list[dict] = field(default_factory=list)
-    run_start_ms:  float = field(default_factory=time.time)
+    run_start_ms: float = field(default_factory=time.time)
     terminated_reason: str = "max_iterations"
     completed_iterations: int = 0
 
@@ -102,8 +198,10 @@ async def _dispatch_tool(name: str, args: dict) -> ForensicResult:
     fn = TOOL_REGISTRY.get(name)
     if not fn:
         return ForensicResult(
-            tool=name, outcome=ToolOutcome.FAIL,
-            summary=f"unknown tool: {name}", duration_ms=0,
+            tool=name,
+            outcome=ToolOutcome.FAIL,
+            summary=f"unknown tool: {name}",
+            duration_ms=0,
             error="tool not found in registry",
         )
     return await fn(**args)
@@ -111,8 +209,7 @@ async def _dispatch_tool(name: str, args: dict) -> ForensicResult:
 
 def _extract_text_blocks(content: list) -> str:
     return "\n".join(
-        block.text for block in content
-        if hasattr(block, "type") and block.type == "text"
+        block.text for block in content if hasattr(block, "type") and block.type == "text"
     )
 
 
@@ -122,6 +219,7 @@ def _synthesize_v1_fallback(response_text: str, iteration: int) -> AgentOutput:
     confidence=None on all findings — calibration panel excludes this run honestly.
     """
     from siftguard.agent.output_schema import NextAction
+
     logger.warning(
         "v2 schema parse failed twice at iteration %d — using v1 fallback synthesis",
         iteration,
@@ -146,10 +244,10 @@ async def run_case_v2(
     audit_db: str = "./audit/siftguard.db",
     training_mode: bool = False,
     model: str = DEFAULT_MODEL,
-    max_iterations: Optional[int] = None,
-    config_override: Optional[dict] = None,
-    ground_truth_path: Optional[str] = None,
-    on_event: Optional[callable] = None,
+    max_iterations: int | None = None,
+    config_override: dict | None = None,
+    ground_truth_path: str | None = None,
+    on_event: callable | None = None,
     system_prompt_prefix: str = "",
 ) -> tuple[str, str]:
     """
@@ -162,25 +260,25 @@ async def run_case_v2(
         Called with (event_type: str, data: dict).
         Dashboard wires this to its SSE emitter.
     """
-    run_id  = str(uuid.uuid4())
-    audit   = AuditLog(audit_db)
-    snap    = SnapshotWriter(audit_db)
+    run_id = str(uuid.uuid4())
+    audit = AuditLog(audit_db)
+    snap = SnapshotWriter(audit_db)
     tracker = HypothesisTracker()
-    client  = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
+    client = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
 
     prompt_version = "v2_training" if training_mode else "v2"
-    system_prompt  = system_prompt_prefix + load_prompt(prompt_version)
+    system_prompt = system_prompt_prefix + load_prompt(prompt_version)
     _max_iter = max_iterations or MAX_ITERATIONS
 
     config = {
-        "agent_id":        "siftguard-v2",
-        "model":           model,
-        "orchestrator":    "siftguard-native",
+        "agent_id": "siftguard-v2",
+        "model": model,
+        "orchestrator": "siftguard-native",
         "self_correction": True,
-        "correlation":     True,
-        "training_mode":   training_mode,
-        "max_iterations":  _max_iter,
-        "prompt_version":  prompt_version,
+        "correlation": True,
+        "training_mode": training_mode,
+        "max_iterations": _max_iter,
+        "prompt_version": prompt_version,
         **(config_override or {}),
     }
 
@@ -194,9 +292,7 @@ async def run_case_v2(
 
     state = V2RunState(run_id=run_id, case_id=case_id, model=model)
 
-    evidence_summary = "\n".join(
-        f"- {label}: {path}" for label, path in evidence_files.items()
-    )
+    evidence_summary = "\n".join(f"- {label}: {path}" for label, path in evidence_files.items())
     initial_message = (
         f"## Case ID: {case_id}\n\n"
         f"## Briefing\n{briefing}\n\n"
@@ -207,16 +303,24 @@ async def run_case_v2(
 
     messages: list[dict] = [{"role": "user", "content": initial_message}]
 
-    console.print(Panel(
-        f"[bold cyan]SIFTGuard v2[/bold cyan] — Case [yellow]{case_id}[/yellow]\n"
-        f"[dim]run_id: {run_id}[/dim]\n{briefing[:200]}",
-        title="Investigation Started", border_style="cyan",
-    ))
+    console.print(
+        Panel(
+            f"[bold cyan]SIFTGuard v2[/bold cyan] — Case [yellow]{case_id}[/yellow]\n"
+            f"[dim]run_id: {run_id}[/dim]\n{briefing[:200]}",
+            title="Investigation Started",
+            border_style="cyan",
+        )
+    )
 
     if on_event:
-        on_event("investigation_started", {
-            "run_id": run_id, "case_id": case_id, "model": model,
-        })
+        on_event(
+            "investigation_started",
+            {
+                "run_id": run_id,
+                "case_id": case_id,
+                "model": model,
+            },
+        )
 
     final_report = ""
     iter_wall_start = time.time()
@@ -228,33 +332,36 @@ async def run_case_v2(
         # Edit 1: line 233 (in main client.messages.create call)
         response = client.messages.create(
             model=model,
-            max_tokens=8192,           # was 4096
+            max_tokens=8192,  # was 4096
             system=system_prompt,
             tools=TOOL_SCHEMAS,
             messages=messages,
         )
 
-        tokens_in  = response.usage.input_tokens
+        tokens_in = response.usage.input_tokens
         tokens_out = response.usage.output_tokens
-        cost       = token_cost(model, tokens_in, tokens_out)
+        cost = token_cost(model, tokens_in, tokens_out)
 
-        state.cumulative_tokens_in  += tokens_in
+        state.cumulative_tokens_in += tokens_in
         state.cumulative_tokens_out += tokens_out
-        state.cumulative_cost_usd   += cost
+        state.cumulative_cost_usd += cost
 
         if on_event:
-            on_event("token_usage", {
-                "iteration": iteration,
-                "tokens_in": tokens_in,
-                "tokens_out": tokens_out,
-                "cost_usd": cost,
-                "cumulative_cost_usd": state.cumulative_cost_usd,
-            })
+            on_event(
+                "token_usage",
+                {
+                    "iteration": iteration,
+                    "tokens_in": tokens_in,
+                    "tokens_out": tokens_out,
+                    "cost_usd": cost,
+                    "cumulative_cost_usd": state.cumulative_cost_usd,
+                },
+            )
 
         # ── Collect content ─────────────────────────────────────────────────
         assistant_content = []
-        tool_calls_made   = []
-        response_text     = ""
+        tool_calls_made = []
+        response_text = ""
 
         for block in response.content:
             assistant_content.append(block)
@@ -276,22 +383,25 @@ async def run_case_v2(
         # ── Early exit: substantial report written, even if response truncated ──
         if final_report and "## Executive Summary" in final_report and len(final_report) > 1500:
             if on_event:
-                on_event("verdict_reached", {
-                    "run_id": run_id,
-                    "claim": "Investigation complete (report-based exit)",
-                    "confidence": None,
-                    "findings_count": len(state.all_findings),
-                    "total_cost_usd": state.cumulative_cost_usd,
-                })
+                on_event(
+                    "verdict_reached",
+                    {
+                        "run_id": run_id,
+                        "claim": "Investigation complete (report-based exit)",
+                        "confidence": None,
+                        "findings_count": len(state.all_findings),
+                        "total_cost_usd": state.cumulative_cost_usd,
+                    },
+                )
             state.terminated_reason = "verdict_reached"
             break
 
-       # ── Parse v2 structured output ──────────────────────────────────────
+        # ── Parse v2 structured output ──────────────────────────────────────
         # Only parse v2 JSON on synthesis turns (no tool calls).
         # On tool-calling turns the structured output IS the tool_use block —
         # no JSON block is expected and attempting to parse one causes false
         # v1-fallback on every tool-calling iteration.
-        agent_out: Optional[AgentOutput] = None
+        agent_out: AgentOutput | None = None
         if not tool_calls_made and is_v2_response(response_text):
             agent_out, error = parse_agent_output(response_text)
             if agent_out is None:
@@ -301,22 +411,28 @@ async def run_case_v2(
                 messages.append({"role": "user", "content": retry_msg})
                 # Edit 2: line 290 (in retry client.messages.create call)
                 retry_resp = client.messages.create(
-                    model=model, max_tokens=8192,        # was 4096
-                    system=system_prompt, tools=TOOL_SCHEMAS, messages=messages,
+                    model=model,
+                    max_tokens=8192,  # was 4096
+                    system=system_prompt,
+                    tools=TOOL_SCHEMAS,
+                    messages=messages,
                 )
                 retry_text = _extract_text_blocks(retry_resp.content)
                 agent_out, error2 = parse_agent_output(retry_text)
                 if agent_out is None:
                     agent_out = _synthesize_v1_fallback(response_text, iteration)
                 else:
-                    messages.append({
-                        "role": "assistant",
-                        "content": retry_resp.content,
-                    })
+                    messages.append(
+                        {
+                            "role": "assistant",
+                            "content": retry_resp.content,
+                        }
+                    )
         elif tool_calls_made:
             # Tool-calling turn — build minimal AgentOutput from tool calls.
             # v2 JSON verdict appears only on the final synthesis turn.
             from siftguard.agent.output_schema import NextAction
+
             agent_out = AgentOutput(
                 iteration_summary=f"Tool calls: {[t.name for t in tool_calls_made]}",
                 findings=[],
@@ -337,29 +453,32 @@ async def run_case_v2(
         snap.write_hypothesis_events(run_id, case_id, iteration, hyp_events)
 
         if on_event and hyp_events:
-            on_event("hypothesis_update", {
-                "iteration": iteration,
-                "events": hyp_events,
-            })
+            on_event(
+                "hypothesis_update",
+                {
+                    "iteration": iteration,
+                    "events": hyp_events,
+                },
+            )
 
         # ── Update cumulative findings ───────────────────────────────────────
-        seen_keys: set[tuple] = {
-            (f["type"], f["value"].lower())
-            for f in state.all_findings
-        }
+        seen_keys: set[tuple] = {(f["type"], f["value"].lower()) for f in state.all_findings}
         for f in agent_out.findings:
             key = (f.type, f.value.lower())
             if key not in seen_keys:
                 state.all_findings.append(f.model_dump())
                 seen_keys.add(key)
                 if f.type in IOC_TYPES and on_event:
-                    on_event("ioc_detected", {
-                        "type": f.type,
-                        "value": f.value,
-                        "confidence": f.confidence,
-                        "mitre_technique": f.mitre_technique,
-                        "iteration": iteration,
-                    })
+                    on_event(
+                        "ioc_detected",
+                        {
+                            "type": f.type,
+                            "value": f.value,
+                            "confidence": f.confidence,
+                            "mitre_technique": f.mitre_technique,
+                            "iteration": iteration,
+                        },
+                    )
 
         state.all_hypotheses = hyp_dicts
 
@@ -379,36 +498,44 @@ async def run_case_v2(
         )
 
         if on_event:
-            on_event("iteration_complete", {
-                "iteration": iteration,
-                "findings_count": len(state.all_findings),
-                "iocs_count": len(iocs),
-                "cumulative_cost_usd": state.cumulative_cost_usd,
-            })
+            on_event(
+                "iteration_complete",
+                {
+                    "iteration": iteration,
+                    "findings_count": len(state.all_findings),
+                    "iocs_count": len(iocs),
+                    "cumulative_cost_usd": state.cumulative_cost_usd,
+                },
+            )
 
         # ── Tool calls ───────────────────────────────────────────────────────
         if response.stop_reason == "end_turn" and not tool_calls_made:
             if final_report:
                 state.terminated_reason = "verdict_reached"
                 break
-            messages.append({
-                "role": "user",
-                "content": (
-                    "Please compile your final incident report using the required headers, "
-                    "then append the JSON block with decision='verdict'."
-                ),
-            })
+            messages.append(
+                {
+                    "role": "user",
+                    "content": (
+                        "Please compile your final incident report using the required headers, "
+                        "then append the JSON block with decision='verdict'."
+                    ),
+                }
+            )
             continue
 
         if tool_calls_made:
             tool_results = []
             for tool_call in tool_calls_made:
                 if on_event:
-                    on_event("tool_call_start", {
-                        "tool": tool_call.name,
-                        "iteration": iteration,
-                        "args": tool_call.input,
-                    })
+                    on_event(
+                        "tool_call_start",
+                        {
+                            "tool": tool_call.name,
+                            "iteration": iteration,
+                            "args": tool_call.input,
+                        },
+                    )
 
                 result = await _dispatch_tool(tool_call.name, tool_call.input)
 
@@ -421,33 +548,35 @@ async def run_case_v2(
                     outcome=result.outcome.value,
                     output=result.model_dump_json(),
                     duration_ms=result.duration_ms,
-                    agent_iteration=iteration,          # real counter
-                    run_id=run_id,                      # NEW
-                    tokens_in=tokens_in,                # NEW
-                    tokens_out=tokens_out,              # NEW
-                    cost_usd=cost,                      # NEW
-                    correction_event=(
-                        agent_out.correction_event
-                        if agent_out else None
-                    ),                                  # NEW
+                    agent_iteration=iteration,  # real counter
+                    run_id=run_id,  # NEW
+                    tokens_in=tokens_in,  # NEW
+                    tokens_out=tokens_out,  # NEW
+                    cost_usd=cost,  # NEW
+                    correction_event=(agent_out.correction_event if agent_out else None),  # NEW
                 )
 
                 if on_event:
-                    on_event("tool_call_end", {
-                        "tool": tool_call.name,
-                        "outcome": result.outcome.value,
-                        "summary": result.summary,
-                        "duration_ms": result.duration_ms,
-                        "iteration": iteration,
-                    })
+                    on_event(
+                        "tool_call_end",
+                        {
+                            "tool": tool_call.name,
+                            "outcome": result.outcome.value,
+                            "summary": result.summary,
+                            "duration_ms": result.duration_ms,
+                            "iteration": iteration,
+                        },
+                    )
 
                 _print_result_summary(tool_call.name, result)
 
-                tool_results.append({
-                    "type": "tool_result",
-                    "tool_use_id": tool_call.id,
-                    "content": result.model_dump_json(indent=2)[:8000],
-                })
+                tool_results.append(
+                    {
+                        "type": "tool_result",
+                        "tool_use_id": tool_call.id,
+                        "content": result.model_dump_json(indent=2)[:8000],
+                    }
+                )
 
             messages.append({"role": "user", "content": tool_results})
 
@@ -455,13 +584,16 @@ async def run_case_v2(
         if agent_out and agent_out.next_action.decision == "verdict":
             state.terminated_reason = "verdict_reached"
             if on_event:
-                on_event("verdict_reached", {
-                    "run_id": run_id,
-                    "claim": agent_out.verdict.claim if agent_out.verdict else "",
-                    "confidence": agent_out.verdict.confidence if agent_out.verdict else None,
-                    "findings_count": len(state.all_findings),
-                    "total_cost_usd": state.cumulative_cost_usd,
-                })
+                on_event(
+                    "verdict_reached",
+                    {
+                        "run_id": run_id,
+                        "claim": agent_out.verdict.claim if agent_out.verdict else "",
+                        "confidence": agent_out.verdict.confidence if agent_out.verdict else None,
+                        "findings_count": len(state.all_findings),
+                        "total_cost_usd": state.cumulative_cost_usd,
+                    },
+                )
             break
 
         if agent_out and agent_out.next_action.decision == "abort":
@@ -490,10 +622,7 @@ async def run_case_v2(
 
 def _print_result_summary(tool_name: str, result: ForensicResult) -> None:
     color = "green" if result.outcome.value == "ok" else "red"
-    console.print(
-        f"  [{color}]✓ {tool_name}:[/{color}] "
-        f"{result.summary} ({result.duration_ms}ms)"
-    )
+    console.print(f"  [{color}]✓ {tool_name}:[/{color}] {result.summary} ({result.duration_ms}ms)")
 
 
 def _print_final_report_v2(
@@ -508,8 +637,8 @@ def _print_final_report_v2(
         title=f"Audit Trail — {case_id} [dim](run {run_id[:8]})[/dim]",
         show_lines=True,
     )
-    table.add_column("Iter",   style="dim", width=4)
-    table.add_column("Tool",   style="cyan")
+    table.add_column("Iter", style="dim", width=4)
+    table.add_column("Tool", style="cyan")
     table.add_column("Outcome", style="green")
     table.add_column("ms")
     table.add_column("Tokens")
@@ -529,8 +658,10 @@ def _print_final_report_v2(
         f"Tokens in: {state.cumulative_tokens_in:,} | "
         f"Tokens out: {state.cumulative_tokens_out:,}[/dim]"
     )
-    console.print(Panel(
-        report,
-        title="[bold green]Incident Report[/bold green]",
-        border_style="green",
-    ))
+    console.print(
+        Panel(
+            report,
+            title="[bold green]Incident Report[/bold green]",
+            border_style="green",
+        )
+    )

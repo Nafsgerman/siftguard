@@ -5,11 +5,12 @@ Usage:
     stats = compute_variance_stats([0.72, 0.74, 0.71])
     # VarianceStats(n=3, mean=0.723, std=0.015, ci_lower=0.71, ci_upper=0.74, ci_level=0.95)
 """
+
 from __future__ import annotations
 
 import math
 import random
-from typing import Sequence
+from collections.abc import Sequence
 
 from pydantic import BaseModel
 
@@ -52,8 +53,7 @@ def bootstrap_ci(
 
     rng = random.Random(seed)
     boot_means: list[float] = sorted(
-        sum(rng.choices(scores_list, k=n)) / n
-        for _ in range(n_resamples)
+        sum(rng.choices(scores_list, k=n)) / n for _ in range(n_resamples)
     )
     alpha = (1.0 - ci) / 2
     lo = boot_means[max(0, int(alpha * n_resamples))]
@@ -73,8 +73,14 @@ def compute_variance_stats(
         return VarianceStats(n=0, mean=0.0, std=0.0, ci_lower=0.0, ci_upper=0.0, ci_level=ci)
     mean = sum(scores_list) / n
     if n == 1:
-        return VarianceStats(n=1, mean=round(mean, 6), std=0.0,
-                             ci_lower=round(mean, 6), ci_upper=round(mean, 6), ci_level=ci)
+        return VarianceStats(
+            n=1,
+            mean=round(mean, 6),
+            std=0.0,
+            ci_lower=round(mean, 6),
+            ci_upper=round(mean, 6),
+            ci_level=ci,
+        )
     std = math.sqrt(sum((s - mean) ** 2 for s in scores_list) / (n - 1))
     lo, hi = bootstrap_ci(scores_list, n_resamples=n_resamples, ci=ci, seed=seed)
     return VarianceStats(

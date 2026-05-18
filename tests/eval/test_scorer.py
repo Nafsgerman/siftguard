@@ -1,9 +1,9 @@
 """tests/eval/test_scorer.py"""
+
 from __future__ import annotations
 
 import json
 import sqlite3
-import tempfile
 from pathlib import Path
 
 import pytest
@@ -11,8 +11,6 @@ import pytest
 from siftguard.eval.scorer import (
     EXTRACTORS,
     IOC_PRODUCING_TOOLS,
-    GroundTruth,
-    GroundTruthIOC,
     ScoreResult,
     _prf,
     extract_findings_from_db,
@@ -22,10 +20,10 @@ from siftguard.eval.scorer import (
     score_run_from_report,
 )
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture
 def gt_dir(tmp_path: Path) -> Path:
@@ -84,26 +82,50 @@ def audit_db(tmp_path: Path) -> Path:
         # Matching run — psscan hit
         conn.execute(
             "INSERT INTO auditentry (run_id, agent_id, case_id, event_type, tool_name, tool_output) VALUES (?,?,?,?,?,?)",
-            ("run-abc", "siftguard-v2", "TEST-001", "tool_call_end", "windows_psscan",
-             json.dumps([{"PID": 1234, "ImageFileName": "evil.exe"}])),
+            (
+                "run-abc",
+                "siftguard-v2",
+                "TEST-001",
+                "tool_call_end",
+                "windows_psscan",
+                json.dumps([{"PID": 1234, "ImageFileName": "evil.exe"}]),
+            ),
         )
         # Matching run — netscan hit
         conn.execute(
             "INSERT INTO auditentry (run_id, agent_id, case_id, event_type, tool_name, tool_output) VALUES (?,?,?,?,?,?)",
-            ("run-abc", "siftguard-v2", "TEST-001", "tool_call_end", "windows_netscan",
-             json.dumps([{"ForeignAddr": "192.168.1.100", "ForeignPort": 4444}])),
+            (
+                "run-abc",
+                "siftguard-v2",
+                "TEST-001",
+                "tool_call_end",
+                "windows_netscan",
+                json.dumps([{"ForeignAddr": "192.168.1.100", "ForeignPort": 4444}]),
+            ),
         )
         # Different run — should be ignored
         conn.execute(
             "INSERT INTO auditentry (run_id, agent_id, case_id, event_type, tool_name, tool_output) VALUES (?,?,?,?,?,?)",
-            ("run-xyz", "siftguard-v2", "TEST-001", "tool_call_end", "windows_psscan",
-             json.dumps([{"PID": 9999, "ImageFileName": "legit.exe"}])),
+            (
+                "run-xyz",
+                "siftguard-v2",
+                "TEST-001",
+                "tool_call_end",
+                "windows_psscan",
+                json.dumps([{"PID": 9999, "ImageFileName": "legit.exe"}]),
+            ),
         )
         # Non-IOC tool — should be ignored
         conn.execute(
             "INSERT INTO auditentry (run_id, agent_id, case_id, event_type, tool_name, tool_output) VALUES (?,?,?,?,?,?)",
-            ("run-abc", "siftguard-v2", "TEST-001", "tool_call_end", "read_file",
-             json.dumps([{"content": "evil.dat"}])),
+            (
+                "run-abc",
+                "siftguard-v2",
+                "TEST-001",
+                "tool_call_end",
+                "read_file",
+                json.dumps([{"content": "evil.dat"}]),
+            ),
         )
         conn.commit()
     return db_path
@@ -112,6 +134,7 @@ def audit_db(tmp_path: Path) -> Path:
 # ---------------------------------------------------------------------------
 # Unit: IOC_PRODUCING_TOOLS
 # ---------------------------------------------------------------------------
+
 
 class TestIOCProducingTools:
     def test_allowlist_is_frozenset(self):
@@ -131,6 +154,7 @@ class TestIOCProducingTools:
 # ---------------------------------------------------------------------------
 # Unit: extractors
 # ---------------------------------------------------------------------------
+
 
 class TestExtractors:
     def test_psscan_extracts_pid_name(self):
@@ -181,6 +205,7 @@ class TestExtractors:
 # Unit: ground truth loader
 # ---------------------------------------------------------------------------
 
+
 class TestLoadGroundTruth:
     def test_loads_valid_file(self, simple_gt: Path):
         gt = load_ground_truth("TEST-001", "1.1.0", gt_root=simple_gt)
@@ -200,6 +225,7 @@ class TestLoadGroundTruth:
 # ---------------------------------------------------------------------------
 # Unit: extract_findings_from_db
 # ---------------------------------------------------------------------------
+
 
 class TestExtractFindingsFromDB:
     def test_extracts_correct_run(self, audit_db: Path):
@@ -229,6 +255,7 @@ class TestExtractFindingsFromDB:
 # Unit: get_last_run_id
 # ---------------------------------------------------------------------------
 
+
 class TestGetLastRunId:
     def test_returns_most_recent_run_id(self, audit_db: Path):
         run_id = get_last_run_id(audit_db, "siftguard-v2", "TEST-001")
@@ -242,6 +269,7 @@ class TestGetLastRunId:
 # ---------------------------------------------------------------------------
 # Unit: _prf
 # ---------------------------------------------------------------------------
+
 
 class TestPRF:
     def test_perfect_score(self):
@@ -271,6 +299,7 @@ class TestPRF:
 # ---------------------------------------------------------------------------
 # Integration: score_run
 # ---------------------------------------------------------------------------
+
 
 class TestScoreRun:
     def test_perfect_score_applicable(self, audit_db: Path, simple_gt: Path):
@@ -348,12 +377,21 @@ class TestScoreRun:
             )
             conn.commit()
         gt = {
-            "case_id": "TEST-001", "version": "1.1.0",
+            "case_id": "TEST-001",
+            "version": "1.1.0",
             "iocs": [
-                {"ioc_id": "p1", "ioc_type": "process", "value": "1234:evil.exe",
-                 "evidence_location": ["windows_psscan"]},
-                {"ioc_id": "n1", "ioc_type": "network_connection", "value": "1.2.3.4:4444",
-                 "evidence_location": ["windows_netscan"]},
+                {
+                    "ioc_id": "p1",
+                    "ioc_type": "process",
+                    "value": "1234:evil.exe",
+                    "evidence_location": ["windows_psscan"],
+                },
+                {
+                    "ioc_id": "n1",
+                    "ioc_type": "network_connection",
+                    "value": "1.2.3.4:4444",
+                    "evidence_location": ["windows_netscan"],
+                },
             ],
         }
         (gt_dir / "TEST-001-v1.1.0.json").write_text(json.dumps(gt))
@@ -367,9 +405,12 @@ class TestScoreRun:
 # Integration: score_run_from_report (degraded path)
 # ---------------------------------------------------------------------------
 
+
 class TestScoreRunFromReport:
     def test_recall_from_report(self, simple_gt: Path):
-        report = "Found process evil.exe on PID 1234. Network connection 192.168.1.100:4444 detected."
+        report = (
+            "Found process evil.exe on PID 1234. Network connection 192.168.1.100:4444 detected."
+        )
         result = score_run_from_report(
             case_id="TEST-001",
             agent_id="siftguard-v2",

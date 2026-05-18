@@ -1,11 +1,21 @@
 from __future__ import annotations
+
 import json
+
 from siftguard.models.forensic import VolatilityProcess
 
 SUSPICIOUS_PROCESS_NAMES = {
-    "cmd.exe", "powershell.exe", "wscript.exe", "cscript.exe",
-    "mshta.exe", "regsvr32.exe", "rundll32.exe", "schtasks.exe",
-    "certutil.exe", "bitsadmin.exe", "msiexec.exe",
+    "cmd.exe",
+    "powershell.exe",
+    "wscript.exe",
+    "cscript.exe",
+    "mshta.exe",
+    "regsvr32.exe",
+    "rundll32.exe",
+    "schtasks.exe",
+    "certutil.exe",
+    "bitsadmin.exe",
+    "msiexec.exe",
 }
 
 SUSPICIOUS_PARENT_COMBOS = {
@@ -52,13 +62,18 @@ def parse_pslist(raw: str) -> list[VolatilityProcess]:
             pid = int(row.get("PID", 0))
             ppid = int(row.get("PPID", 0))
             name = row.get("ImageFileName", "")
-            processes.append(VolatilityProcess(
-                pid=pid, ppid=ppid, name=name,
-                create_time=None, exit_time=None,
-                threads=int(row.get("Threads", 0) or 0),
-                handles=None,
-                suspicious_indicators=_flag_process(name, ppid, pid_name_map),
-            ))
+            processes.append(
+                VolatilityProcess(
+                    pid=pid,
+                    ppid=ppid,
+                    name=name,
+                    create_time=None,
+                    exit_time=None,
+                    threads=int(row.get("Threads", 0) or 0),
+                    handles=None,
+                    suspicious_indicators=_flag_process(name, ppid, pid_name_map),
+                )
+            )
         except (json.JSONDecodeError, ValueError):
             continue
     return processes

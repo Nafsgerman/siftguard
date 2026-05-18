@@ -1,6 +1,8 @@
 from __future__ import annotations
-from dataclasses import dataclass, field
+
+from dataclasses import dataclass
 from typing import Any
+
 
 @dataclass
 class OrchestratorResult:
@@ -14,6 +16,7 @@ class OrchestratorResult:
     report: dict[str, Any] | None
     tool_calls: int
     agent_text: str = ""
+
 
 class BaseOrchestrator:
     agent_id: str = "base"

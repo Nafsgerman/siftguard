@@ -3,13 +3,13 @@
 Single-variable claim: orchestration changes, model/tools/scorer unchanged.
 Uses Google Gemini API with function calling via google-genai SDK.
 """
+
 from __future__ import annotations
 
 import json
 import logging
 import os
 import uuid
-from typing import Optional
 
 from dotenv import load_dotenv
 
@@ -27,7 +27,6 @@ from siftguard.agent.loop_v2 import (
     TOOL_SCHEMAS,
     _dispatch_tool,
 )
-from siftguard.agent.output_schema import NextAction
 from siftguard.agent.output_validator import is_v2_response, parse_agent_output
 from siftguard.agent.prompts import load_prompt
 from siftguard.audit.log import AuditLog
@@ -47,17 +46,21 @@ def _to_gemini_tools() -> list:
                 type=gtypes.Type.STRING,
                 description=v.get("description", ""),
             )
-        tools.append(gtypes.Tool(
-            function_declarations=[gtypes.FunctionDeclaration(
-                name=t["name"],
-                description=t["description"],
-                parameters=gtypes.Schema(
-                    type=gtypes.Type.OBJECT,
-                    properties=props,
-                    required=schema.get("required", []),
-                ),
-            )]
-        ))
+        tools.append(
+            gtypes.Tool(
+                function_declarations=[
+                    gtypes.FunctionDeclaration(
+                        name=t["name"],
+                        description=t["description"],
+                        parameters=gtypes.Schema(
+                            type=gtypes.Type.OBJECT,
+                            properties=props,
+                            required=schema.get("required", []),
+                        ),
+                    )
+                ]
+            )
+        )
     return tools
 
 
@@ -71,9 +74,9 @@ async def run_case_gemini(
     audit_db: str = "./audit/siftguard.db",
     training_mode: bool = False,
     model: str = GEMINI_MODEL,
-    config_override: Optional[dict] = None,
-    ground_truth_path: Optional[str] = None,
-    on_event: Optional[callable] = None,
+    config_override: dict | None = None,
+    ground_truth_path: str | None = None,
+    on_event: callable | None = None,
     system_prompt_prefix: str = "",
 ) -> tuple[str, str]:
     run_id = str(uuid.uuid4())
@@ -132,12 +135,15 @@ async def run_case_gemini(
         iter_count = iteration
 
         if on_event:
-            on_event("iteration_complete", {
-                "iteration": iteration,
-                "max": max_iter,
-                "findings": all_findings,
-                "hypotheses": all_hypotheses,
-            })
+            on_event(
+                "iteration_complete",
+                {
+                    "iteration": iteration,
+                    "max": max_iter,
+                    "findings": all_findings,
+                    "hypotheses": all_hypotheses,
+                },
+            )
 
         try:
             response = client.models.generate_content(
@@ -208,20 +214,25 @@ async def run_case_gemini(
                 )
 
                 if on_event:
-                    on_event("tool_call_end", {
-                        "tool": tool_name,
-                        "outcome": outcome,
-                        "summary": summary,
-                        "findings_count": len(result.findings or []),
-                        "duration_ms": duration_ms,
-                    })
-
-                tool_result_parts.append(gtypes.Part(
-                    function_response=gtypes.FunctionResponse(
-                        name=tool_name,
-                        response={"result": json.dumps(result.model_dump(), default=str)},
+                    on_event(
+                        "tool_call_end",
+                        {
+                            "tool": tool_name,
+                            "outcome": outcome,
+                            "summary": summary,
+                            "findings_count": len(result.findings or []),
+                            "duration_ms": duration_ms,
+                        },
                     )
-                ))
+
+                tool_result_parts.append(
+                    gtypes.Part(
+                        function_response=gtypes.FunctionResponse(
+                            name=tool_name,
+                            response={"result": json.dumps(result.model_dump(), default=str)},
+                        )
+                    )
+                )
 
             history.append({"role": "user", "parts": tool_result_parts})
             continue
@@ -247,10 +258,13 @@ async def run_case_gemini(
                 final_report = agent_text
                 terminated_reason = "verdict_reached"
                 if on_event:
-                    on_event("verdict_reached", {
-                        "verdict": parsed.verdict.model_dump(),
-                        "findings": all_findings,
-                    })
+                    on_event(
+                        "verdict_reached",
+                        {
+                            "verdict": parsed.verdict.model_dump(),
+                            "findings": all_findings,
+                        },
+                    )
                 break
 
         history.append({"role": "user", "parts": [{"text": "Continue your investigation."}]})

@@ -4,6 +4,7 @@ Reads result JSON files produced by experiments/run.py and attempts to
 build Trace objects from the audit DB via TraceBuilder.
 Falls back to a lightweight summary-only object when the DB is unavailable.
 """
+
 from __future__ import annotations
 
 import json
@@ -12,21 +13,22 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 RESULTS_DIR = Path(__file__).resolve().parents[4] / "experiments" / "results"
-CASES_ROOT  = Path("/cases")
+CASES_ROOT = Path("/cases")
 
 
 @dataclass
 class RunSummary:
     """Lightweight run record loaded from result JSON."""
-    config_name:   str
-    case_id:       str
-    status:        str
-    report_path:   str | None
-    wall_time:     float
-    timestamp:     str
-    config:        dict = field(default_factory=dict)
-    run_id:        str | None = None
-    final_score:   float | None = None
+
+    config_name: str
+    case_id: str
+    status: str
+    report_path: str | None
+    wall_time: float
+    timestamp: str
+    config: dict = field(default_factory=dict)
+    run_id: str | None = None
+    final_score: float | None = None
     total_cost_usd: float | None = None
     completed_iterations: int | None = None
 
@@ -39,21 +41,24 @@ def load_all_run_summaries() -> list[RunSummary]:
             data = json.loads(result_file.read_text())
             config_path = (
                 Path(__file__).resolve().parents[4]
-                / "experiments" / "configs"
-                / f"{data.get('config','')}.json"
+                / "experiments"
+                / "configs"
+                / f"{data.get('config', '')}.json"
             )
             config = {}
             if config_path.exists():
                 config = json.loads(config_path.read_text())
-            summaries.append(RunSummary(
-                config_name=data.get("config", "unknown"),
-                case_id=data.get("case_id", "unknown"),
-                status=data.get("status", "unknown"),
-                report_path=data.get("report"),
-                wall_time=data.get("wall_time", 0.0),
-                timestamp=data.get("timestamp", ""),
-                config=config,
-            ))
+            summaries.append(
+                RunSummary(
+                    config_name=data.get("config", "unknown"),
+                    case_id=data.get("case_id", "unknown"),
+                    status=data.get("status", "unknown"),
+                    report_path=data.get("report"),
+                    wall_time=data.get("wall_time", 0.0),
+                    timestamp=data.get("timestamp", ""),
+                    config=config,
+                )
+            )
         except Exception:
             continue
     return summaries
@@ -65,9 +70,7 @@ def load_experiment_runs_from_db(db_path: str | Path) -> list[dict]:
     try:
         conn = sqlite3.connect(str(db_path))
         conn.row_factory = sqlite3.Row
-        cur = conn.execute(
-            "SELECT * FROM experiment_run ORDER BY started_at"
-        )
+        cur = conn.execute("SELECT * FROM experiment_run ORDER BY started_at")
         for row in cur.fetchall():
             runs.append(dict(row))
         conn.close()

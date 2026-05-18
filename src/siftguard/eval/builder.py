@@ -3,14 +3,13 @@
 This is SIFTGuard's native adapter. Other agents implement their own
 to_trace() adapter; this file is not part of the public framework API.
 """
+
 from __future__ import annotations
 
 import json
 import sqlite3
-from datetime import datetime, timezone
-from pathlib import Path
+from datetime import UTC, datetime
 
-from siftguard.eval.verifier import verify_finding
 from siftguard.eval.trace import (
     ExperimentConfig,
     Finding,
@@ -20,19 +19,20 @@ from siftguard.eval.trace import (
     IterationSnapshot,
     Orchestrator,
     TerminatedReason,
+    ToolCall,
     Trace,
     TraceMeta,
-    ToolCall,
     UsageTotals,
     Verdict,
 )
+from siftguard.eval.verifier import verify_finding
 
 
 def _parse_dt(s: str | None) -> datetime | None:
     if not s:
         return None
     try:
-        return datetime.fromisoformat(s).replace(tzinfo=timezone.utc)
+        return datetime.fromisoformat(s).replace(tzinfo=UTC)
     except ValueError:
         return None
 
@@ -98,15 +98,18 @@ class TraceBuilder:
         """Post-collection verification pass. Populates finding.verification on each Finding."""
         result = []
         for f in findings:
-            finding_dict = {"id": f.id, "value": f.value, "type": f.type.value, "description": f.evidence_excerpt}
+            finding_dict = {
+                "id": f.id,
+                "value": f.value,
+                "type": f.type.value,
+                "description": f.evidence_excerpt,
+            }
             vr = verify_finding(finding_dict, db_path, run_id)
             result.append(f.model_copy(update={"verification": vr}))
         return tuple(result)
 
     def _fetch_experiment_run(self, run_id: str) -> sqlite3.Row:
-        cur = self.conn.execute(
-            "SELECT * FROM experiment_run WHERE run_id = ?", (run_id,)
-        )
+        cur = self.conn.execute("SELECT * FROM experiment_run WHERE run_id = ?", (run_id,))
         row = cur.fetchone()
         if row is None:
             raise ValueError(f"No experiment_run found for run_id={run_id!r}")
@@ -125,17 +128,19 @@ class TraceBuilder:
         )
         results = []
         for row in cur.fetchall():
-            results.append(ToolCall(
-                audit_entry_id=row["id"],
-                tool_name=row["tool_name"],
-                iteration=row["agent_iteration"] or 0,
-                outcome=row["outcome"],
-                duration_ms=row["duration_ms"],
-                tokens_in=row["tokens_in"],
-                tokens_out=row["tokens_out"],
-                cost_usd=row["cost_usd"],
-                correction_event=row["correction_event"],
-            ))
+            results.append(
+                ToolCall(
+                    audit_entry_id=row["id"],
+                    tool_name=row["tool_name"],
+                    iteration=row["agent_iteration"] or 0,
+                    outcome=row["outcome"],
+                    duration_ms=row["duration_ms"],
+                    tokens_in=row["tokens_in"],
+                    tokens_out=row["tokens_out"],
+                    cost_usd=row["cost_usd"],
+                    correction_event=row["correction_event"],
+                )
+            )
         return results
 
     def _fetch_iterations(self, run_id: str) -> list[IterationSnapshot]:
@@ -155,18 +160,20 @@ class TraceBuilder:
             findings = json.loads(row["findings_json"] or "[]")
             iocs = json.loads(row["iocs_json"] or "[]")
             hyps = json.loads(row["hypotheses_json"] or "[]")
-            results.append(IterationSnapshot(
-                run_id=run_id,
-                iteration=row["iteration"],
-                findings_count=len(findings),
-                iocs_count=len(iocs),
-                hypotheses_count=len(hyps),
-                cumulative_tokens_in=row["cumulative_tokens_in"] or 0,
-                cumulative_tokens_out=row["cumulative_tokens_out"] or 0,
-                cumulative_cost_usd=row["cumulative_cost_usd"] or 0.0,
-                wall_time_ms=row["wall_time_ms"],
-                created_at=_require_dt(row["created_at"]),
-            ))
+            results.append(
+                IterationSnapshot(
+                    run_id=run_id,
+                    iteration=row["iteration"],
+                    findings_count=len(findings),
+                    iocs_count=len(iocs),
+                    hypotheses_count=len(hyps),
+                    cumulative_tokens_in=row["cumulative_tokens_in"] or 0,
+                    cumulative_tokens_out=row["cumulative_tokens_out"] or 0,
+                    cumulative_cost_usd=row["cumulative_cost_usd"] or 0.0,
+                    wall_time_ms=row["wall_time_ms"],
+                    created_at=_require_dt(row["created_at"]),
+                )
+            )
         return results
 
     def _fetch_hypothesis_events(self, run_id: str) -> list[HypothesisEvent]:
@@ -182,15 +189,17 @@ class TraceBuilder:
         )
         results = []
         for row in cur.fetchall():
-            results.append(HypothesisEvent(
-                run_id=run_id,
-                iteration=row["iteration"],
-                event_type=HypothesisEventType(row["event_type"]),
-                hypothesis_id=row["hypothesis_id"],
-                content=row["content"],
-                confidence=row["confidence"],
-                created_at=_require_dt(row["created_at"]),
-            ))
+            results.append(
+                HypothesisEvent(
+                    run_id=run_id,
+                    iteration=row["iteration"],
+                    event_type=HypothesisEventType(row["event_type"]),
+                    hypothesis_id=row["hypothesis_id"],
+                    content=row["content"],
+                    confidence=row["confidence"],
+                    created_at=_require_dt(row["created_at"]),
+                )
+            )
         return results
 
     def _build_findings(
@@ -237,16 +246,18 @@ class TraceBuilder:
             if len(excerpt) < 10:
                 excerpt = (excerpt + " " * 10)[:10]
 
-            results.append(Finding(
-                id=raw.get("id", str(id(raw))),
-                type=f_type,
-                value=value,
-                confidence=raw.get("confidence"),
-                supporting_audit_entry_ids=raw.get("audit_entry_ids", []),
-                evidence_excerpt=excerpt,
-                mitre_technique=raw.get("mitre_technique"),
-                first_seen_iteration=raw.get("first_seen_iteration", 0),
-            ))
+            results.append(
+                Finding(
+                    id=raw.get("id", str(id(raw))),
+                    type=f_type,
+                    value=value,
+                    confidence=raw.get("confidence"),
+                    supporting_audit_entry_ids=raw.get("audit_entry_ids", []),
+                    evidence_excerpt=excerpt,
+                    mitre_technique=raw.get("mitre_technique"),
+                    first_seen_iteration=raw.get("first_seen_iteration", 0),
+                )
+            )
         return results
 
     def _build_verdict(
@@ -267,11 +278,7 @@ class TraceBuilder:
             confidence=run["final_score"],
             supporting_finding_ids=[f.id for f in findings],
             reasoning="See incident report for full reasoning chain.",
-            mitre_techniques=list({
-                f.mitre_technique
-                for f in findings
-                if f.mitre_technique
-            }),
+            mitre_techniques=list({f.mitre_technique for f in findings if f.mitre_technique}),
             terminated_reason=reason,
         )
 

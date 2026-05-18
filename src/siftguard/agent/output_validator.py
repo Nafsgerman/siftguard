@@ -7,26 +7,26 @@ Implements:
 - Single retry on failure with error feedback
 - v1 fallback on second failure (Q4: v2 with v1 fallback)
 """
+
 from __future__ import annotations
 
 import json
 import re
-from typing import Optional
 
-from siftguard.agent.output_schema import AgentOutput
 from pydantic import ValidationError
 
+from siftguard.agent.output_schema import AgentOutput
 
 _JSON_BLOCK_RE = re.compile(r"```json\s*(.*?)\s*```", re.DOTALL)
 
 
-def extract_json_block(text: str) -> Optional[str]:
+def extract_json_block(text: str) -> str | None:
     """Extract first ```json ... ``` block from agent response."""
     m = _JSON_BLOCK_RE.search(text)
     return m.group(1).strip() if m else None
 
 
-def parse_agent_output(text: str) -> tuple[Optional[AgentOutput], Optional[str]]:
+def parse_agent_output(text: str) -> tuple[AgentOutput | None, str | None]:
     """
     Attempt to parse v2 structured output from agent response text.
 
@@ -55,8 +55,7 @@ def parse_agent_output(text: str) -> tuple[Optional[AgentOutput], Optional[str]]
         return output, None
     except ValidationError as e:
         errors = "; ".join(
-            f"{' -> '.join(str(loc) for loc in err['loc'])}: {err['msg']}"
-            for err in e.errors()
+            f"{' -> '.join(str(loc) for loc in err['loc'])}: {err['msg']}" for err in e.errors()
         )
         return None, (
             f"Schema validation failed: {errors}. "

@@ -1,4 +1,5 @@
 """Unit tests for ClaudeCodeAdapter. Mocks subprocess — no real `claude` CLI required."""
+
 from __future__ import annotations
 
 import json
@@ -9,8 +10,8 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from siftguard.eval.orchestrators.claude_code_adapter import (
-    ClaudeCodeAdapter,
     REPORT_BLOCK_RE,
+    ClaudeCodeAdapter,
 )
 
 

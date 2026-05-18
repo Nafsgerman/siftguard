@@ -3,11 +3,11 @@
 Replaces src/siftguard/eval/datasets/registry.py (deleted in ADR-008).
 All callers import from here: get_case(), list_cases(), list_case_ids().
 """
+
 from __future__ import annotations
 
 from functools import lru_cache
 from pathlib import Path
-from typing import Any
 
 from siftguard.eval.ground_truth import CaseManifest
 

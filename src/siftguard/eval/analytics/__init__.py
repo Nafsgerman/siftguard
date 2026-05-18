@@ -2,6 +2,7 @@
 
 ADR: docs/adr/ADR-005-analytics-module-design.md
 """
+
 from siftguard.eval.analytics import (  # noqa: F401
     panel_1_accuracy,
     panel_2_calibration,

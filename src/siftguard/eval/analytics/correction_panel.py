@@ -2,7 +2,11 @@ import sqlite3
 from collections import Counter
 from typing import Any
 
-from siftguard.models.correction_taxonomy import SelfCorrectionType, SelfCorrectionEvent, classify_correction
+from siftguard.models.correction_taxonomy import (
+    SelfCorrectionEvent,
+    SelfCorrectionType,
+    classify_correction,
+)
 
 
 def get_correction_breakdown(db_path: str, case_id: str) -> dict[str, Any]:
@@ -10,25 +14,30 @@ def get_correction_breakdown(db_path: str, case_id: str) -> dict[str, Any]:
     conn.row_factory = sqlite3.Row
     cur = conn.cursor()
 
-    cur.execute("""
+    cur.execute(
+        """
         SELECT id, agent_iteration, tool_name, correction_event
         FROM auditentry
         WHERE case_id = ? AND correction_event IS NOT NULL
         ORDER BY agent_iteration ASC
-    """, (case_id,))
+    """,
+        (case_id,),
+    )
     rows = cur.fetchall()
     conn.close()
 
     events: list[SelfCorrectionEvent] = []
     for row in rows:
         raw_msg = row["correction_event"] or ""
-        events.append(SelfCorrectionEvent(
-            audit_id=row["id"],
-            event_type=classify_correction(raw_msg),
-            iteration=row["agent_iteration"] or 0,
-            tool_name=row["tool_name"],
-            message=raw_msg,
-        ))
+        events.append(
+            SelfCorrectionEvent(
+                audit_id=row["id"],
+                event_type=classify_correction(raw_msg),
+                iteration=row["agent_iteration"] or 0,
+                tool_name=row["tool_name"],
+                message=raw_msg,
+            )
+        )
 
     type_counts = Counter(e.event_type.value for e in events)
     by_iteration: dict[int, list[str]] = {}

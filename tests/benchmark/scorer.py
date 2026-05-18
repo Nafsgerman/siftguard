@@ -2,13 +2,12 @@
 SIFTGuard Benchmark Scorer
 Computes precision, recall, F1 for IOC detection and section completeness.
 """
+
 from __future__ import annotations
 
 import json
-import re
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
 
 
 @dataclass
@@ -131,23 +130,30 @@ def score_report(report_text: str, ground_truth: dict) -> BenchmarkScore:
         found_section = ""
         if found:
             # Find which section contains the IOC
-            for section in ["executive summary", "indicators of compromise",
-                            "timeline", "persistence", "recommendations"]:
+            for section in [
+                "executive summary",
+                "indicators of compromise",
+                "timeline",
+                "persistence",
+                "recommendations",
+            ]:
                 idx = report_lower.find(f"## {section}")
                 if idx == -1:
                     continue
                 next_section = report_lower.find("## ", idx + 3)
-                chunk = report_lower[idx: next_section if next_section > 0 else len(report_lower)]
+                chunk = report_lower[idx : next_section if next_section > 0 else len(report_lower)]
                 if ioc_val_lower in chunk:
                     found_section = section
                     break
-        score.ioc_scores.append(IOCScore(
-            ioc_type=ioc["type"],
-            ioc_value=ioc["value"],
-            expected_confidence=ioc["confidence"],
-            found=found,
-            found_in_section=found_section,
-        ))
+        score.ioc_scores.append(
+            IOCScore(
+                ioc_type=ioc["type"],
+                ioc_value=ioc["value"],
+                expected_confidence=ioc["confidence"],
+                found=found,
+                found_in_section=found_section,
+            )
+        )
 
     # --- Section completeness ---
     for section in ground_truth.get("required_sections", []):

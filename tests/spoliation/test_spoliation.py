@@ -5,13 +5,15 @@ Proves that evidence destruction is architecturally impossible.
 Each test ATTEMPTS a destructive action and verifies it is BLOCKED.
 This is not a safety feature — it is an architectural guarantee.
 """
-from __future__ import annotations
-import asyncio
-import pytest
-from siftguard.mcp_server.safe_exec import safe_exec, SafeExecError
 
+from __future__ import annotations
+
+import pytest
+
+from siftguard.mcp_server.safe_exec import SafeExecError, safe_exec
 
 # ── Attack 1: Direct rm command ──────────────────────────────────────────────
+
 
 @pytest.mark.asyncio
 async def test_rm_binary_blocked():
@@ -22,6 +24,7 @@ async def test_rm_binary_blocked():
 
 # ── Attack 2: rm via shell injection in args ──────────────────────────────────
 
+
 @pytest.mark.asyncio
 async def test_rm_pattern_in_args_blocked():
     """rm pattern in args is blocked by deny list."""
@@ -30,6 +33,7 @@ async def test_rm_pattern_in_args_blocked():
 
 
 # ── Attack 3: dd (disk wipe) ──────────────────────────────────────────────────
+
 
 @pytest.mark.asyncio
 async def test_dd_wipe_blocked():
@@ -40,6 +44,7 @@ async def test_dd_wipe_blocked():
 
 # ── Attack 4: dd pattern in args ─────────────────────────────────────────────
 
+
 @pytest.mark.asyncio
 async def test_dd_pattern_in_args_blocked():
     """dd of= pattern blocked even inside allowed binary args."""
@@ -48,6 +53,7 @@ async def test_dd_pattern_in_args_blocked():
 
 
 # ── Attack 5: mkfs (format filesystem) ───────────────────────────────────────
+
 
 @pytest.mark.asyncio
 async def test_mkfs_blocked():
@@ -58,6 +64,7 @@ async def test_mkfs_blocked():
 
 # ── Attack 6: Path traversal outside evidence root ───────────────────────────
 
+
 @pytest.mark.asyncio
 async def test_path_traversal_blocked():
     """Paths escaping the evidence root are blocked."""
@@ -66,6 +73,7 @@ async def test_path_traversal_blocked():
 
 
 # ── Attack 7: shutdown ────────────────────────────────────────────────────────
+
 
 @pytest.mark.asyncio
 async def test_shutdown_blocked():
@@ -76,6 +84,7 @@ async def test_shutdown_blocked():
 
 # ── Attack 8: Redirect to overwrite evidence ─────────────────────────────────
 
+
 @pytest.mark.asyncio
 async def test_redirect_overwrite_blocked():
     """Shell redirect pattern > / is blocked."""
@@ -84,6 +93,7 @@ async def test_redirect_overwrite_blocked():
 
 
 # ── Attack 9: kill process ────────────────────────────────────────────────────
+
 
 @pytest.mark.asyncio
 async def test_kill_blocked():
@@ -94,6 +104,7 @@ async def test_kill_blocked():
 
 # ── Attack 10: chmod to make evidence writable ───────────────────────────────
 
+
 @pytest.mark.asyncio
 async def test_chmod_write_blocked():
     """chmod +w pattern is blocked."""
@@ -102,6 +113,7 @@ async def test_chmod_write_blocked():
 
 
 # ── Positive: legitimate forensic call passes validation ─────────────────────
+
 
 @pytest.mark.asyncio
 async def test_legitimate_fls_passes_validation():
@@ -124,7 +136,7 @@ async def test_legitimate_vol3_passes_validation():
     try:
         await safe_exec(
             "/opt/volatility3/bin/vol",
-            ["-f", "/cases/TEST-001/base-hunt-memory.img", "-r", "jsonl", "windows.psscan"]
+            ["-f", "/cases/TEST-001/base-hunt-memory.img", "-r", "jsonl", "windows.psscan"],
         )
     except SafeExecError as e:
         assert "not in allowlist" not in str(e)

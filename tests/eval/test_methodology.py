@@ -1,18 +1,19 @@
 import json
-import pytest
 from pathlib import Path
 
-from siftguard.eval.methodology import (
-    METHODOLOGY_VERSION,
-    METHODOLOGY_DOC_NAME,
-    METHODOLOGY_DOC_SHA256,
-    current_block,
-    doc_path,
-)
+import pytest
+
 from siftguard.eval.manifest import (
+    MethodologyMismatch,
     attach_to_manifest,
     stamp_manifest_file,
-    MethodologyMismatch,
+)
+from siftguard.eval.methodology import (
+    METHODOLOGY_DOC_NAME,
+    METHODOLOGY_DOC_SHA256,
+    METHODOLOGY_VERSION,
+    current_block,
+    doc_path,
 )
 
 

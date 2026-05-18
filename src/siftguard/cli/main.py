@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import asyncio
-import os
 from pathlib import Path
 
 import typer
@@ -35,15 +34,19 @@ def investigate(
         evidence["mft"] = mft
 
     if not evidence:
-        console.print("[red]Error:[/red] Provide at least one evidence file (--memory, --disk, or --mft)")
+        console.print(
+            "[red]Error:[/red] Provide at least one evidence file (--memory, --disk, or --mft)"
+        )
         raise typer.Exit(1)
 
-    report = asyncio.run(run_case(
-        case_id=case_id,
-        evidence_files=evidence,
-        briefing=briefing,
-        audit_db=audit_db,
-    ))
+    report = asyncio.run(
+        run_case(
+            case_id=case_id,
+            evidence_files=evidence,
+            briefing=briefing,
+            audit_db=audit_db,
+        )
+    )
 
     output_path = Path(f"./audit/{case_id}_report.md")
     output_path.parent.mkdir(exist_ok=True)
@@ -55,6 +58,7 @@ def investigate(
 def server() -> None:
     """Start SIFTGuard MCP server (stdio transport)."""
     from siftguard.mcp_server.server import main
+
     main()
 
 

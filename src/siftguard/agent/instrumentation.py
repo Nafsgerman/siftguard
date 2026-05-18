@@ -5,48 +5,47 @@ Principle: investigation > telemetry.
 
 ADR: docs/adr/ADR-003-loop-instrumentation.md
 """
+
 from __future__ import annotations
 
 import json
 import logging
 import sqlite3
-import time
-from datetime import datetime, timezone
-from pathlib import Path
-from typing import Optional
+from datetime import UTC, datetime
 
 logger = logging.getLogger(__name__)
 
 # ── Token cost table ───────────────────────────────────────────────────────────
 # Prices in USD per token. Update when pricing changes.
 _COST_PER_TOKEN_IN: dict[str, float] = {
-    "claude-sonnet-4-6":  3.00 / 1_000_000,
-    "claude-opus-4-20250514":   15.00 / 1_000_000,
-    "claude-haiku-4-20251001":   0.80 / 1_000_000,
-    "gpt-4o":                    2.50 / 1_000_000,
-    "gpt-4o-mini":               0.15 / 1_000_000,
-    "gemini-2.5-pro":            1.25 / 1_000_000,
+    "claude-sonnet-4-6": 3.00 / 1_000_000,
+    "claude-opus-4-20250514": 15.00 / 1_000_000,
+    "claude-haiku-4-20251001": 0.80 / 1_000_000,
+    "gpt-4o": 2.50 / 1_000_000,
+    "gpt-4o-mini": 0.15 / 1_000_000,
+    "gemini-2.5-pro": 1.25 / 1_000_000,
 }
 _COST_PER_TOKEN_OUT: dict[str, float] = {
     "claude-sonnet-4-6": 15.00 / 1_000_000,
-    "claude-opus-4-20250514":   75.00 / 1_000_000,
-    "claude-haiku-4-20251001":   4.00 / 1_000_000,
-    "gpt-4o":                   10.00 / 1_000_000,
-    "gpt-4o-mini":               0.60 / 1_000_000,
-    "gemini-2.5-pro":            5.00 / 1_000_000,
+    "claude-opus-4-20250514": 75.00 / 1_000_000,
+    "claude-haiku-4-20251001": 4.00 / 1_000_000,
+    "gpt-4o": 10.00 / 1_000_000,
+    "gpt-4o-mini": 0.60 / 1_000_000,
+    "gemini-2.5-pro": 5.00 / 1_000_000,
 }
-_FALLBACK_COST_IN  = 3.00 / 1_000_000
+_FALLBACK_COST_IN = 3.00 / 1_000_000
 _FALLBACK_COST_OUT = 15.00 / 1_000_000
 
 
 def token_cost(model: str, tokens_in: int, tokens_out: int) -> float:
     """Return USD cost for a single API call."""
-    rate_in  = _COST_PER_TOKEN_IN.get(model, _FALLBACK_COST_IN)
+    rate_in = _COST_PER_TOKEN_IN.get(model, _FALLBACK_COST_IN)
     rate_out = _COST_PER_TOKEN_OUT.get(model, _FALLBACK_COST_OUT)
     return round(tokens_in * rate_in + tokens_out * rate_out, 8)
 
 
 # ── Hypothesis tracker ─────────────────────────────────────────────────────────
+
 
 def _jaccard(a: str, b: str) -> float:
     """Token-set Jaccard similarity."""
@@ -87,36 +86,44 @@ class HypothesisTracker:
             event_type = hyp.get("event_type", "")
 
             if hid not in self._prior:
-                events.append({
-                    "hypothesis_id": hid,
-                    "event_type": "formed",
-                    "content": content,
-                    "confidence": confidence,
-                })
+                events.append(
+                    {
+                        "hypothesis_id": hid,
+                        "event_type": "formed",
+                        "content": content,
+                        "confidence": confidence,
+                    }
+                )
             else:
                 prior_content = self._prior[hid].get("content", "")
                 similarity = _jaccard(prior_content, content)
                 if event_type == "abandoned":
-                    events.append({
-                        "hypothesis_id": hid,
-                        "event_type": "abandoned",
-                        "content": content,
-                        "confidence": confidence,
-                    })
+                    events.append(
+                        {
+                            "hypothesis_id": hid,
+                            "event_type": "abandoned",
+                            "content": content,
+                            "confidence": confidence,
+                        }
+                    )
                 elif event_type == "confirmed":
-                    events.append({
-                        "hypothesis_id": hid,
-                        "event_type": "confirmed",
-                        "content": content,
-                        "confidence": confidence,
-                    })
+                    events.append(
+                        {
+                            "hypothesis_id": hid,
+                            "event_type": "confirmed",
+                            "content": content,
+                            "confidence": confidence,
+                        }
+                    )
                 elif similarity < 0.7:
-                    events.append({
-                        "hypothesis_id": hid,
-                        "event_type": "updated",
-                        "content": content,
-                        "confidence": confidence,
-                    })
+                    events.append(
+                        {
+                            "hypothesis_id": hid,
+                            "event_type": "updated",
+                            "content": content,
+                            "confidence": confidence,
+                        }
+                    )
 
             self._prior[hid] = {"content": content, "confidence": confidence}
 
@@ -124,6 +131,7 @@ class HypothesisTracker:
 
 
 # ── Snapshot writer ────────────────────────────────────────────────────────────
+
 
 class SnapshotWriter:
     """
@@ -137,6 +145,7 @@ class SnapshotWriter:
 
         # Guard: fail loud if schema not initialized
         import sqlite3 as _sqlite3
+
         try:
             _conn = _sqlite3.connect(db_path)
             _conn.execute("SELECT 1 FROM experiment_run LIMIT 1")
@@ -158,7 +167,7 @@ class SnapshotWriter:
         case_id: str,
         agent_id: str,
         config: dict,
-        ground_truth_path: Optional[str] = None,
+        ground_truth_path: str | None = None,
     ) -> None:
         try:
             with self._conn() as conn:
@@ -170,10 +179,12 @@ class SnapshotWriter:
                     VALUES (?, ?, ?, ?, ?, ?)
                     """,
                     (
-                        run_id, case_id, agent_id,
+                        run_id,
+                        case_id,
+                        agent_id,
                         json.dumps(config, default=str),
                         ground_truth_path,
-                        datetime.now(timezone.utc).isoformat(),
+                        datetime.now(UTC).isoformat(),
                     ),
                 )
         except Exception as exc:
@@ -187,7 +198,7 @@ class SnapshotWriter:
         total_tokens_in: int,
         total_tokens_out: int,
         total_cost_usd: float,
-        final_score: Optional[float] = None,
+        final_score: float | None = None,
     ) -> None:
         try:
             with self._conn() as conn:
@@ -204,7 +215,7 @@ class SnapshotWriter:
                     WHERE run_id = ?
                     """,
                     (
-                        datetime.now(timezone.utc).isoformat(),
+                        datetime.now(UTC).isoformat(),
                         completed_iterations,
                         terminated_reason,
                         total_tokens_in,
@@ -242,7 +253,9 @@ class SnapshotWriter:
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """,
                     (
-                        run_id, case_id, iteration,
+                        run_id,
+                        case_id,
+                        iteration,
                         json.dumps(findings, default=str),
                         json.dumps(iocs, default=str),
                         json.dumps(hypotheses, default=str),
@@ -250,7 +263,7 @@ class SnapshotWriter:
                         cumulative_tokens_out,
                         cumulative_cost_usd,
                         wall_time_ms,
-                        datetime.now(timezone.utc).isoformat(),
+                        datetime.now(UTC).isoformat(),
                     ),
                 )
         except Exception as exc:
@@ -276,16 +289,19 @@ class SnapshotWriter:
                         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                         """,
                         (
-                            run_id, case_id, iteration,
+                            run_id,
+                            case_id,
+                            iteration,
                             ev.get("event_type", "formed"),
                             ev.get("hypothesis_id", ""),
                             ev.get("content", ""),
                             ev.get("confidence"),
-                            datetime.now(timezone.utc).isoformat(),
+                            datetime.now(UTC).isoformat(),
                         ),
                     )
         except Exception as exc:
             logger.warning("SnapshotWriter.write_hypothesis_events failed: %s", exc)
+
     def emit_blocked_mutation(
         self,
         case_id: str,
@@ -294,8 +310,9 @@ class SnapshotWriter:
         actor: str = "siftguard-agent",
     ) -> str:
         import uuid
+
         receipt_id = str(uuid.uuid4())
-        timestamp = datetime.now(timezone.utc).isoformat()
+        timestamp = datetime.now(UTC).isoformat()
         try:
             with self._conn() as conn:
                 conn.execute(

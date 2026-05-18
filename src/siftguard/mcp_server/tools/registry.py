@@ -1,15 +1,23 @@
 from __future__ import annotations
+
 import json
+
+from siftguard.mcp_server.safe_exec import SafeExecError, safe_exec
 from siftguard.models.forensic import ForensicResult, ToolOutcome
-from siftguard.mcp_server.safe_exec import safe_exec, SafeExecError
 
 VOL3 = "/opt/volatility3/bin/vol"
-RIP  = "/usr/local/bin/rip.pl"
+RIP = "/usr/local/bin/rip.pl"
 
 REGRIPPER_PLUGINS = [
-    "autoruns", "services", "run", "userassist",
-    "shellbags", "recentdocs", "networklist",
-    "timezone", "samparse",
+    "autoruns",
+    "services",
+    "run",
+    "userassist",
+    "shellbags",
+    "recentdocs",
+    "networklist",
+    "timezone",
+    "samparse",
 ]
 
 # High-value registry keys for persistence hunting — queried via printkey
@@ -32,29 +40,42 @@ async def list_registry_hives(*, memory_image: str) -> ForensicResult:
             timeout_s=120,
         )
     except SafeExecError as e:
-        return ForensicResult(tool="list_registry_hives", outcome=ToolOutcome.FAIL,
-                              summary=str(e), duration_ms=0, error=str(e))
+        return ForensicResult(
+            tool="list_registry_hives",
+            outcome=ToolOutcome.FAIL,
+            summary=str(e),
+            duration_ms=0,
+            error=str(e),
+        )
 
     if result.returncode != 0:
-        return ForensicResult(tool="list_registry_hives", outcome=ToolOutcome.FAIL,
-                              summary="hivelist failed", raw_excerpt=result.stderr[:1500],
-                              duration_ms=result.duration_ms, error=result.stderr[:500])
+        return ForensicResult(
+            tool="list_registry_hives",
+            outcome=ToolOutcome.FAIL,
+            summary="hivelist failed",
+            raw_excerpt=result.stderr[:1500],
+            duration_ms=result.duration_ms,
+            error=result.stderr[:500],
+        )
 
     hives = []
     try:
         raw = json.loads(result.stdout)
         for h in raw:
-            name   = h.get("Name") or h.get("name") or ""
+            name = h.get("Name") or h.get("name") or ""
             offset = h.get("Offset") or h.get("offset") or 0
             hives.append({"name": name, "offset": offset})
     except Exception:
         pass
 
     return ForensicResult(
-        tool="list_registry_hives", outcome=ToolOutcome.OK,
+        tool="list_registry_hives",
+        outcome=ToolOutcome.OK,
         summary=f"{len(hives)} registry hives found in memory",
-        findings=hives, raw_excerpt=result.stdout[:1500],
-        evidence_refs=[memory_image], duration_ms=result.duration_ms,
+        findings=hives,
+        raw_excerpt=result.stdout[:1500],
+        evidence_refs=[memory_image],
+        duration_ms=result.duration_ms,
     )
 
 
@@ -63,36 +84,47 @@ async def query_registry_key(*, memory_image: str, key: str) -> ForensicResult:
     try:
         result = await safe_exec(
             VOL3,
-            ["-q", "-f", memory_image, "-r", "json",
-             "windows.registry.printkey", "--key", key],
+            ["-q", "-f", memory_image, "-r", "json", "windows.registry.printkey", "--key", key],
             timeout_s=120,
         )
     except SafeExecError as e:
-        return ForensicResult(tool="query_registry_key", outcome=ToolOutcome.FAIL,
-                              summary=str(e), duration_ms=0, error=str(e))
+        return ForensicResult(
+            tool="query_registry_key",
+            outcome=ToolOutcome.FAIL,
+            summary=str(e),
+            duration_ms=0,
+            error=str(e),
+        )
 
     if result.returncode != 0:
-        return ForensicResult(tool="query_registry_key", outcome=ToolOutcome.FAIL,
-                              summary=f"printkey failed for {key}",
-                              raw_excerpt=result.stderr[:1500],
-                              duration_ms=result.duration_ms, error=result.stderr[:500])
+        return ForensicResult(
+            tool="query_registry_key",
+            outcome=ToolOutcome.FAIL,
+            summary=f"printkey failed for {key}",
+            raw_excerpt=result.stderr[:1500],
+            duration_ms=result.duration_ms,
+            error=result.stderr[:500],
+        )
 
     findings = []
     try:
         raw = json.loads(result.stdout)
         for entry in raw:
-            findings.append({
-                "key": key,
-                "name":  entry.get("Name")  or entry.get("name")  or "",
-                "type":  entry.get("Type")  or entry.get("type")  or "",
-                "data":  entry.get("Data")  or entry.get("data")  or "",
-                "volatile": entry.get("Volatile") or False,
-            })
+            findings.append(
+                {
+                    "key": key,
+                    "name": entry.get("Name") or entry.get("name") or "",
+                    "type": entry.get("Type") or entry.get("type") or "",
+                    "data": entry.get("Data") or entry.get("data") or "",
+                    "volatile": entry.get("Volatile") or False,
+                }
+            )
     except Exception:
         findings = [{"key": key, "raw": result.stdout[:2000]}]
 
     return ForensicResult(
-        tool="query_registry_key", outcome=ToolOutcome.OK,
+        tool="query_registry_key",
+        outcome=ToolOutcome.OK,
         summary=f"{len(findings)} values under {key}",
         findings=findings,
         raw_excerpt=result.stdout[:1500],
@@ -104,27 +136,43 @@ async def query_registry_key(*, memory_image: str, key: str) -> ForensicResult:
 async def run_regripper(*, hive_path: str, plugin: str = "autoruns") -> ForensicResult:
     """Run a regripper plugin against a registry hive. READ-ONLY."""
     if plugin not in REGRIPPER_PLUGINS:
-        return ForensicResult(tool="run_regripper", outcome=ToolOutcome.FAIL,
-                              summary=f"plugin '{plugin}' not in approved list",
-                              duration_ms=0, error="unapproved plugin")
+        return ForensicResult(
+            tool="run_regripper",
+            outcome=ToolOutcome.FAIL,
+            summary=f"plugin '{plugin}' not in approved list",
+            duration_ms=0,
+            error="unapproved plugin",
+        )
     try:
         result = await safe_exec(RIP, ["-r", hive_path, "-p", plugin], timeout_s=120)
     except SafeExecError as e:
-        return ForensicResult(tool="run_regripper", outcome=ToolOutcome.FAIL,
-                              summary=str(e), duration_ms=0, error=str(e))
+        return ForensicResult(
+            tool="run_regripper",
+            outcome=ToolOutcome.FAIL,
+            summary=str(e),
+            duration_ms=0,
+            error=str(e),
+        )
 
     if result.returncode != 0:
-        return ForensicResult(tool="run_regripper", outcome=ToolOutcome.FAIL,
-                              summary=f"regripper {plugin} failed",
-                              raw_excerpt=result.stderr[:1500],
-                              duration_ms=result.duration_ms, error=result.stderr[:500])
+        return ForensicResult(
+            tool="run_regripper",
+            outcome=ToolOutcome.FAIL,
+            summary=f"regripper {plugin} failed",
+            raw_excerpt=result.stderr[:1500],
+            duration_ms=result.duration_ms,
+            error=result.stderr[:500],
+        )
 
     findings = _parse_regripper_output(plugin, result.stdout)
     return ForensicResult(
-        tool="run_regripper", outcome=ToolOutcome.OK,
+        tool="run_regripper",
+        outcome=ToolOutcome.OK,
         summary=f"regripper {plugin}: {len(findings)} entries",
-        findings=findings, raw_excerpt=result.stdout[:2000],
-        evidence_refs=[hive_path], duration_ms=result.duration_ms,
+        findings=findings,
+        raw_excerpt=result.stdout[:2000],
+        evidence_refs=[hive_path],
+        duration_ms=result.duration_ms,
     )
 
 
@@ -140,7 +188,8 @@ async def hunt_registry(*, memory_image: str) -> ForensicResult:
             all_findings.extend(r.findings)
 
     return ForensicResult(
-        tool="hunt_registry", outcome=ToolOutcome.OK,
+        tool="hunt_registry",
+        outcome=ToolOutcome.OK,
         summary=f"registry hunt complete: {len(all_findings)} persistence findings across {len(PERSISTENCE_KEYS)} keys",
         findings=all_findings[:200],
         evidence_refs=[memory_image],
@@ -154,8 +203,10 @@ def _parse_regripper_output(plugin: str, output: str) -> list[dict]:
     if plugin in ("autoruns", "run"):
         for line in lines:
             line = line.strip()
-            if line and not line.startswith("#") and any(
-                c in line for c in ["\\", ".exe", ".dll", ".bat", ".cmd", ".ps1"]
+            if (
+                line
+                and not line.startswith("#")
+                and any(c in line for c in ["\\", ".exe", ".dll", ".bat", ".cmd", ".ps1"])
             ):
                 findings.append({"type": "autorun_entry", "value": line})
     elif plugin == "services":

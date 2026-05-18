@@ -22,17 +22,24 @@ except ImportError:
     OpenAIFunctionCallingAdapter = None
 
 REGISTRY: dict[str, type[BaseOrchestrator]] = {
-    k: v for k, v in {
+    k: v
+    for k, v in {
         "siftguard-claudecode": ClaudeCodeAdapter,
         "siftguard-gemini3pro": GeminiAdapter,
         "siftguard-langgraph": LangGraphAdapter,
         "siftguard-native": NativeLoopAdapter,
         "siftguard-openai-fc": OpenAIFunctionCallingAdapter,
-    }.items() if v is not None
+    }.items()
+    if v is not None
 }
 
 __all__ = [
-    "BaseOrchestrator", "OrchestratorResult", "ClaudeCodeAdapter",
-    "GeminiAdapter", "LangGraphAdapter", "NativeLoopAdapter",
-    "OpenAIFunctionCallingAdapter", "REGISTRY",
+    "BaseOrchestrator",
+    "OrchestratorResult",
+    "ClaudeCodeAdapter",
+    "GeminiAdapter",
+    "LangGraphAdapter",
+    "NativeLoopAdapter",
+    "OpenAIFunctionCallingAdapter",
+    "REGISTRY",
 ]

@@ -1,7 +1,8 @@
 """Tests for siftguard.eval.variance."""
+
 from __future__ import annotations
-import pytest
-from siftguard.eval.variance import bootstrap_ci, compute_variance_stats, VarianceStats
+
+from siftguard.eval.variance import bootstrap_ci, compute_variance_stats
 
 
 def test_empty_scores():

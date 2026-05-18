@@ -1,4 +1,5 @@
 """Smoke tests for migration 001 — empirical evaluation framework schema."""
+
 from __future__ import annotations
 
 import sqlite3
@@ -53,16 +54,14 @@ def legacy_db(tmp_path):
 def test_migration_adds_all_auditentry_columns(legacy_db):
     ensure_migrations_table(legacy_db)
     apply_migration_001(legacy_db)
-    for col in ["tokens_in", "tokens_out", "cost_usd",
-                "confidence_score", "correction_event"]:
+    for col in ["tokens_in", "tokens_out", "cost_usd", "confidence_score", "correction_event"]:
         assert column_exists(legacy_db, "auditentry", col), f"{col} missing"
 
 
 def test_migration_creates_all_new_tables(legacy_db):
     ensure_migrations_table(legacy_db)
     apply_migration_001(legacy_db)
-    for t in ["iteration_snapshot", "hypothesis_event",
-              "experiment_run", "schema_migrations"]:
+    for t in ["iteration_snapshot", "hypothesis_event", "experiment_run", "schema_migrations"]:
         assert table_exists(legacy_db, t), f"table {t} missing"
 
 
@@ -83,8 +82,18 @@ def test_legacy_writes_still_work(legacy_db):
         " args_json, args_sha256, outcome, output_sha256, "
         " output_excerpt, duration_ms) "
         "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-        ("CASE-TEST", "2026-05-06 14:00:00", "vol_pslist", "v3",
-         "{}", "abc", "ok", "def", "summary", 100),
+        (
+            "CASE-TEST",
+            "2026-05-06 14:00:00",
+            "vol_pslist",
+            "v3",
+            "{}",
+            "abc",
+            "ok",
+            "def",
+            "summary",
+            100,
+        ),
     )
     legacy_db.commit()
     cur = legacy_db.execute("SELECT case_id, tool_name FROM auditentry")
@@ -103,14 +112,29 @@ def test_new_columns_accept_values(legacy_db):
         " tokens_in, tokens_out, cost_usd, "
         " confidence_score, correction_event) "
         "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-        ("CASE-TEST", "2026-05-06 14:00:00", "vol_pslist", "v3",
-         "{}", "abc", "ok", "def", "summary", 100,
-         1234, 567, 0.0042, 0.85, "tool_failure_recovery"),
+        (
+            "CASE-TEST",
+            "2026-05-06 14:00:00",
+            "vol_pslist",
+            "v3",
+            "{}",
+            "abc",
+            "ok",
+            "def",
+            "summary",
+            100,
+            1234,
+            567,
+            0.0042,
+            0.85,
+            "tool_failure_recovery",
+        ),
     )
     legacy_db.commit()
     cur = legacy_db.execute(
         "SELECT tokens_in, tokens_out, cost_usd, confidence_score, correction_event "
-        "FROM auditentry WHERE case_id=?", ("CASE-TEST",),
+        "FROM auditentry WHERE case_id=?",
+        ("CASE-TEST",),
     )
     row = cur.fetchone()
     assert row == (1234, 567, 0.0042, 0.85, "tool_failure_recovery")

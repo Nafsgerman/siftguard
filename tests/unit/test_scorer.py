@@ -1,10 +1,12 @@
 """Unit tests for the benchmark scorer."""
+
 from __future__ import annotations
-import pytest
+
 import sys
 from pathlib import Path
+
 sys.path.insert(0, str(Path(__file__).parents[2]))
-from tests.benchmark.scorer import score_report, BenchmarkScore
+from tests.benchmark.scorer import score_report
 
 GROUND_TRUTH = {
     "case_id": "TEST-UNIT",
