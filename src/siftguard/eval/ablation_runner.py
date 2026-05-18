@@ -12,19 +12,21 @@ Usage:
     python -m siftguard.eval.ablation_runner --all
     python -m siftguard.eval.ablation_runner --variance-table
 """
+
 from __future__ import annotations
 
 import argparse
 import asyncio
 import json
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(REPO_ROOT))
 
-from experiments.run import RESULTS_DIR, load_config, list_configs, run_single as _run_single
+from experiments.run import RESULTS_DIR, list_configs, load_config
+from experiments.run import run_single as _run_single
 from siftguard.cases.loader import list_case_ids as available_datasets
 from siftguard.eval.variance import compute_variance_stats
 
@@ -35,7 +37,7 @@ TIER2_CASES = ["TEST-004", "TEST-005"]
 
 
 def _timestamp() -> str:
-    return datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+    return datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
 
 
 def _result_exists(config_name: str, case_id: str, seed: int) -> bool:
@@ -81,7 +83,9 @@ async def run_tier1(
         for seed in seeds:
             done += 1
             print(f"\n[Tier1 {done}/{total}] {cfg['name']} × {TIER1_CASE} × seed={seed}")
-            results.append(await run_seeded(cfg, TIER1_CASE, seed, dry_run=dry_run, orchestrator=orchestrator))
+            results.append(
+                await run_seeded(cfg, TIER1_CASE, seed, dry_run=dry_run, orchestrator=orchestrator)
+            )
     return results
 
 
@@ -101,7 +105,9 @@ async def run_tier2(
         for seed in seeds:
             done += 1
             print(f"\n[Tier2 {done}/{total}] {winner} × {case_id} × seed={seed}")
-            results.append(await run_seeded(config, case_id, seed, dry_run=dry_run, orchestrator=orchestrator))
+            results.append(
+                await run_seeded(config, case_id, seed, dry_run=dry_run, orchestrator=orchestrator)
+            )
     return results
 
 
@@ -135,12 +141,14 @@ def _print_summary(results: list[dict]) -> None:
     skip = sum(1 for r in results if "skip" in r["status"])
     err = sum(1 for r in results if r["status"] == "error")
     dry = sum(1 for r in results if r["status"] == "dry_run")
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"  ABLATION SUMMARY  ok={ok} skipped={skip} errors={err} dry={dry}")
     for r in results:
         if r["status"] == "error":
-            print(f"  ERR {r['config']} × {r.get('case_id')} × seed={r.get('seed')}: {r.get('error','')[:80]}")
-    print(f"{'='*60}\n")
+            print(
+                f"  ERR {r['config']} × {r.get('case_id')} × seed={r.get('seed')}: {r.get('error', '')[:80]}"
+            )
+    print(f"{'=' * 60}\n")
 
 
 def main() -> int:
@@ -150,7 +158,9 @@ def main() -> int:
     p.add_argument("--seeds", nargs="+", type=int, default=SEEDS)
     p.add_argument("--dry-run", action="store_true")
     p.add_argument("--variance-table", action="store_true")
-    p.add_argument("--orchestrator", default=None, help="Override orchestrator in config (native|langgraph)")
+    p.add_argument(
+        "--orchestrator", default=None, help="Override orchestrator in config (native|langgraph)"
+    )
     args = p.parse_args()
 
     if args.variance_table:
@@ -159,9 +169,18 @@ def main() -> int:
 
     results: list[dict] = []
     if args.tier in ("1", "all"):
-        results += asyncio.run(run_tier1(dry_run=args.dry_run, seeds=args.seeds, orchestrator=args.orchestrator))
+        results += asyncio.run(
+            run_tier1(dry_run=args.dry_run, seeds=args.seeds, orchestrator=args.orchestrator)
+        )
     if args.tier in ("2", "all"):
-        results += asyncio.run(run_tier2(winner=args.winner, dry_run=args.dry_run, seeds=args.seeds, orchestrator=args.orchestrator))
+        results += asyncio.run(
+            run_tier2(
+                winner=args.winner,
+                dry_run=args.dry_run,
+                seeds=args.seeds,
+                orchestrator=args.orchestrator,
+            )
+        )
     _print_summary(results)
     return 1 if any(r["status"] == "error" for r in results) else 0
 

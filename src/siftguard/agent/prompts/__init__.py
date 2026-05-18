@@ -6,6 +6,7 @@ Versions:
   v2              — structured-confidence JSON output (eval framework default)
   v2_training     — v2 + training_annotation field per finding
 """
+
 from __future__ import annotations
 
 from functools import lru_cache
@@ -19,10 +20,7 @@ _VALID_VERSIONS = {"v1", "v1_training", "v2", "v2_training"}
 @lru_cache(maxsize=8)
 def load_prompt(version: str = "v2") -> str:
     if version not in _VALID_VERSIONS:
-        raise ValueError(
-            f"Unknown prompt version {version!r}. "
-            f"Valid: {sorted(_VALID_VERSIONS)}"
-        )
+        raise ValueError(f"Unknown prompt version {version!r}. Valid: {sorted(_VALID_VERSIONS)}")
     path = _PROMPTS_DIR / f"{version}.txt"
     if not path.exists():
         raise FileNotFoundError(f"Prompt file not found: {path}")

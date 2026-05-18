@@ -1,4 +1,5 @@
 """Smoke tests for migration 002 — run_id column."""
+
 from __future__ import annotations
 
 import sqlite3
@@ -50,9 +51,7 @@ def _apply_002(conn: sqlite3.Connection) -> None:
     ensure_migrations_table(conn)
     if not column_exists(conn, "auditentry", "run_id"):
         conn.execute("ALTER TABLE auditentry ADD COLUMN run_id TEXT")
-        conn.execute(
-            "CREATE INDEX IF NOT EXISTS ix_auditentry_run_id ON auditentry (run_id)"
-        )
+        conn.execute("CREATE INDEX IF NOT EXISTS ix_auditentry_run_id ON auditentry (run_id)")
         conn.commit()
 
 
@@ -73,8 +72,18 @@ def test_existing_rows_get_null_run_id(post_001_db):
         "(case_id, timestamp, tool_name, tool_version, args_json, "
         " args_sha256, outcome, output_sha256, output_excerpt, duration_ms) "
         "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-        ("CASE-1", "2026-05-06 10:00:00", "vol_pslist", "v3",
-         "{}", "abc", "ok", "def", "summary", 100),
+        (
+            "CASE-1",
+            "2026-05-06 10:00:00",
+            "vol_pslist",
+            "v3",
+            "{}",
+            "abc",
+            "ok",
+            "def",
+            "summary",
+            100,
+        ),
     )
     post_001_db.commit()
     _apply_002(post_001_db)
@@ -90,8 +99,19 @@ def test_new_rows_accept_run_id(post_001_db):
         "(case_id, timestamp, tool_name, tool_version, args_json, "
         " args_sha256, outcome, output_sha256, output_excerpt, duration_ms, run_id) "
         "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-        ("CASE-2", "2026-05-06 10:00:00", "vol_pslist", "v3",
-         "{}", "abc", "ok", "def", "summary", 100, "run-abc-123"),
+        (
+            "CASE-2",
+            "2026-05-06 10:00:00",
+            "vol_pslist",
+            "v3",
+            "{}",
+            "abc",
+            "ok",
+            "def",
+            "summary",
+            100,
+            "run-abc-123",
+        ),
     )
     post_001_db.commit()
     cur = post_001_db.execute("SELECT run_id FROM auditentry WHERE case_id='CASE-2'")

@@ -3,6 +3,7 @@ Tool injection helper for Lock C (T12, phase 1).
 Prepends available/unavailable tool context to each orchestrator's system prompt.
 MCP-level enforcement deferred to T15 + ADR-007.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -12,6 +13,7 @@ from typing import Any
 @dataclass
 class ToolManifest:
     """Minimal manifest contract consumed by build_tools_preamble."""
+
     available_tools: list[str]
     unavailable_tools: list[dict[str, str]]  # [{tool: str, reason: str}]
     case_id: str
@@ -64,6 +66,7 @@ def manifest_from_case_loader(case_data: Any) -> ToolManifest:
     Build a ToolManifest from whatever the cases/loader.py returns.
     Handles both dict and object (Pydantic model) case representations.
     """
+
     def _get(obj: Any, *keys: str, default: Any = None) -> Any:
         for key in keys:
             try:

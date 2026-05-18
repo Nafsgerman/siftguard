@@ -3,6 +3,7 @@
 Structure: data["panel_7"]["data"][agent_label]["mean"] -> float F1
 No live API calls. The committed JSON IS the fixture.
 """
+
 from __future__ import annotations
 
 import json
@@ -11,8 +12,7 @@ from pathlib import Path
 import pytest
 
 ANALYSIS_PATH = (
-    Path(__file__).resolve().parents[2]
-    / "experiments" / "analysis" / "TEST-001" / "data.json"
+    Path(__file__).resolve().parents[2] / "experiments" / "analysis" / "TEST-001" / "data.json"
 )
 
 MIN_AGENT_COUNT = 3

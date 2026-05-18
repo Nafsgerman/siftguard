@@ -4,6 +4,7 @@ Invokes the `claude` CLI in headless mode against the SIFTGuard MCP server
 configured via .mcp.json. The agent reads CLAUDE.md, runs the investigation
 fully autonomously, and emits a `siftguard-report` JSON block we parse out.
 """
+
 from __future__ import annotations
 
 import json
@@ -17,7 +18,6 @@ from pathlib import Path
 from typing import Any
 
 from siftguard.eval.orchestrators.base import BaseOrchestrator, OrchestratorResult
-
 
 REPORT_BLOCK_RE = re.compile(
     r"```siftguard-report\s*\n(?P<json>.*?)\n```",
@@ -59,11 +59,16 @@ class ClaudeCodeAdapter(BaseOrchestrator):
 
         cli = [
             "claude",
-            "-p", prompt,
-            "--output-format", "json",
-            "--model", self.model,
-            "--permission-mode", "bypassPermissions",
-            "--mcp-config", str(self.cwd / mcp_config_file),
+            "-p",
+            prompt,
+            "--output-format",
+            "json",
+            "--model",
+            self.model,
+            "--permission-mode",
+            "bypassPermissions",
+            "--mcp-config",
+            str(self.cwd / mcp_config_file),
             *self.extra_cli_args,
         ]
 
@@ -82,9 +87,12 @@ class ClaudeCodeAdapter(BaseOrchestrator):
         snap = None
         try:
             from siftguard.agent.instrumentation import SnapshotWriter
+
             snap = SnapshotWriter(str(audit_db))
             snap.write_experiment_run_start(
-                run_id=run_id, case_id=case_id, agent_id=self.agent_id,
+                run_id=run_id,
+                case_id=case_id,
+                agent_id=self.agent_id,
                 config={"model": self.model, "orchestrator": "claudecode", "cli": "headless"},
             )
         except Exception:
@@ -107,19 +115,30 @@ class ClaudeCodeAdapter(BaseOrchestrator):
             if snap:
                 try:
                     snap.write_experiment_run_complete(
-                        run_id=run_id, completed_iterations=0,
+                        run_id=run_id,
+                        completed_iterations=0,
                         terminated_reason="aborted",
-                        total_tokens_in=0, total_tokens_out=0,
-                        total_cost_usd=0.0, final_score=None,
+                        total_tokens_in=0,
+                        total_tokens_out=0,
+                        total_cost_usd=0.0,
+                        final_score=None,
                     )
                 except Exception:
                     pass
             return OrchestratorResult(
-                agent_id=self.agent_id, case_id=case_id, wall_time_s=wall,
-                success=False, error=f"timeout after {self.timeout_s}s",
-                raw_stdout=(exc.stdout or b"").decode("utf-8", errors="replace") if isinstance(exc.stdout, bytes) else (exc.stdout or ""),
-                raw_stderr=(exc.stderr or b"").decode("utf-8", errors="replace") if isinstance(exc.stderr, bytes) else (exc.stderr or ""),
-                report=None, tool_calls=0,
+                agent_id=self.agent_id,
+                case_id=case_id,
+                wall_time_s=wall,
+                success=False,
+                error=f"timeout after {self.timeout_s}s",
+                raw_stdout=(exc.stdout or b"").decode("utf-8", errors="replace")
+                if isinstance(exc.stdout, bytes)
+                else (exc.stdout or ""),
+                raw_stderr=(exc.stderr or b"").decode("utf-8", errors="replace")
+                if isinstance(exc.stderr, bytes)
+                else (exc.stderr or ""),
+                report=None,
+                tool_calls=0,
             )
 
         wall = time.monotonic() - t0
@@ -128,18 +147,26 @@ class ClaudeCodeAdapter(BaseOrchestrator):
             if snap:
                 try:
                     snap.write_experiment_run_complete(
-                        run_id=run_id, completed_iterations=0,
+                        run_id=run_id,
+                        completed_iterations=0,
                         terminated_reason="error",
-                        total_tokens_in=0, total_tokens_out=0,
-                        total_cost_usd=0.0, final_score=None,
+                        total_tokens_in=0,
+                        total_tokens_out=0,
+                        total_cost_usd=0.0,
+                        final_score=None,
                     )
                 except Exception:
                     pass
             return OrchestratorResult(
-                agent_id=self.agent_id, case_id=case_id, wall_time_s=wall,
-                success=False, error=f"exit={proc.returncode}",
-                raw_stdout=proc.stdout, raw_stderr=proc.stderr,
-                report=None, tool_calls=0,
+                agent_id=self.agent_id,
+                case_id=case_id,
+                wall_time_s=wall,
+                success=False,
+                error=f"exit={proc.returncode}",
+                raw_stdout=proc.stdout,
+                raw_stderr=proc.stderr,
+                report=None,
+                tool_calls=0,
             )
 
         report, tool_calls, agent_text = self._parse_output(proc.stdout)
@@ -158,20 +185,28 @@ class ClaudeCodeAdapter(BaseOrchestrator):
         if snap:
             try:
                 snap.write_experiment_run_complete(
-                    run_id=run_id, completed_iterations=tool_calls,
+                    run_id=run_id,
+                    completed_iterations=tool_calls,
                     terminated_reason="verdict_reached" if report else "error",
-                    total_tokens_in=tokens_in, total_tokens_out=tokens_out,
-                    total_cost_usd=cost_usd, final_score=None,
+                    total_tokens_in=tokens_in,
+                    total_tokens_out=tokens_out,
+                    total_cost_usd=cost_usd,
+                    final_score=None,
                 )
             except Exception:
                 pass
 
         return OrchestratorResult(
-            agent_id=self.agent_id, case_id=case_id, wall_time_s=wall,
+            agent_id=self.agent_id,
+            case_id=case_id,
+            wall_time_s=wall,
             success=report is not None,
             error=None if report is not None else "no siftguard-report block found",
-            raw_stdout=proc.stdout, raw_stderr=proc.stderr,
-            report=report, tool_calls=tool_calls, agent_text=agent_text,
+            raw_stdout=proc.stdout,
+            raw_stderr=proc.stderr,
+            report=report,
+            tool_calls=tool_calls,
+            agent_text=agent_text,
         )
 
     @staticmethod

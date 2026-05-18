@@ -1,6 +1,6 @@
 """Tests for seed_spoliation_receipts and SnapshotWriter.emit_blocked_mutation."""
+
 import sqlite3
-import tempfile
 from pathlib import Path
 
 import pytest

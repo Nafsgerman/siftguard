@@ -5,10 +5,10 @@ based on the prompt_version config value.
 
 ADR: docs/adr/ADR-003-loop-instrumentation.md
 """
+
 from __future__ import annotations
 
 import os
-from typing import Optional
 
 from siftguard.agent.loop_v1 import run_case_v1
 from siftguard.agent.loop_v2 import run_case_v2
@@ -20,11 +20,11 @@ async def run_case(
     briefing: str,
     audit_db: str = "./audit/siftguard.db",
     training_mode: bool = False,
-    model: Optional[str] = None,
-    prompt_version: Optional[str] = None,
-    config_override: Optional[dict] = None,
-    ground_truth_path: Optional[str] = None,
-    on_event: Optional[callable] = None,
+    model: str | None = None,
+    prompt_version: str | None = None,
+    config_override: dict | None = None,
+    ground_truth_path: str | None = None,
+    on_event: callable | None = None,
     system_prompt_prefix: str = "",
 ) -> str:
     """
@@ -35,11 +35,12 @@ async def run_case(
     Default: v2
     """
     _version = prompt_version or os.environ.get("SIFTGUARD_PROMPT_VERSION", "v2")
-    _model   = model or os.environ.get("SIFTGUARD_MODEL", "claude-sonnet-4-6")
+    _model = model or os.environ.get("SIFTGUARD_MODEL", "claude-sonnet-4-6")
 
     _orchestrator = (config_override or {}).get("orchestrator", "siftguard-native")
     if _orchestrator == "langgraph":
         from siftguard.orchestrators.langgraph_adapter import run_case_langgraph
+
         report, _run_id = await run_case_langgraph(
             case_id=case_id,
             evidence_files=evidence_files,

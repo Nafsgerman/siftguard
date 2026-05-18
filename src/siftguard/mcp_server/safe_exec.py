@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 import asyncio
 import os
 import shlex
@@ -30,9 +31,20 @@ ALLOWED_BINARIES: set[str] = {
 }
 
 DENY_PATTERNS: set[str] = {
-    "rm ", "rm\t", "mkfs", "dd if=", "dd of=",
-    " > /", ">/dev/", "shutdown", "reboot",
-    "iptables", "kill ", "pkill", "chmod +w", "chown ",
+    "rm ",
+    "rm\t",
+    "mkfs",
+    "dd if=",
+    "dd of=",
+    " > /",
+    ">/dev/",
+    "shutdown",
+    "reboot",
+    "iptables",
+    "kill ",
+    "pkill",
+    "chmod +w",
+    "chown ",
 }
 
 
@@ -48,9 +60,14 @@ class SafeExecError(Exception):
     pass
 
 
-async def safe_exec(binary: str, args: list[str], *,
-                    cwd: str | None = None, timeout_s: int = 120,
-                    env: dict[str, str] | None = None) -> ExecResult:
+async def safe_exec(
+    binary: str,
+    args: list[str],
+    *,
+    cwd: str | None = None,
+    timeout_s: int = 120,
+    env: dict[str, str] | None = None,
+) -> ExecResult:
     if binary not in ALLOWED_BINARIES:
         raise SafeExecError(f"binary not in allowlist: {binary}")
 
@@ -59,17 +76,17 @@ async def safe_exec(binary: str, args: list[str], *,
         if pat in cmdline:
             raise SafeExecError(f"denied pattern in command: {pat!r}")
 
-    evidence_root = Path(
-        os.environ.get("SIFTGUARD_EVIDENCE_ROOT", "/cases")).resolve()
+    evidence_root = Path(os.environ.get("SIFTGUARD_EVIDENCE_ROOT", "/cases")).resolve()
     for a in args:
         if a.startswith("/") or a.startswith("./"):
             try:
                 resolved = Path(a).resolve()
                 safe_prefixes = ("/usr/", "/opt/", "/home/sansforensics/", "/tmp/", "/cases/")
-                if (evidence_root not in resolved.parents
-                        and resolved != evidence_root
-                        and not any(str(resolved).startswith(p)
-                                    for p in safe_prefixes)):
+                if (
+                    evidence_root not in resolved.parents
+                    and resolved != evidence_root
+                    and not any(str(resolved).startswith(p) for p in safe_prefixes)
+                ):
                     raise SafeExecError(f"path escapes evidence root: {a}")
             except (OSError, ValueError):
                 pass
@@ -77,15 +94,16 @@ async def safe_exec(binary: str, args: list[str], *,
     full_env = {**os.environ, **(env or {})}
     start = time.monotonic()
     proc = await asyncio.create_subprocess_exec(
-        binary, *args,
+        binary,
+        *args,
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
-        cwd=cwd, env=full_env,
+        cwd=cwd,
+        env=full_env,
     )
     try:
-        stdout_b, stderr_b = await asyncio.wait_for(
-            proc.communicate(), timeout=timeout_s)
-    except asyncio.TimeoutError:
+        stdout_b, stderr_b = await asyncio.wait_for(proc.communicate(), timeout=timeout_s)
+    except TimeoutError:
         proc.kill()
         raise SafeExecError(f"timeout after {timeout_s}s: {binary} {shlex.join(args)}")
 

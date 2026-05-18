@@ -7,17 +7,17 @@ State machine:
                                   ↓
                                  END
 """
+
 from __future__ import annotations
 
 import logging
 import os
 import uuid
-from typing import Optional, TypedDict
+from typing import TypedDict
 
 import anthropic
 from dotenv import load_dotenv
 from langgraph.graph import END, StateGraph
-
 
 load_dotenv()
 
@@ -40,6 +40,7 @@ logger = logging.getLogger(__name__)
 
 # ── State ─────────────────────────────────────────────────────────────────────
 
+
 class AgentState(TypedDict):
     messages: list
     iter_count: int
@@ -57,12 +58,13 @@ class AgentState(TypedDict):
     final_report: str
     terminated_reason: str
     audit_db: str
-    ground_truth_path: Optional[str]
-    on_event: Optional[object]
+    ground_truth_path: str | None
+    on_event: object | None
     config: dict
 
 
 # ── Nodes ─────────────────────────────────────────────────────────────────────
+
 
 def think_node(state: AgentState) -> dict:
     client = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
@@ -89,13 +91,16 @@ def think_node(state: AgentState) -> dict:
 
     on_event = state.get("on_event")
     if on_event:
-        on_event("token_usage", {
-            "iteration": state["iter_count"],
-            "tokens_in": tokens_in,
-            "tokens_out": tokens_out,
-            "cost_usd": cost,
-            "cumulative_cost_usd": state["cumulative_cost_usd"] + cost,
-        })
+        on_event(
+            "token_usage",
+            {
+                "iteration": state["iter_count"],
+                "tokens_in": tokens_in,
+                "tokens_out": tokens_out,
+                "cost_usd": cost,
+                "cumulative_cost_usd": state["cumulative_cost_usd"] + cost,
+            },
+        )
 
     assistant_msg = {
         "role": "assistant",
@@ -161,10 +166,7 @@ async def tool_node(state: AgentState) -> dict:
     if not response:
         return {}
 
-    tool_calls = [
-        b for b in response.content
-        if hasattr(b, "type") and b.type == "tool_use"
-    ]
+    tool_calls = [b for b in response.content if hasattr(b, "type") and b.type == "tool_use"]
     if not tool_calls:
         return {}
 
@@ -174,11 +176,14 @@ async def tool_node(state: AgentState) -> dict:
 
     for tool_call in tool_calls:
         if on_event:
-            on_event("tool_call_start", {
-                "tool": tool_call.name,
-                "iteration": state["iter_count"],
-                "args": tool_call.input,
-            })
+            on_event(
+                "tool_call_start",
+                {
+                    "tool": tool_call.name,
+                    "iteration": state["iter_count"],
+                    "args": tool_call.input,
+                },
+            )
 
         result = await _dispatch_tool(tool_call.name, tool_call.input)
 
@@ -199,39 +204,50 @@ async def tool_node(state: AgentState) -> dict:
         )
 
         if on_event:
-            on_event("tool_call_end", {
-                "tool": tool_call.name,
-                "outcome": result.outcome.value,
-                "summary": result.summary,
-                "duration_ms": result.duration_ms,
-                "iteration": state["iter_count"],
-            })
+            on_event(
+                "tool_call_end",
+                {
+                    "tool": tool_call.name,
+                    "outcome": result.outcome.value,
+                    "summary": result.summary,
+                    "duration_ms": result.duration_ms,
+                    "iteration": state["iter_count"],
+                },
+            )
 
-        tool_results.append({
-            "type": "tool_result",
-            "tool_use_id": tool_call.id,
-            "content": result.model_dump_json(indent=2)[:8000],
-        })
+        tool_results.append(
+            {
+                "type": "tool_result",
+                "tool_use_id": tool_call.id,
+                "content": result.model_dump_json(indent=2)[:8000],
+            }
+        )
 
     return {"messages": state["messages"] + [{"role": "user", "content": tool_results}]}
 
 
 def nudge_node(state: AgentState) -> dict:
     return {
-        "messages": state["messages"] + [{
-            "role": "user",
-            "content": (
-                "Please compile your final incident report using the required headers, "
-                "then append the JSON block with decision='verdict'."
-            ),
-        }]
+        "messages": state["messages"]
+        + [
+            {
+                "role": "user",
+                "content": (
+                    "Please compile your final incident report using the required headers, "
+                    "then append the JSON block with decision='verdict'."
+                ),
+            }
+        ]
     }
 
 
 def observe_node(state: AgentState) -> dict:
     last_assistant = next(
-        (m for m in reversed(state["messages"])
-         if isinstance(m, dict) and m.get("role") == "assistant"),
+        (
+            m
+            for m in reversed(state["messages"])
+            if isinstance(m, dict) and m.get("role") == "assistant"
+        ),
         None,
     )
     if not last_assistant:
@@ -249,11 +265,12 @@ def observe_node(state: AgentState) -> dict:
                     final_report = block.text
 
     tool_calls = [
-        b for b in (response.content if response else [])
+        b
+        for b in (response.content if response else [])
         if hasattr(b, "type") and b.type == "tool_use"
     ]
 
-    agent_out: Optional[AgentOutput] = None
+    agent_out: AgentOutput | None = None
     if not tool_calls and is_v2_response(text):
         agent_out, _ = parse_agent_output(text)
         if agent_out is None:
@@ -263,9 +280,7 @@ def observe_node(state: AgentState) -> dict:
             iteration_summary=f"Tool calls: {[t.name for t in tool_calls]}",
             findings=[],
             hypotheses=[],
-            next_action=NextAction(
-                decision="continue", tool_to_call=None, rationale="tool turn"
-            ),
+            next_action=NextAction(decision="continue", tool_to_call=None, rationale="tool turn"),
             verdict=None,
         )
     else:
@@ -275,17 +290,21 @@ def observe_node(state: AgentState) -> dict:
     seen_keys = {(f["type"], f["value"].lower()) for f in new_findings}
     on_event = state.get("on_event")
 
-    for f in (agent_out.findings if agent_out else []):
+    for f in agent_out.findings if agent_out else []:
         key = (f.type, f.value.lower())
         if key not in seen_keys:
             new_findings.append(f.model_dump())
             seen_keys.add(key)
             if f.type in IOC_TYPES and on_event:
-                on_event("ioc_detected", {
-                    "type": f.type, "value": f.value,
-                    "confidence": f.confidence,
-                    "iteration": state["iter_count"],
-                })
+                on_event(
+                    "ioc_detected",
+                    {
+                        "type": f.type,
+                        "value": f.value,
+                        "confidence": f.confidence,
+                        "iteration": state["iter_count"],
+                    },
+                )
 
     hyp_dicts = [h.model_dump() for h in (agent_out.hypotheses if agent_out else [])]
 
@@ -305,12 +324,15 @@ def observe_node(state: AgentState) -> dict:
     )
 
     if on_event:
-        on_event("iteration_complete", {
-            "iteration": state["iter_count"],
-            "findings_count": len(new_findings),
-            "iocs_count": len(iocs),
-            "cumulative_cost_usd": state["cumulative_cost_usd"],
-        })
+        on_event(
+            "iteration_complete",
+            {
+                "iteration": state["iter_count"],
+                "findings_count": len(new_findings),
+                "iocs_count": len(iocs),
+                "cumulative_cost_usd": state["cumulative_cost_usd"],
+            },
+        )
 
     return {
         "all_findings": new_findings,
@@ -321,6 +343,7 @@ def observe_node(state: AgentState) -> dict:
 
 # ── Graph ─────────────────────────────────────────────────────────────────────
 
+
 def build_graph() -> StateGraph:
     g = StateGraph(AgentState)
     g.add_node("think_node", think_node)
@@ -328,12 +351,16 @@ def build_graph() -> StateGraph:
     g.add_node("observe_node", observe_node)
     g.add_node("nudge_node", nudge_node)
     g.set_entry_point("think_node")
-    g.add_conditional_edges("think_node", tool_router, {
-        "tool_node": "tool_node",
-        "observe_node": "observe_node",
-        "nudge": "nudge_node",
-        "end": END,
-    })
+    g.add_conditional_edges(
+        "think_node",
+        tool_router,
+        {
+            "tool_node": "tool_node",
+            "observe_node": "observe_node",
+            "nudge": "nudge_node",
+            "end": END,
+        },
+    )
     g.add_edge("tool_node", "observe_node")
     g.add_edge("observe_node", "think_node")
     g.add_edge("nudge_node", "think_node")
@@ -342,6 +369,7 @@ def build_graph() -> StateGraph:
 
 # ── Public entry point ────────────────────────────────────────────────────────
 
+
 async def run_case_langgraph(
     case_id: str,
     evidence_files: dict[str, str],
@@ -349,9 +377,9 @@ async def run_case_langgraph(
     audit_db: str = "./audit/siftguard.db",
     training_mode: bool = False,
     model: str = DEFAULT_MODEL,
-    config_override: Optional[dict] = None,
-    ground_truth_path: Optional[str] = None,
-    on_event: Optional[callable] = None,
+    config_override: dict | None = None,
+    ground_truth_path: str | None = None,
+    on_event: callable | None = None,
     system_prompt_prefix: str = "",
 ) -> tuple[str, str]:
     run_id = str(uuid.uuid4())
@@ -417,10 +445,15 @@ async def run_case_langgraph(
     }
 
     if on_event:
-        on_event("investigation_started", {
-            "run_id": run_id, "case_id": case_id,
-            "model": model, "orchestrator": "langgraph",
-        })
+        on_event(
+            "investigation_started",
+            {
+                "run_id": run_id,
+                "case_id": case_id,
+                "model": model,
+                "orchestrator": "langgraph",
+            },
+        )
 
     final_report = ""
     final_state: dict = initial_state
@@ -431,7 +464,9 @@ async def run_case_langgraph(
             f"Investigation incomplete — max_iterations after "
             f"{final_state['iter_count']} iterations."
         )
-        terminated_reason = "verdict_reached" if final_state.get("final_report") else "max_iterations"
+        terminated_reason = (
+            "verdict_reached" if final_state.get("final_report") else "max_iterations"
+        )
     except Exception as e:
         logger.exception("LangGraph run failed: %s", e)
         final_report = f"Investigation aborted due to error: {e}"
@@ -442,11 +477,19 @@ async def run_case_langgraph(
         try:
             snap.write_experiment_run_complete(
                 run_id=run_id,
-                completed_iterations=final_state.get("iter_count", 0) if isinstance(final_state, dict) else 0,
+                completed_iterations=final_state.get("iter_count", 0)
+                if isinstance(final_state, dict)
+                else 0,
                 terminated_reason=terminated_reason,
-                total_tokens_in=final_state.get("cumulative_tokens_in", 0) if isinstance(final_state, dict) else 0,
-                total_tokens_out=final_state.get("cumulative_tokens_out", 0) if isinstance(final_state, dict) else 0,
-                total_cost_usd=final_state.get("cumulative_cost_usd", 0.0) if isinstance(final_state, dict) else 0.0,
+                total_tokens_in=final_state.get("cumulative_tokens_in", 0)
+                if isinstance(final_state, dict)
+                else 0,
+                total_tokens_out=final_state.get("cumulative_tokens_out", 0)
+                if isinstance(final_state, dict)
+                else 0,
+                total_cost_usd=final_state.get("cumulative_cost_usd", 0.0)
+                if isinstance(final_state, dict)
+                else 0.0,
             )
         except Exception as e:
             logger.warning("Failed to write experiment_run_complete: %s", e)

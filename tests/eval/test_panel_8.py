@@ -1,8 +1,13 @@
 from __future__ import annotations
-import pytest
+
 from unittest.mock import MagicMock
-from siftguard.eval.verifier_models import VerificationResult, VerificationStatus, VerificationMethod
+
 from siftguard.eval.analytics.panel_8_verification import get_verification_breakdown, render_panel_8
+from siftguard.eval.verifier_models import (
+    VerificationMethod,
+    VerificationResult,
+    VerificationStatus,
+)
 
 
 def _finding(status: VerificationStatus, method: VerificationMethod) -> MagicMock:
@@ -37,7 +42,9 @@ def test_no_verification_field_skipped():
 
 
 def test_all_verified():
-    findings = [_finding(VerificationStatus.VERIFIED, VerificationMethod.SUBSTRING_MATCH) for _ in range(5)]
+    findings = [
+        _finding(VerificationStatus.VERIFIED, VerificationMethod.SUBSTRING_MATCH) for _ in range(5)
+    ]
     bd = get_verification_breakdown([_trace(findings)])
     assert bd["total"] == 5
     assert bd["verified"] == 5
@@ -47,7 +54,9 @@ def test_all_verified():
 
 
 def test_all_refuted():
-    findings = [_finding(VerificationStatus.REFUTED, VerificationMethod.TOOL_RERUN) for _ in range(3)]
+    findings = [
+        _finding(VerificationStatus.REFUTED, VerificationMethod.TOOL_RERUN) for _ in range(3)
+    ]
     bd = get_verification_breakdown([_trace(findings)])
     assert bd["hallucination_rate"] == 1.0
     assert bd["tool_rerun_count"] == 3

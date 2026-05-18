@@ -2,9 +2,8 @@ from __future__ import annotations
 
 import hashlib
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Optional
 
 from sqlmodel import Field, Session, SQLModel, create_engine, select
 
@@ -12,9 +11,7 @@ from sqlmodel import Field, Session, SQLModel, create_engine, select
 class AuditEntry(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     case_id: str = Field(index=True)
-    timestamp: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc), index=True
-    )
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC), index=True)
     tool_name: str = Field(index=True)
     tool_version: str
     args_json: str
@@ -90,16 +87,8 @@ class AuditLog:
 
     def for_case(self, case_id: str) -> list[AuditEntry]:
         with Session(self.engine) as s:
-            return list(
-                s.exec(
-                    select(AuditEntry).where(AuditEntry.case_id == case_id)
-                ).all()
-            )
+            return list(s.exec(select(AuditEntry).where(AuditEntry.case_id == case_id)).all())
 
     def for_run(self, run_id: str) -> list[AuditEntry]:
         with Session(self.engine) as s:
-            return list(
-                s.exec(
-                    select(AuditEntry).where(AuditEntry.run_id == run_id)
-                ).all()
-            )
+            return list(s.exec(select(AuditEntry).where(AuditEntry.run_id == run_id)).all())

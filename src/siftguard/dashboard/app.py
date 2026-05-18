@@ -1,18 +1,22 @@
 from __future__ import annotations
-import pathlib
+
 import asyncio
+import io
 import json
 import os
+import pathlib
 import uuid
-from datetime import datetime, timezone
+from collections.abc import AsyncGenerator
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import AsyncGenerator
-from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse, StreamingResponse, Response
-import io
-from fastapi.middleware.cors import CORSMiddleware
+
 from dotenv import load_dotenv
-from siftguard.cases.loader import list_case_ids, get_case
+from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse, Response, StreamingResponse
+
+from siftguard.cases.loader import get_case, list_case_ids
+
 load_dotenv(Path(__file__).resolve().parents[4] / ".env")
 
 
@@ -23,17 +27,20 @@ _sessions: dict[str, list[dict]] = {}
 _queues: dict[str, asyncio.Queue] = {}
 _stream_gen: dict[str, str] = {}
 
+
 def get_or_create_session(session_id: str):
     if session_id not in _sessions:
         _sessions[session_id] = []
         _queues[session_id] = asyncio.Queue()
     return _sessions[session_id], _queues[session_id]
 
+
 async def push_event(session_id: str, event: dict) -> None:
     events, queue = get_or_create_session(session_id)
-    event["timestamp"] = datetime.now(timezone.utc).isoformat()
+    event["timestamp"] = datetime.now(UTC).isoformat()
     events.append(event)
     await queue.put(event)
+
 
 @app.get("/", response_class=HTMLResponse)
 async def dashboard():
@@ -41,12 +48,14 @@ async def dashboard():
     with open(html_path) as f:
         return HTMLResponse(f.read())
 
+
 @app.get("/api/stream/{session_id}")
 async def stream(session_id: str, request: Request):
     gen_id = str(uuid.uuid4())
     _stream_gen[session_id] = gen_id
     fresh_queue: asyncio.Queue = asyncio.Queue()
     _queues[session_id] = fresh_queue
+
     async def event_generator() -> AsyncGenerator[str, None]:
         queue = fresh_queue
         get_or_create_session(session_id)
@@ -62,10 +71,15 @@ async def stream(session_id: str, request: Request):
             try:
                 event = await asyncio.wait_for(queue.get(), timeout=1.0)
                 yield f"data: {json.dumps(event)}\n\n"
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 yield ": keepalive\n\n"
-    return StreamingResponse(event_generator(), media_type="text/event-stream",
-                             headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
+
 
 @app.post("/api/investigate")
 async def start_investigation(request: Request):
@@ -76,10 +90,20 @@ async def start_investigation(request: Request):
     memory_image = body.get("memory_image", "")
     training_mode = body.get("training_mode", False)
     orchestrator = body.get("orchestrator", "native")
-    asyncio.create_task(_run_investigation(session_id, case_id, briefing, memory_image, training_mode, orchestrator))
+    asyncio.create_task(
+        _run_investigation(session_id, case_id, briefing, memory_image, training_mode, orchestrator)
+    )
     return {"session_id": session_id, "case_id": case_id}
 
-async def _run_investigation(session_id: str, case_id: str, briefing: str, memory_image: str, training_mode: bool = False, orchestrator: str = "native"):
+
+async def _run_investigation(
+    session_id: str,
+    case_id: str,
+    briefing: str,
+    memory_image: str,
+    training_mode: bool = False,
+    orchestrator: str = "native",
+):
     if orchestrator == "openai-fc":
         from siftguard.orchestrators.openai_fc_adapter import run_case_openai_fc as run_case
     elif orchestrator == "langgraph":
@@ -88,12 +112,15 @@ async def _run_investigation(session_id: str, case_id: str, briefing: str, memor
         from siftguard.orchestrators.gemini_adapter import run_case_gemini as run_case
     elif orchestrator == "haiku":
         from siftguard.agent.loop import run_case as _run_native
+
         async def run_case(*args, **kwargs):
             kwargs["model"] = "claude-haiku-4-5"
             return await _run_native(*args, **kwargs)
     elif orchestrator == "claudecode":
         from siftguard.eval.orchestrators.claude_code_adapter import ClaudeCodeAdapter
+
         _cc = ClaudeCodeAdapter()
+
         async def run_case(*args, **kwargs):
             _on_event = kwargs.get("on_event")
             if _on_event:
@@ -103,27 +130,29 @@ async def _run_investigation(session_id: str, case_id: str, briefing: str, memor
             )
             if _on_event:
                 if result.success:
-                    _on_event("verdict_reached", {"verdict": result.report.get("verdict","unknown")})
+                    _on_event(
+                        "verdict_reached", {"verdict": result.report.get("verdict", "unknown")}
+                    )
                 else:
                     _on_event("verdict_reached", {"verdict": "error", "error": result.error})
             return result.report
     else:
         from siftguard.agent.loop import run_case
 
-
     evidence = {"memory_image": memory_image} if memory_image else {}
     audit_db = os.path.join(os.path.dirname(__file__), "..", "..", "..", "audit", f"{case_id}.db")
 
     _EVENT_MAP = {
         "iteration_complete": "iteration",
-        "tool_call_start":    "tool_call",
-        "tool_call_end":      "tool_result",
+        "tool_call_start": "tool_call",
+        "tool_call_end": "tool_result",
         "investigation_started": "start",
-        "verdict_reached":    "complete",
-        "ioc_detected":       "ioc",
-        "hypothesis_update":  "hypothesis",
+        "verdict_reached": "complete",
+        "ioc_detected": "ioc",
+        "hypothesis_update": "hypothesis",
     }
     _main_loop = asyncio.get_running_loop()
+
     def on_event(event_type: str, data: dict):
         mapped = _EVENT_MAP.get(event_type, event_type)
         try:
@@ -147,7 +176,10 @@ async def _run_investigation(session_id: str, case_id: str, briefing: str, memor
             report_dict = report if isinstance(report, dict) else None
             if not report_dict and isinstance(report, str):
                 import re as _re_ioc
-                m = _re_ioc.search(r"```(?:siftguard-report|json)?\s*\n(\{.*?\})\n```", report, _re_ioc.DOTALL)
+
+                m = _re_ioc.search(
+                    r"```(?:siftguard-report|json)?\s*\n(\{.*?\})\n```", report, _re_ioc.DOTALL
+                )
                 if m:
                     try:
                         report_dict = json.loads(m.group(1))
@@ -157,81 +189,122 @@ async def _run_investigation(session_id: str, case_id: str, briefing: str, memor
                 _IOC_TYPE_MAP = {
                     "process": "process",
                     "network": "ip",
-                    "ip":      "ip",
-                    "file":    "file",
+                    "ip": "ip",
+                    "file": "file",
                     "registry": "registry",
-                    "hash":    "hash",
+                    "hash": "hash",
                 }
-                for ioc in (report_dict.get("confirmed_iocs") or []) + (report_dict.get("suspicious_indicators") or []):
-                    on_event("ioc_detected", {
-                        "ioc_type":  _IOC_TYPE_MAP.get(ioc.get("type","").lower(), "other"),
-                        "value":     ioc.get("value",""),
-                        "evidence":  ioc.get("evidence", []),
-                        "confirmed": ioc in (report_dict.get("confirmed_iocs") or []),
-                    })
-                for tech in (report_dict.get("mitre_techniques") or report_dict.get("sections",{}).get("mitre_techniques") or []):
-                    on_event("ioc_detected", {"ioc_type": "mitre", "value": tech, "evidence": [], "confirmed": True})
+                for ioc in (report_dict.get("confirmed_iocs") or []) + (
+                    report_dict.get("suspicious_indicators") or []
+                ):
+                    on_event(
+                        "ioc_detected",
+                        {
+                            "ioc_type": _IOC_TYPE_MAP.get(ioc.get("type", "").lower(), "other"),
+                            "value": ioc.get("value", ""),
+                            "evidence": ioc.get("evidence", []),
+                            "confirmed": ioc in (report_dict.get("confirmed_iocs") or []),
+                        },
+                    )
+                for tech in (
+                    report_dict.get("mitre_techniques")
+                    or report_dict.get("sections", {}).get("mitre_techniques")
+                    or []
+                ):
+                    on_event(
+                        "ioc_detected",
+                        {"ioc_type": "mitre", "value": tech, "evidence": [], "confirmed": True},
+                    )
             await push_event(session_id, {"type": "report", "content": report})
     except Exception as e:
         await push_event(session_id, {"type": "error", "message": str(e)})
 
     await push_event(session_id, {"type": "complete"})
 
+
 @app.get("/api/export/pdf/{session_id}")
 async def export_pdf(session_id: str):
-    from reportlab.lib.pagesizes import A4
-    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-    from reportlab.lib.units import mm
     from reportlab.lib import colors
-    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, HRFlowable
-    from reportlab.lib.enums import TA_LEFT, TA_CENTER
+    from reportlab.lib.enums import TA_CENTER
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+    from reportlab.lib.units import mm
+    from reportlab.platypus import (
+        HRFlowable,
+        Paragraph,
+        SimpleDocTemplate,
+        Spacer,
+        Table,
+        TableStyle,
+    )
 
     events = _sessions.get(session_id, [])
     if not events:
         return Response(status_code=404)
 
     buf = io.BytesIO()
-    doc = SimpleDocTemplate(buf, pagesize=A4,
-        leftMargin=20*mm, rightMargin=20*mm, topMargin=20*mm, bottomMargin=20*mm)
+    doc = SimpleDocTemplate(
+        buf,
+        pagesize=A4,
+        leftMargin=20 * mm,
+        rightMargin=20 * mm,
+        topMargin=20 * mm,
+        bottomMargin=20 * mm,
+    )
 
     styles = getSampleStyleSheet()
     BLUE = colors.HexColor("#1a73e8")
     DARK = colors.HexColor("#202124")
     GRAY = colors.HexColor("#5f6368")
-    RED  = colors.HexColor("#d93025")
+    RED = colors.HexColor("#d93025")
     GREEN = colors.HexColor("#1e8e3e")
 
-    h1 = ParagraphStyle("h1", parent=styles["Normal"], fontSize=22, textColor=BLUE,
-        spaceAfter=4, fontName="Helvetica-Bold")
-    h2 = ParagraphStyle("h2", parent=styles["Normal"], fontSize=13, textColor=DARK,
-        spaceBefore=10, spaceAfter=4, fontName="Helvetica-Bold")
-    body = ParagraphStyle("body", parent=styles["Normal"], fontSize=9, textColor=DARK,
-        leading=14, spaceAfter=3)
+    h1 = ParagraphStyle(
+        "h1",
+        parent=styles["Normal"],
+        fontSize=22,
+        textColor=BLUE,
+        spaceAfter=4,
+        fontName="Helvetica-Bold",
+    )
+    h2 = ParagraphStyle(
+        "h2",
+        parent=styles["Normal"],
+        fontSize=13,
+        textColor=DARK,
+        spaceBefore=10,
+        spaceAfter=4,
+        fontName="Helvetica-Bold",
+    )
+    body = ParagraphStyle(
+        "body", parent=styles["Normal"], fontSize=9, textColor=DARK, leading=14, spaceAfter=3
+    )
     meta = ParagraphStyle("meta", parent=styles["Normal"], fontSize=8, textColor=GRAY, spaceAfter=2)
 
     story = []
     case_id = next((e["case_id"] for e in events if e.get("case_id")), session_id)
-    briefing = next((e.get("briefing","") for e in events if e.get("type") == "start"), "")
-    generated_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    briefing = next((e.get("briefing", "") for e in events if e.get("type") == "start"), "")
+    generated_at = datetime.now(UTC).strftime("%Y-%m-%d %H:%M UTC")
 
     story.append(Paragraph("SIFTGuard DFIR Report", h1))
-    story.append(Spacer(1, 4*mm))
+    story.append(Spacer(1, 4 * mm))
     story.append(HRFlowable(width="100%", thickness=2, color=BLUE, spaceAfter=6))
     story.append(Paragraph(f"Case ID: <b>{case_id}</b>", meta))
     story.append(Paragraph(f"Generated: {generated_at}", meta))
     story.append(Paragraph(f"Session: {session_id}", meta))
-    story.append(Spacer(1, 6*mm))
+    story.append(Spacer(1, 6 * mm))
 
     if briefing:
         story.append(Paragraph("Briefing", h2))
-        story.append(Paragraph(briefing.replace("\n","<br/>"), body))
-        story.append(Spacer(1, 4*mm))
+        story.append(Paragraph(briefing.replace("\n", "<br/>"), body))
+        story.append(Spacer(1, 4 * mm))
 
     report_blocks = [e["content"] for e in events if e.get("type") == "report"]
     if report_blocks:
         story.append(Paragraph("Investigation Report", h2))
         story.append(HRFlowable(width="100%", thickness=0.5, color=GRAY, spaceAfter=4))
         import re as _re2
+
         for block in report_blocks:
             if isinstance(block, dict):
                 block = json.dumps(block, indent=2)
@@ -245,7 +318,7 @@ async def export_pdf(session_id: str):
             for line in block.split("\n"):
                 line = line.strip()
                 if not line:
-                    story.append(Spacer(1, 2*mm))
+                    story.append(Spacer(1, 2 * mm))
                 elif line.startswith("## "):
                     story.append(Paragraph(line[3:], h2))
                 elif line.startswith("# "):
@@ -257,41 +330,56 @@ async def export_pdf(session_id: str):
 
     tool_events = [e for e in events if e.get("type") == "tool_result"]
     if tool_events:
-        story.append(Spacer(1, 4*mm))
+        story.append(Spacer(1, 4 * mm))
         story.append(Paragraph("Tool Execution Log", h2))
         story.append(HRFlowable(width="100%", thickness=0.5, color=GRAY, spaceAfter=4))
         table_data = [["Tool", "Outcome", "Findings", "Duration", "Summary"]]
         for e in tool_events:
-            table_data.append([
-                e.get("tool","")[:30],
-                e.get("outcome","").upper(),
-                str(e.get("findings_count", 0)),
-                f"{e.get('duration_ms',0)}ms",
-                (e.get("summary","")[:60] + "…") if len(e.get("summary","")) > 60 else e.get("summary",""),
-            ])
-        t = Table(table_data, colWidths=[40*mm, 20*mm, 18*mm, 20*mm, None])
-        t.setStyle(TableStyle([
-            ("BACKGROUND", (0,0), (-1,0), BLUE),
-            ("TEXTCOLOR",  (0,0), (-1,0), colors.white),
-            ("FONTNAME",   (0,0), (-1,0), "Helvetica-Bold"),
-            ("FONTSIZE",   (0,0), (-1,-1), 8),
-            ("ROWBACKGROUNDS", (0,1), (-1,-1), [colors.white, colors.HexColor("#f8f9fa")]),
-            ("GRID",       (0,0), (-1,-1), 0.25, colors.HexColor("#dadce0")),
-            ("LEFTPADDING",(0,0), (-1,-1), 4),
-            ("RIGHTPADDING",(0,0), (-1,-1), 4),
-            ("TOPPADDING", (0,0), (-1,-1), 3),
-            ("BOTTOMPADDING",(0,0), (-1,-1), 3),
-            ("VALIGN",     (0,0), (-1,-1), "MIDDLE"),
-        ]))
+            table_data.append(
+                [
+                    e.get("tool", "")[:30],
+                    e.get("outcome", "").upper(),
+                    str(e.get("findings_count", 0)),
+                    f"{e.get('duration_ms', 0)}ms",
+                    (e.get("summary", "")[:60] + "…")
+                    if len(e.get("summary", "")) > 60
+                    else e.get("summary", ""),
+                ]
+            )
+        t = Table(table_data, colWidths=[40 * mm, 20 * mm, 18 * mm, 20 * mm, None])
+        t.setStyle(
+            TableStyle(
+                [
+                    ("BACKGROUND", (0, 0), (-1, 0), BLUE),
+                    ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+                    ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                    ("FONTSIZE", (0, 0), (-1, -1), 8),
+                    (
+                        "ROWBACKGROUNDS",
+                        (0, 1),
+                        (-1, -1),
+                        [colors.white, colors.HexColor("#f8f9fa")],
+                    ),
+                    ("GRID", (0, 0), (-1, -1), 0.25, colors.HexColor("#dadce0")),
+                    ("LEFTPADDING", (0, 0), (-1, -1), 4),
+                    ("RIGHTPADDING", (0, 0), (-1, -1), 4),
+                    ("TOPPADDING", (0, 0), (-1, -1), 3),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
+                    ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                ]
+            )
+        )
         story.append(t)
 
-    story.append(Spacer(1, 8*mm))
+    story.append(Spacer(1, 8 * mm))
     story.append(HRFlowable(width="100%", thickness=0.5, color=GRAY))
-    story.append(Paragraph(
-        "Generated by SIFTGuard — Autonomous DFIR Agent | SANS SIFT Workstation | "
-        "Evidence integrity guaranteed by architectural spoliation prevention.",
-        ParagraphStyle("footer", parent=meta, alignment=TA_CENTER)
-    ))
+    story.append(
+        Paragraph(
+            "Generated by SIFTGuard — Autonomous DFIR Agent | SANS SIFT Workstation | "
+            "Evidence integrity guaranteed by architectural spoliation prevention.",
+            ParagraphStyle("footer", parent=meta, alignment=TA_CENTER),
+        )
+    )
 
     doc.build(story)
     buf.seek(0)
@@ -299,37 +387,46 @@ async def export_pdf(session_id: str):
     return Response(
         content=buf.read(),
         media_type="application/pdf",
-        headers={"Content-Disposition": f'attachment; filename="{filename}"'}
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
+
 
 @app.get("/api/corrections/{case_id}")
 async def get_corrections(case_id: str):
     from siftguard.eval.analytics.correction_panel import get_correction_breakdown
+
     db_path = os.path.join(os.path.dirname(__file__), "..", "..", "..", "audit", f"{case_id}.db")
     if not os.path.exists(db_path):
         return Response(status_code=404)
     return get_correction_breakdown(db_path, case_id)
 
+
 @app.get("/api/orchestrator-comparison/{db_id}")
 async def orchestrator_comparison(db_id: str, case: str = "all"):
     """Panel 7 — case='all' aggregates; case='TEST-001' filters."""
-    import json as _json, sqlite3
+    import json as _json
+    import sqlite3
     from datetime import datetime as _dt
 
     ORCH_IDS = [
-        "siftguard-v2", "siftguard-langgraph",
-        "siftguard-openai-fc", "siftguard-gemini", "siftguard-claudecode",
+        "siftguard-v2",
+        "siftguard-langgraph",
+        "siftguard-openai-fc",
+        "siftguard-gemini",
+        "siftguard-claudecode",
     ]
     ORCH_LABELS = {
-        "siftguard-v2":         "Native Loop (Sonnet)",
-        "siftguard-langgraph":  "LangGraph (Sonnet)",
-        "siftguard-openai-fc":  "OpenAI FC (gpt-5.5)",
-        "siftguard-gemini":     "Gemini 3 Pro",
+        "siftguard-v2": "Native Loop (Sonnet)",
+        "siftguard-langgraph": "LangGraph (Sonnet)",
+        "siftguard-openai-fc": "OpenAI FC (gpt-5.5)",
+        "siftguard-gemini": "Gemini 3 Pro",
         "siftguard-claudecode": "Claude Code (headless)",
     }
 
     known_cases = list_case_ids()
-    target_cases = known_cases if case == "all" else ([case] if case in known_cases else known_cases)
+    target_cases = (
+        known_cases if case == "all" else ([case] if case in known_cases else known_cases)
+    )
 
     repo_root = pathlib.Path(__file__).resolve().parents[3]
 
@@ -343,11 +440,19 @@ async def orchestrator_comparison(db_id: str, case: str = "all"):
             d = _json.loads(data_file.read_text())
             p7 = d.get("panel_7", {}).get("data", {})
             mapping = {
-                "siftguard-v2":         (p7.get("siftguard-v2") or p7.get("baseline", {})).get("mean"),
-                "siftguard-langgraph":  (p7.get("siftguard-langgraph") or p7.get("langgraph", {})).get("mean"),
-                "siftguard-openai-fc":  (p7.get("siftguard-openai-fc") or p7.get("openai_fc", {})).get("mean"),
-                "siftguard-gemini":     (p7.get("siftguard-gemini") or p7.get("gemini", {})).get("mean"),
-                "siftguard-claudecode": (p7.get("siftguard-claudecode") or p7.get("claudecode", {})).get("mean"),
+                "siftguard-v2": (p7.get("siftguard-v2") or p7.get("baseline", {})).get("mean"),
+                "siftguard-langgraph": (
+                    p7.get("siftguard-langgraph") or p7.get("langgraph", {})
+                ).get("mean"),
+                "siftguard-openai-fc": (
+                    p7.get("siftguard-openai-fc") or p7.get("openai_fc", {})
+                ).get("mean"),
+                "siftguard-gemini": (p7.get("siftguard-gemini") or p7.get("gemini", {})).get(
+                    "mean"
+                ),
+                "siftguard-claudecode": (
+                    p7.get("siftguard-claudecode") or p7.get("claudecode", {})
+                ).get("mean"),
             }
             for aid, score in mapping.items():
                 if score is not None:
@@ -373,14 +478,19 @@ async def orchestrator_comparison(db_id: str, case: str = "all"):
                 wall_ms = None
                 if row["started_at"] and row["completed_at"]:
                     try:
-                        wall_ms = int((
-                            _dt.fromisoformat(row["completed_at"]) -
-                            _dt.fromisoformat(row["started_at"])
-                        ).total_seconds() * 1000)
+                        wall_ms = int(
+                            (
+                                _dt.fromisoformat(row["completed_at"])
+                                - _dt.fromisoformat(row["started_at"])
+                            ).total_seconds()
+                            * 1000
+                        )
                     except Exception:
                         pass
                 db_results[aid] = {
-                    "cost_usd": round(row["total_cost_usd"], 4) if row["total_cost_usd"] is not None else None,
+                    "cost_usd": round(row["total_cost_usd"], 4)
+                    if row["total_cost_usd"] is not None
+                    else None,
                     "iterations": row["completed_iterations"],
                     "wall_ms": wall_ms,
                 }
@@ -398,13 +508,13 @@ async def orchestrator_comparison(db_id: str, case: str = "all"):
         coverage_hits += len(scores)
         db = db_results.get(aid, {})
         rows[aid] = {
-            "label":      ORCH_LABELS[aid],
-            "mean_f1":    round(sum(scores) / len(scores), 4) if scores else None,
+            "label": ORCH_LABELS[aid],
+            "mean_f1": round(sum(scores) / len(scores), 4) if scores else None,
             "case_scores": case_scores,
-            "n_cases":    len(scores),
-            "cost_usd":   db.get("cost_usd"),
+            "n_cases": len(scores),
+            "cost_usd": db.get("cost_usd"),
             "iterations": db.get("iterations"),
-            "wall_ms":    db.get("wall_ms"),
+            "wall_ms": db.get("wall_ms"),
         }
 
     return {
@@ -413,6 +523,7 @@ async def orchestrator_comparison(db_id: str, case: str = "all"):
         "case_filter": case,
         "available_cases": known_cases,
     }
+
 
 @app.get("/api/cases")
 async def get_cases():

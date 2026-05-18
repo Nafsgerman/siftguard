@@ -1,6 +1,7 @@
 from __future__ import annotations
+
 from enum import Enum
-from typing import Optional
+
 from pydantic import BaseModel, Field
 
 
@@ -21,6 +22,6 @@ class VerificationResult(BaseModel):
     status: VerificationStatus
     method: VerificationMethod
     confidence: float = Field(ge=0.0, le=1.0)
-    matched_evidence: Optional[str] = None
-    refutation_reason: Optional[str] = None
-    tool_output_snippet: Optional[str] = None
+    matched_evidence: str | None = None
+    refutation_reason: str | None = None
+    tool_output_snippet: str | None = None

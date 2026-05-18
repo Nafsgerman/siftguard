@@ -7,13 +7,13 @@ and LangGraph adapters — only the orchestration paradigm differs.
 Orchestration: imperative while-loop (no graph-DAG).
 Client: OpenAI Python SDK, model gpt-4o, tool_choice="auto".
 """
+
 from __future__ import annotations
 
 import json
 import logging
 import os
 import uuid
-from typing import Optional
 
 from dotenv import load_dotenv
 
@@ -26,7 +26,6 @@ except ImportError as _e:
 
 from siftguard.agent.instrumentation import SnapshotWriter, token_cost
 from siftguard.agent.loop_v2 import (
-    DEFAULT_MODEL,
     IOC_TYPES,
     MAX_ITERATIONS,
     TOOL_SCHEMAS,
@@ -58,6 +57,7 @@ OPENAI_TOOLS = [
 
 # ── Public entry point ────────────────────────────────────────────────────────
 
+
 async def run_case_openai_fc(
     case_id: str,
     evidence_files: dict[str, str],
@@ -65,9 +65,9 @@ async def run_case_openai_fc(
     audit_db: str = "./audit/siftguard.db",
     training_mode: bool = False,
     model: str = "gpt-5.5",
-    config_override: Optional[dict] = None,
-    ground_truth_path: Optional[str] = None,
-    on_event: Optional[callable] = None,
+    config_override: dict | None = None,
+    ground_truth_path: str | None = None,
+    on_event: callable | None = None,
     system_prompt_prefix: str = "",
 ) -> tuple[str, str]:
     """OpenAI FC-orchestrated investigation. Returns (report, run_id).
@@ -120,10 +120,15 @@ async def run_case_openai_fc(
     ]
 
     if on_event:
-        on_event("investigation_started", {
-            "run_id": run_id, "case_id": case_id,
-            "model": model, "orchestrator": "openai-fc",
-        })
+        on_event(
+            "investigation_started",
+            {
+                "run_id": run_id,
+                "case_id": case_id,
+                "model": model,
+                "orchestrator": "openai-fc",
+            },
+        )
 
     all_findings: list[dict] = []
     all_hypotheses: list[dict] = []
@@ -154,13 +159,16 @@ async def run_case_openai_fc(
         iter_count += 1
 
         if on_event:
-            on_event("token_usage", {
-                "iteration": iter_count,
-                "tokens_in": tokens_in,
-                "tokens_out": tokens_out,
-                "cost_usd": cost,
-                "cumulative_cost_usd": cumulative_cost_usd,
-            })
+            on_event(
+                "token_usage",
+                {
+                    "iteration": iter_count,
+                    "tokens_in": tokens_in,
+                    "tokens_out": tokens_out,
+                    "cost_usd": cost,
+                    "cumulative_cost_usd": cumulative_cost_usd,
+                },
+            )
 
         msg = response.choices[0].message
         tool_calls = msg.tool_calls or []
@@ -195,11 +203,14 @@ async def run_case_openai_fc(
                     args = {}
 
                 if on_event:
-                    on_event("tool_call_start", {
-                        "tool": tc.function.name,
-                        "iteration": iter_count,
-                        "args": args,
-                    })
+                    on_event(
+                        "tool_call_start",
+                        {
+                            "tool": tc.function.name,
+                            "iteration": iter_count,
+                            "args": args,
+                        },
+                    )
 
                 result = await _dispatch_tool(tc.function.name, args)
 
@@ -220,22 +231,27 @@ async def run_case_openai_fc(
                 )
 
                 if on_event:
-                    on_event("tool_call_end", {
-                        "tool": tc.function.name,
-                        "outcome": result.outcome.value,
-                        "summary": result.summary,
-                        "duration_ms": result.duration_ms,
-                        "iteration": iter_count,
-                    })
+                    on_event(
+                        "tool_call_end",
+                        {
+                            "tool": tc.function.name,
+                            "outcome": result.outcome.value,
+                            "summary": result.summary,
+                            "duration_ms": result.duration_ms,
+                            "iteration": iter_count,
+                        },
+                    )
 
-                messages.append({
-                    "role": "tool",
-                    "tool_call_id": tc.id,
-                    "content": result.model_dump_json(indent=2)[:8000],
-                })
+                messages.append(
+                    {
+                        "role": "tool",
+                        "tool_call_id": tc.id,
+                        "content": result.model_dump_json(indent=2)[:8000],
+                    }
+                )
 
         # ── Parse v2 structured output (synthesis turns only) ─────────────────
-        agent_out: Optional[AgentOutput] = None
+        agent_out: AgentOutput | None = None
         if not tool_calls and is_v2_response(text):
             agent_out, _ = parse_agent_output(text)
             if agent_out is None:
@@ -245,7 +261,9 @@ async def run_case_openai_fc(
                 iteration_summary=f"Tool calls: {[tc.function.name for tc in tool_calls]}",
                 findings=[],
                 hypotheses=[],
-                next_action=NextAction(decision="continue", tool_to_call=None, rationale="tool turn"),
+                next_action=NextAction(
+                    decision="continue", tool_to_call=None, rationale="tool turn"
+                ),
                 verdict=None,
             )
         else:
@@ -253,17 +271,21 @@ async def run_case_openai_fc(
 
         # ── Update findings ───────────────────────────────────────────────────
         seen_keys = {(f["type"], f["value"].lower()) for f in all_findings}
-        for f in (agent_out.findings if agent_out else []):
+        for f in agent_out.findings if agent_out else []:
             key = (f.type, f.value.lower())
             if key not in seen_keys:
                 all_findings.append(f.model_dump())
                 seen_keys.add(key)
                 if f.type in IOC_TYPES and on_event:
-                    on_event("ioc_detected", {
-                        "type": f.type, "value": f.value,
-                        "confidence": f.confidence,
-                        "iteration": iter_count,
-                    })
+                    on_event(
+                        "ioc_detected",
+                        {
+                            "type": f.type,
+                            "value": f.value,
+                            "confidence": f.confidence,
+                            "iteration": iter_count,
+                        },
+                    )
 
         all_hypotheses = [h.model_dump() for h in (agent_out.hypotheses if agent_out else [])]
 
@@ -283,24 +305,30 @@ async def run_case_openai_fc(
         )
 
         if on_event:
-            on_event("iteration_complete", {
-                "iteration": iter_count,
-                "findings_count": len(all_findings),
-                "iocs_count": len(iocs),
-                "cumulative_cost_usd": cumulative_cost_usd,
-            })
+            on_event(
+                "iteration_complete",
+                {
+                    "iteration": iter_count,
+                    "findings_count": len(all_findings),
+                    "iocs_count": len(iocs),
+                    "cumulative_cost_usd": cumulative_cost_usd,
+                },
+            )
 
         # ── Verdict / abort checks ─────────────────────────────────────────────
         if agent_out and agent_out.next_action.decision == "verdict":
             terminated_reason = "verdict_reached"
             if on_event:
-                on_event("verdict_reached", {
-                    "run_id": run_id,
-                    "claim": agent_out.verdict.claim if agent_out.verdict else "",
-                    "confidence": agent_out.verdict.confidence if agent_out.verdict else None,
-                    "findings_count": len(all_findings),
-                    "total_cost_usd": cumulative_cost_usd,
-                })
+                on_event(
+                    "verdict_reached",
+                    {
+                        "run_id": run_id,
+                        "claim": agent_out.verdict.claim if agent_out.verdict else "",
+                        "confidence": agent_out.verdict.confidence if agent_out.verdict else None,
+                        "findings_count": len(all_findings),
+                        "total_cost_usd": cumulative_cost_usd,
+                    },
+                )
             break
 
         if agent_out and agent_out.next_action.decision == "abort":
@@ -312,13 +340,15 @@ async def run_case_openai_fc(
             if final_report:
                 terminated_reason = "verdict_reached"
                 break
-            messages.append({
-                "role": "user",
-                "content": (
-                    "Please compile your final incident report using the required headers, "
-                    "then append the JSON block with decision='verdict'."
-                ),
-            })
+            messages.append(
+                {
+                    "role": "user",
+                    "content": (
+                        "Please compile your final incident report using the required headers, "
+                        "then append the JSON block with decision='verdict'."
+                    ),
+                }
+            )
 
     # ── Finalise ──────────────────────────────────────────────────────────────
     if not final_report:

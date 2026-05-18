@@ -3,13 +3,14 @@
 Idempotent: calling attach_to_manifest twice produces the same result.
 Strict: refuses to overwrite a methodology block with a different version.
 """
+
 from __future__ import annotations
 
 import json
 from pathlib import Path
 from typing import Any
 
-from .methodology import current_block, MethodologyBlock
+from .methodology import MethodologyBlock, current_block
 
 
 class MethodologyMismatch(RuntimeError):
@@ -24,10 +25,13 @@ def attach_to_manifest(manifest: dict[str, Any]) -> dict[str, Any]:
     block = current_block()
     existing = manifest.get("methodology")
     if existing is not None:
-        if existing.get("version") != block.version or existing.get("doc_sha256") != block.doc_sha256:
+        if (
+            existing.get("version") != block.version
+            or existing.get("doc_sha256") != block.doc_sha256
+        ):
             raise MethodologyMismatch(
                 f"Manifest already pinned to methodology "
-                f"v{existing.get('version')} sha={existing.get('doc_sha256','?')[:12]}…; "
+                f"v{existing.get('version')} sha={existing.get('doc_sha256', '?')[:12]}…; "
                 f"current is v{block.version} sha={block.doc_sha256[:12]}…. "
                 f"Refusing to silently overwrite."
             )

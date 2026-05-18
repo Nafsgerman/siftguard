@@ -1,5 +1,7 @@
 """SIFTGuard evaluation framework — agent-agnostic trace-based evaluation."""
+
 from siftguard.eval.trace import (
+    SCHEMA_VERSION,
     CorrectionEvent,
     ExperimentConfig,
     Finding,
@@ -9,12 +11,11 @@ from siftguard.eval.trace import (
     IterationSnapshot,
     Orchestrator,
     TerminatedReason,
+    ToolCall,
     Trace,
     TraceMeta,
-    ToolCall,
     UsageTotals,
     Verdict,
-    SCHEMA_VERSION,
 )
 
 __all__ = [

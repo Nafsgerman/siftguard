@@ -7,25 +7,25 @@ Usage:
     python -m tests.benchmark.runner --all --evidence-dir /cases
     python -m tests.benchmark.runner --dry-run   # score saved reports without running agent
 """
+
 from __future__ import annotations
 
 import argparse
 import asyncio
 import json
-import os
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from rich.console import Console
-from rich.table import Table
 from rich.panel import Panel
+from rich.table import Table
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parents[3] / "src"))
 
 from siftguard.agent.loop import run_case
-from tests.benchmark.scorer import load_ground_truth, score_report, BenchmarkScore
+from tests.benchmark.scorer import BenchmarkScore, load_ground_truth, score_report
 
 console = Console()
 
@@ -37,8 +37,17 @@ def _get_evidence_files(case_id: str, evidence_dir: str) -> dict[str, str]:
     base = Path(evidence_dir) / case_id
     evidence = {}
     candidates = {
-        "memory_image": ["memory.mem", "memory.raw", "memory.vmem", "mem.dmp",
-                         "base-hunt-memory.img", "*.img", "*.mem", "*.raw", "*.vmem"],
+        "memory_image": [
+            "memory.mem",
+            "memory.raw",
+            "memory.vmem",
+            "mem.dmp",
+            "base-hunt-memory.img",
+            "*.img",
+            "*.mem",
+            "*.raw",
+            "*.vmem",
+        ],
         "disk_image": ["disk.dd", "disk.img", "disk.e01", "disk.raw", "*.dd", "*.E01"],
         "mft": ["$MFT", "MFT", "mft.bin"],
         "system_hive": ["SYSTEM", "system.hiv"],
@@ -83,10 +92,12 @@ async def run_benchmark_case(
             console.print("[yellow]Use --dry-run to score a saved report instead.[/yellow]")
             sys.exit(1)
 
-        console.print(Panel(
-            f"Case: [yellow]{case_id}[/yellow]\nThreat: [cyan]{gt['threat_type']}[/cyan]\nEvidence: {list(evidence.keys())}",
-            title="Running Benchmark Case"
-        ))
+        console.print(
+            Panel(
+                f"Case: [yellow]{case_id}[/yellow]\nThreat: [cyan]{gt['threat_type']}[/cyan]\nEvidence: {list(evidence.keys())}",
+                title="Running Benchmark Case",
+            )
+        )
 
         report_text = await run_case(
             case_id=case_id,
@@ -95,7 +106,7 @@ async def run_benchmark_case(
         )
 
         REPORTS_DIR.mkdir(exist_ok=True)
-        ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+        ts = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
         report_file = REPORTS_DIR / f"{case_id}_{ts}_report.txt"
         report_file.write_text(report_text)
         (REPORTS_DIR / f"{case_id}_report.txt").write_text(report_text)
@@ -103,7 +114,7 @@ async def run_benchmark_case(
 
     score = score_report(report_text, gt)
     SCORES_DIR.mkdir(exist_ok=True)
-    ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+    ts = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
     score_file = SCORES_DIR / f"{case_id}_{ts}_score.json"
     score_file.write_text(json.dumps(score.to_dict(), indent=2))
     return score
@@ -138,8 +149,13 @@ def _print_score_table(scores: list[BenchmarkScore]) -> None:
         avg_f1 = sum(s.ioc_f1 for s in scores) / len(scores)
         table.add_section()
         table.add_row(
-            "[bold]AVERAGE[/bold]", "", "", "",
-            f"[bold]{avg_f1:.1%}[/bold]", "", "",
+            "[bold]AVERAGE[/bold]",
+            "",
+            "",
+            "",
+            f"[bold]{avg_f1:.1%}[/bold]",
+            "",
+            "",
             f"[bold]{avg_overall:.1%}[/bold]",
         )
 
@@ -157,8 +173,12 @@ async def main() -> None:
     parser = argparse.ArgumentParser(description="SIFTGuard Benchmark Runner")
     parser.add_argument("--case", help="Run a single case by ID (e.g. TEST-001)")
     parser.add_argument("--all", action="store_true", help="Run all available ground truth cases")
-    parser.add_argument("--dry-run", action="store_true", help="Score saved reports without running agent")
-    parser.add_argument("--evidence-dir", default="/cases", help="Root directory containing case evidence folders")
+    parser.add_argument(
+        "--dry-run", action="store_true", help="Score saved reports without running agent"
+    )
+    parser.add_argument(
+        "--evidence-dir", default="/cases", help="Root directory containing case evidence folders"
+    )
     args = parser.parse_args()
 
     if not args.case and not args.all:

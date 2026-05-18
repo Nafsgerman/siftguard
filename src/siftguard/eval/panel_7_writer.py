@@ -3,14 +3,14 @@
 Merges a single run's F1 into experiments/analysis/<case_id>/data.json under
 panel_7.data.<agent_id>. Preserves all other panels. Last-write-wins per run timestamp.
 """
+
 from __future__ import annotations
 
 import json
 import os
 import tempfile
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Optional
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 ANALYSIS_DIR = REPO_ROOT / "experiments" / "analysis"
@@ -33,11 +33,11 @@ def update_panel_7(
     *,
     case_id: str,
     agent_id: str,
-    f1: Optional[float],
+    f1: float | None,
     gt_version: str,
     applicable_count: int,
     not_applicable_count: int,
-    run_timestamp: Optional[str] = None,
+    run_timestamp: str | None = None,
 ) -> Path:
     data_path = ANALYSIS_DIR / case_id / "data.json"
     data: dict = {}
@@ -51,14 +51,16 @@ def update_panel_7(
     panel_7_data = panel_7.setdefault("data", {})
     agent_block = panel_7_data.setdefault(agent_id, {"runs": [], "mean": None, "n": 0})
 
-    ts = run_timestamp or datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
-    agent_block.setdefault("runs", []).append({
-        "f1": f1,
-        "timestamp": ts,
-        "gt_version": gt_version,
-        "applicable_count": applicable_count,
-        "not_applicable_count": not_applicable_count,
-    })
+    ts = run_timestamp or datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
+    agent_block.setdefault("runs", []).append(
+        {
+            "f1": f1,
+            "timestamp": ts,
+            "gt_version": gt_version,
+            "applicable_count": applicable_count,
+            "not_applicable_count": not_applicable_count,
+        }
+    )
 
     scores = [r["f1"] for r in agent_block["runs"] if r.get("f1") is not None]
     agent_block["mean"] = (sum(scores) / len(scores)) if scores else None

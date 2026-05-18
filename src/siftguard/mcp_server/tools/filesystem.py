@@ -1,10 +1,12 @@
 from __future__ import annotations
+
 from pathlib import Path
+
+from siftguard.mcp_server.safe_exec import SafeExecError, safe_exec
 from siftguard.models.forensic import ForensicResult, ToolOutcome
-from siftguard.mcp_server.safe_exec import safe_exec, SafeExecError
 from siftguard.parsers.filesystem_parser import parse_fls_output
 
-FLS  = "/usr/bin/fls"
+FLS = "/usr/bin/fls"
 ICAT = "/usr/bin/icat"
 
 
@@ -26,22 +28,27 @@ async def list_files(
     try:
         result = await safe_exec(FLS, args, timeout_s=300)
     except SafeExecError as e:
-        return ForensicResult(tool="list_files", outcome=ToolOutcome.FAIL,
-                              summary=str(e), duration_ms=0, error=str(e))
+        return ForensicResult(
+            tool="list_files", outcome=ToolOutcome.FAIL, summary=str(e), duration_ms=0, error=str(e)
+        )
 
     if result.returncode != 0:
-        return ForensicResult(tool="list_files", outcome=ToolOutcome.FAIL,
-                              summary="fls failed",
-                              raw_excerpt=result.stderr[:1500],
-                              duration_ms=result.duration_ms,
-                              error=result.stderr[:500])
+        return ForensicResult(
+            tool="list_files",
+            outcome=ToolOutcome.FAIL,
+            summary="fls failed",
+            raw_excerpt=result.stderr[:1500],
+            duration_ms=result.duration_ms,
+            error=result.stderr[:500],
+        )
 
     entries = parse_fls_output(result.stdout)
     deleted = [e for e in entries if e.get("deleted")]
     suspicious = _flag_suspicious_files(entries)
 
     return ForensicResult(
-        tool="list_files", outcome=ToolOutcome.OK,
+        tool="list_files",
+        outcome=ToolOutcome.OK,
         summary=f"{len(entries)} entries, {len(deleted)} deleted, {len(suspicious)} suspicious",
         findings=entries[:500],
         raw_excerpt=result.stdout[:1500],
@@ -66,15 +73,23 @@ async def extract_file(
     try:
         result = await safe_exec(ICAT, args, timeout_s=120)
     except SafeExecError as e:
-        return ForensicResult(tool="extract_file", outcome=ToolOutcome.FAIL,
-                              summary=str(e), duration_ms=0, error=str(e))
+        return ForensicResult(
+            tool="extract_file",
+            outcome=ToolOutcome.FAIL,
+            summary=str(e),
+            duration_ms=0,
+            error=str(e),
+        )
 
     if result.returncode != 0:
-        return ForensicResult(tool="extract_file", outcome=ToolOutcome.FAIL,
-                              summary=f"icat failed for inode {inode}",
-                              raw_excerpt=result.stderr[:1500],
-                              duration_ms=result.duration_ms,
-                              error=result.stderr[:500])
+        return ForensicResult(
+            tool="extract_file",
+            outcome=ToolOutcome.FAIL,
+            summary=f"icat failed for inode {inode}",
+            raw_excerpt=result.stderr[:1500],
+            duration_ms=result.duration_ms,
+            error=result.stderr[:500],
+        )
 
     # Write extracted bytes to output_path
     out = Path(output_path)
@@ -82,7 +97,8 @@ async def extract_file(
     out.write_bytes(result.stdout.encode() if isinstance(result.stdout, str) else result.stdout)
 
     return ForensicResult(
-        tool="extract_file", outcome=ToolOutcome.OK,
+        tool="extract_file",
+        outcome=ToolOutcome.OK,
         summary=f"extracted inode {inode} → {output_path} ({out.stat().st_size} bytes)",
         findings=[{"inode": inode, "output_path": output_path, "bytes": out.stat().st_size}],
         raw_excerpt=result.stdout[:500] if isinstance(result.stdout, str) else "",

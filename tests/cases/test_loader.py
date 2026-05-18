@@ -2,23 +2,21 @@
 
 ADR-008: flat datasets/registry.py deleted; loader.py is canonical.
 """
+
 from __future__ import annotations
 
-import pytest
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+
+import pytest
 
 from siftguard.cases.loader import (
+    evidence_paths,
     get_case,
+    ground_truth_path,
     list_case_ids,
     list_cases,
-    evidence_paths,
-    evidence_available,
-    ground_truth_path,
-    CASES_DIR,
 )
 from siftguard.eval.ground_truth import CaseManifest
-
 
 KNOWN_CASES = ["TEST-001", "TEST-002"]
 
@@ -121,10 +119,13 @@ def test_get_case_is_cached() -> None:
     assert m1 is m2  # lru_cache hit
 
 
-@pytest.mark.parametrize("case_id,unavailable_tool", [
-    ("TEST-002", "volatility_pslist"),
-    ("TEST-001", "filesystem_walk"),
-])
+@pytest.mark.parametrize(
+    "case_id,unavailable_tool",
+    [
+        ("TEST-002", "volatility_pslist"),
+        ("TEST-001", "filesystem_walk"),
+    ],
+)
 def test_tool_unavailable(case_id: str, unavailable_tool: str) -> None:
     manifest = get_case(case_id)
     assert not manifest.is_tool_available(unavailable_tool)

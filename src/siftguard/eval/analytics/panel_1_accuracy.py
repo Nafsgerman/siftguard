@@ -3,19 +3,21 @@
 Claim: SIFTGuard accuracy improves with iteration count and plateaus.
 Self-correction is responsible for the improvement.
 """
+
 from __future__ import annotations
 
 import json
 from pathlib import Path
 
-import matplotlib.pyplot as plt
 import matplotlib.axes
 
-from siftguard.eval.analytics.style import apply_style, add_claim, placeholder, BLUE, GRAY, LGRAY
 from siftguard.eval.analytics.load_traces import (
-    load_iteration_snapshots, get_db_path, load_experiment_runs_from_db
+    get_db_path,
+    load_experiment_runs_from_db,
+    load_iteration_snapshots,
 )
-from siftguard.eval.analytics.scorer_framework import score_findings, ScoreResult
+from siftguard.eval.analytics.scorer_framework import score_findings
+from siftguard.eval.analytics.style import add_claim, apply_style, placeholder
 from siftguard.eval.trace import Finding, FindingType
 
 CLAIM = "Accuracy improves monotonically with iteration count and plateaus — self-correction drives improvement."
@@ -39,16 +41,18 @@ def _findings_from_snapshot(snap: dict) -> list[Finding]:
         excerpt = str(raw.get("evidence_excerpt", value))[:200]
         if len(excerpt) < 10:
             excerpt = (excerpt + " " * 10)[:10]
-        findings.append(Finding(
-            id=raw.get("id", f"{ftype.value}-{value}"),
-            type=ftype,
-            value=value,
-            confidence=raw.get("confidence"),
-            supporting_audit_entry_ids=[],
-            evidence_excerpt=excerpt,
-            mitre_technique=raw.get("mitre_technique"),
-            first_seen_iteration=raw.get("first_seen_iteration", 0),
-        ))
+        findings.append(
+            Finding(
+                id=raw.get("id", f"{ftype.value}-{value}"),
+                type=ftype,
+                value=value,
+                confidence=raw.get("confidence"),
+                supporting_audit_entry_ids=[],
+                evidence_excerpt=excerpt,
+                mitre_technique=raw.get("mitre_technique"),
+                first_seen_iteration=raw.get("first_seen_iteration", 0),
+            )
+        )
     return findings
 
 
@@ -58,14 +62,12 @@ def render(ax: matplotlib.axes.Axes, case_id: str = "TEST-001") -> dict:
     gt_path = GT_DIR / f"{case_id}.json"
 
     if not db_path.exists() or not gt_path.exists():
-        placeholder(ax, "Panel 1 — Accuracy over Iterations",
-                    f"DB not found: {db_path}")
+        placeholder(ax, "Panel 1 — Accuracy over Iterations", f"DB not found: {db_path}")
         return {"status": "placeholder"}
 
     runs = load_experiment_runs_from_db(db_path)
     if not runs:
-        placeholder(ax, "Panel 1 — Accuracy over Iterations",
-                    "No experiment runs found in DB.")
+        placeholder(ax, "Panel 1 — Accuracy over Iterations", "No experiment runs found in DB.")
         return {"status": "placeholder"}
 
     # Deduplicate: keep only the most recent run per config
@@ -91,14 +93,14 @@ def render(ax: matplotlib.axes.Axes, case_id: str = "TEST-001") -> dict:
         config = json.loads(run.get("config_json") or "{}")
         label = config.get("notes", run_id[:8])
         if not label or label == run_id[:8]:
-            label = f"{config.get('agent_id','?')} {config.get('prompt_version','')}"
+            label = f"{config.get('agent_id', '?')} {config.get('prompt_version', '')}"
 
         snapshots = load_iteration_snapshots(db_path, run_id)
         if not snapshots:
             continue
 
         iterations = []
-        f1_scores  = []
+        f1_scores = []
         for snap in snapshots:
             findings = _findings_from_snapshot(snap)
             score = score_findings(findings, gt_path)
@@ -113,8 +115,11 @@ def render(ax: matplotlib.axes.Axes, case_id: str = "TEST-001") -> dict:
         plotted += 1
 
     if plotted == 0:
-        placeholder(ax, "Panel 1 — Accuracy over Iterations",
-                    "No iteration snapshots found. Re-run experiments with v2 loop.")
+        placeholder(
+            ax,
+            "Panel 1 — Accuracy over Iterations",
+            "No iteration snapshots found. Re-run experiments with v2 loop.",
+        )
         return {"status": "placeholder"}
 
     ax.set_title("Panel 1 — Accuracy over Iterations", fontweight="bold")

@@ -3,10 +3,12 @@
 Aggregates VerificationResult across all trace findings.
 Reports three rates: verified, refuted (hallucination), unverifiable.
 """
+
 from __future__ import annotations
+
 from typing import Any
 
-from siftguard.eval.verifier_models import VerificationStatus, VerificationMethod
+from siftguard.eval.verifier_models import VerificationMethod, VerificationStatus
 
 
 def get_verification_breakdown(traces: list) -> dict[str, Any]:

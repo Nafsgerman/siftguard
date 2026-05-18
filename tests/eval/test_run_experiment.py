@@ -1,9 +1,10 @@
 """Tests for CLI flag parsing and agent normalization."""
+
 from __future__ import annotations
 
 import pytest
 
-from siftguard.eval.run_experiment import normalize_agent_id, _parse_args
+from siftguard.eval.run_experiment import _parse_args, normalize_agent_id
 
 
 def test_normalize_short_aliases():

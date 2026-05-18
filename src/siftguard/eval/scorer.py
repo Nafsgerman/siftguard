@@ -7,29 +7,36 @@ Audit DB schema assumed (auditentry table):
   run_id TEXT, agent_id TEXT, case_id TEXT, event_type TEXT,
   tool_name TEXT, tool_input TEXT, tool_output TEXT, created_at TEXT
 """
+
 from __future__ import annotations
 
 import json
 import sqlite3
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Callable, Optional
 
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
 
-IOC_PRODUCING_TOOLS: frozenset[str] = frozenset({
-    "vol_pslist", "windows_psscan", "vol_psscan",
-    "vol_netscan", "windows_netscan",
-    "vol_malfind", "windows_malfind",
-    "windows_registry_printkey",
-    "windows_mftscan",
-    "windows_mftscan_ads",
-    "windows_filescan",
-    "windows_cmdline",
-    "windows_dlllist",
-})
+IOC_PRODUCING_TOOLS: frozenset[str] = frozenset(
+    {
+        "vol_pslist",
+        "windows_psscan",
+        "vol_psscan",
+        "vol_netscan",
+        "windows_netscan",
+        "vol_malfind",
+        "windows_malfind",
+        "windows_registry_printkey",
+        "windows_mftscan",
+        "windows_mftscan_ads",
+        "windows_filescan",
+        "windows_cmdline",
+        "windows_dlllist",
+    }
+)
 
 _TOOL_OUTPUT_EVENT_TYPES = ("tool_call_end", "tool_result", "tool_output")
 _GT_ROOT = Path("experiments/ground_truth")
@@ -39,11 +46,12 @@ _GT_ROOT = Path("experiments/ground_truth")
 # Data classes
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class GroundTruthIOC:
     ioc_id: str
     ioc_type: str
-    value: str                    # normalized match key (lowercase)
+    value: str  # normalized match key (lowercase)
     evidence_location: list[str]  # tool names that can surface this
 
 
@@ -60,12 +68,12 @@ class ScoreResult:
     agent_id: str
     gt_version: str
     run_id: str
-    f1_applicable: Optional[float]
-    precision_applicable: Optional[float]
-    recall_applicable: Optional[float]
-    f1_total: Optional[float]
-    precision_total: Optional[float]
-    recall_total: Optional[float]
+    f1_applicable: float | None
+    precision_applicable: float | None
+    recall_applicable: float | None
+    f1_total: float | None
+    precision_total: float | None
+    recall_total: float | None
     tp: int = 0
     fp: int = 0
     fn_applicable: int = 0
@@ -80,6 +88,7 @@ class ScoreResult:
 # ---------------------------------------------------------------------------
 # Per-tool IOC extractors  →  normalized match keys
 # ---------------------------------------------------------------------------
+
 
 def _extract_psscan(rows: list[dict]) -> set[str]:
     found: set[str] = set()
@@ -196,6 +205,7 @@ EXTRACTORS: dict[str, Callable[[list[dict]], set[str]]] = {
 # Ground truth loader
 # ---------------------------------------------------------------------------
 
+
 def load_ground_truth(
     case_id: str,
     version: str,
@@ -220,6 +230,7 @@ def load_ground_truth(
 # ---------------------------------------------------------------------------
 # Audit DB helpers
 # ---------------------------------------------------------------------------
+
 
 def _discover_output_column(cur: sqlite3.Cursor) -> str:
     cur.execute("PRAGMA table_info(auditentry)")
@@ -281,7 +292,7 @@ def get_last_run_id(
     audit_db_path: str | Path,
     agent_id: str,
     case_id: str,
-) -> Optional[str]:
+) -> str | None:
     """Return most recent run_id for agent_id + case_id from audit DB."""
     db_path = Path(audit_db_path)
     if not db_path.exists():
@@ -315,11 +326,14 @@ def get_last_run_id(
 # F1 helpers
 # ---------------------------------------------------------------------------
 
-def _prf(tp: int, fp: int, fn: int) -> tuple[Optional[float], Optional[float], Optional[float]]:
+
+def _prf(tp: int, fp: int, fn: int) -> tuple[float | None, float | None, float | None]:
     p = tp / (tp + fp) if (tp + fp) > 0 else None
     r = tp / (tp + fn) if (tp + fn) > 0 else None
-    f1 = (2 * p * r / (p + r)) if (p is not None and r is not None and p + r > 0) else (
-        0.0 if (p is not None and r is not None) else None
+    f1 = (
+        (2 * p * r / (p + r))
+        if (p is not None and r is not None and p + r > 0)
+        else (0.0 if (p is not None and r is not None) else None)
     )
     return p, r, f1
 
@@ -327,6 +341,7 @@ def _prf(tp: int, fp: int, fn: int) -> tuple[Optional[float], Optional[float], O
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
+
 
 def score_run(
     case_id: str,
@@ -340,8 +355,7 @@ def score_run(
     found_keys = extract_findings_from_db(audit_db_path, run_id)
 
     applicable = [
-        ioc for ioc in gt.iocs
-        if any(loc in IOC_PRODUCING_TOOLS for loc in ioc.evidence_location)
+        ioc for ioc in gt.iocs if any(loc in IOC_PRODUCING_TOOLS for loc in ioc.evidence_location)
     ]
 
     # Applicable F1
@@ -396,25 +410,42 @@ def score_run_from_report(
     gt = load_ground_truth(case_id, gt_version, gt_root)
     report_lower = report_text.lower()
     applicable = [
-        ioc for ioc in gt.iocs
-        if any(loc in IOC_PRODUCING_TOOLS for loc in ioc.evidence_location)
+        ioc for ioc in gt.iocs if any(loc in IOC_PRODUCING_TOOLS for loc in ioc.evidence_location)
     ]
     if not applicable:
         return ScoreResult(
-            case_id=case_id, agent_id=agent_id, gt_version=gt_version, run_id="<report>",
-            f1_applicable=None, precision_applicable=None, recall_applicable=None,
-            f1_total=None, precision_total=None, recall_total=None,
-            applicable_count=0, total_count=len(gt.iocs),
+            case_id=case_id,
+            agent_id=agent_id,
+            gt_version=gt_version,
+            run_id="<report>",
+            f1_applicable=None,
+            precision_applicable=None,
+            recall_applicable=None,
+            f1_total=None,
+            precision_total=None,
+            recall_total=None,
+            applicable_count=0,
+            total_count=len(gt.iocs),
         )
     hits = {ioc.value for ioc in applicable if ioc.value in report_lower}
     tp = len(hits)
     fn = len(applicable) - tp
     recall = tp / len(applicable)
     return ScoreResult(
-        case_id=case_id, agent_id=agent_id, gt_version=gt_version, run_id="<report>",
-        f1_applicable=None, precision_applicable=None, recall_applicable=recall,
-        f1_total=None, precision_total=None, recall_total=None,
-        tp=tp, fp=0, fn_applicable=fn,
-        applicable_count=len(applicable), total_count=len(gt.iocs),
+        case_id=case_id,
+        agent_id=agent_id,
+        gt_version=gt_version,
+        run_id="<report>",
+        f1_applicable=None,
+        precision_applicable=None,
+        recall_applicable=recall,
+        f1_total=None,
+        precision_total=None,
+        recall_total=None,
+        tp=tp,
+        fp=0,
+        fn_applicable=fn,
+        applicable_count=len(applicable),
+        total_count=len(gt.iocs),
         found_ioc_keys=sorted(hits),
     )

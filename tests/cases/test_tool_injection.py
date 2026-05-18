@@ -1,7 +1,6 @@
 """tests/cases/test_tool_injection.py"""
-from __future__ import annotations
 
-import pytest
+from __future__ import annotations
 
 from siftguard.cases.tool_injection import (
     ToolManifest,
@@ -9,14 +8,16 @@ from siftguard.cases.tool_injection import (
     manifest_from_case_loader,
 )
 
-
 # ---------------------------------------------------------------------------
 # Unit: build_tools_preamble
 # ---------------------------------------------------------------------------
 
+
 class TestBuildToolsPreamble:
     def test_returns_string(self):
-        m = ToolManifest(case_id="TEST-001", available_tools=["windows_psscan"], unavailable_tools=[])
+        m = ToolManifest(
+            case_id="TEST-001", available_tools=["windows_psscan"], unavailable_tools=[]
+        )
         result = build_tools_preamble(m)
         assert isinstance(result, str)
 
@@ -25,7 +26,9 @@ class TestBuildToolsPreamble:
         assert "TEST-001" in build_tools_preamble(m)
 
     def test_available_tool_listed(self):
-        m = ToolManifest(case_id="X", available_tools=["windows_psscan", "windows_netscan"], unavailable_tools=[])
+        m = ToolManifest(
+            case_id="X", available_tools=["windows_psscan", "windows_netscan"], unavailable_tools=[]
+        )
         result = build_tools_preamble(m)
         assert "windows_psscan" in result
         assert "windows_netscan" in result
@@ -57,14 +60,18 @@ class TestBuildToolsPreamble:
 
     def test_prepend_pattern_works(self):
         """Result should be safe to prepend to any system prompt."""
-        m = ToolManifest(case_id="TEST-001", available_tools=["windows_psscan"], unavailable_tools=[])
+        m = ToolManifest(
+            case_id="TEST-001", available_tools=["windows_psscan"], unavailable_tools=[]
+        )
         preamble = build_tools_preamble(m)
         system_prompt = preamble + "You are SIFTGuard."
         assert "TEST-001" in system_prompt
         assert "You are SIFTGuard." in system_prompt
 
     def test_tools_sorted_alphabetically(self):
-        m = ToolManifest(case_id="X", available_tools=["z_tool", "a_tool", "m_tool"], unavailable_tools=[])
+        m = ToolManifest(
+            case_id="X", available_tools=["z_tool", "a_tool", "m_tool"], unavailable_tools=[]
+        )
         result = build_tools_preamble(m)
         a_pos = result.index("a_tool")
         m_pos = result.index("m_tool")
@@ -75,6 +82,7 @@ class TestBuildToolsPreamble:
 # ---------------------------------------------------------------------------
 # Unit: manifest_from_case_loader
 # ---------------------------------------------------------------------------
+
 
 class TestManifestFromCaseLoader:
     def test_from_dict(self):
@@ -124,6 +132,7 @@ class TestManifestFromCaseLoader:
 # Smoke: adapter prompt injection pattern
 # ---------------------------------------------------------------------------
 
+
 class TestAdapterPromptInjectionSmoke:
     """
     Validates the pattern used in all 5 adapter patches.
@@ -134,7 +143,8 @@ class TestAdapterPromptInjectionSmoke:
         return ToolManifest(
             case_id="TEST-001",
             available_tools=available or ["windows_psscan", "windows_netscan"],
-            unavailable_tools=unavailable or [{"tool": "linux_bash_history", "reason": "Windows image"}],
+            unavailable_tools=unavailable
+            or [{"tool": "linux_bash_history", "reason": "Windows image"}],
         )
 
     def test_preamble_does_not_break_json_serializable_content(self):

@@ -3,10 +3,10 @@
 This is the per-iteration output schema — distinct from Trace which is
 the post-run aggregated record. One AgentOutput per agent response turn.
 """
+
 from __future__ import annotations
 
 import uuid
-from typing import Optional
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
@@ -18,9 +18,9 @@ class FindingOutput(BaseModel):
     confidence: float = Field(ge=0.0, le=1.0)
     evidence_excerpt: str
     supporting_audit_entry_ids: list[int] = Field(default_factory=list)
-    mitre_technique: Optional[str] = None
+    mitre_technique: str | None = None
     reasoning: str
-    training_annotation: Optional[str] = None
+    training_annotation: str | None = None
 
     @field_validator("confidence")
     @classmethod
@@ -36,21 +36,15 @@ class FindingOutput(BaseModel):
     @classmethod
     def excerpt_length(cls, v: str) -> str:
         if len(v) < 10:
-            raise ValueError(
-                f"evidence_excerpt too short ({len(v)} chars). Minimum 10."
-            )
+            raise ValueError(f"evidence_excerpt too short ({len(v)} chars). Minimum 10.")
         if len(v) > 200:
-            raise ValueError(
-                f"evidence_excerpt too long ({len(v)} chars). Maximum 200."
-            )
+            raise ValueError(f"evidence_excerpt too long ({len(v)} chars). Maximum 200.")
         return v
 
 
 class HypothesisOutput(BaseModel):
     hypothesis_id: str
-    event_type: str = Field(
-        pattern="^(formed|updated|confirmed|abandoned)$"
-    )
+    event_type: str = Field(pattern="^(formed|updated|confirmed|abandoned)$")
     content: str
     confidence: float = Field(ge=0.0, le=1.0)
     reasoning: str
@@ -66,7 +60,7 @@ class VerdictOutput(BaseModel):
 
 class NextAction(BaseModel):
     decision: str = Field(pattern="^(continue|verdict|abort)$")
-    tool_to_call: Optional[str] = None
+    tool_to_call: str | None = None
     rationale: str
 
 
@@ -74,17 +68,17 @@ class AgentOutput(BaseModel):
     """Complete structured output from one agent response turn."""
 
     iteration_summary: str
-    correction_event: Optional[str] = Field(
+    correction_event: str | None = Field(
         default=None,
         pattern="^(tool_failure_recovery|hypothesis_revision|data_conflict|gap_detection)$",
     )
     findings: list[FindingOutput] = Field(default_factory=list)
     hypotheses: list[HypothesisOutput] = Field(default_factory=list)
     next_action: NextAction
-    verdict: Optional[VerdictOutput] = None
+    verdict: VerdictOutput | None = None
 
     @model_validator(mode="after")
-    def validate_verdict_finding_refs(self) -> "AgentOutput":
+    def validate_verdict_finding_refs(self) -> AgentOutput:
         """Ref-check runs first — guarantees aggregation validator sees valid IDs."""
         if self.verdict is None:
             return self
@@ -98,7 +92,7 @@ class AgentOutput(BaseModel):
         return self
 
     @model_validator(mode="after")
-    def validate_verdict_confidence_aggregation(self) -> "AgentOutput":
+    def validate_verdict_confidence_aggregation(self) -> AgentOutput:
         """Verdict confidence must not exceed minimum supporting finding confidence."""
         if self.verdict is None:
             return self
@@ -106,9 +100,7 @@ class AgentOutput(BaseModel):
             return self
         finding_map = {f.id: f.confidence for f in self.findings}
         matched = [
-            finding_map[fid]
-            for fid in self.verdict.supporting_finding_ids
-            if fid in finding_map
+            finding_map[fid] for fid in self.verdict.supporting_finding_ids if fid in finding_map
         ]
         if not matched:
             return self

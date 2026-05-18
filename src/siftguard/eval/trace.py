@@ -4,14 +4,14 @@ Design: docs/adr/ADR-002-trace-data-model.md
 Any agent (SIFTGuard, LangGraph, OpenAI FC, Protocol SIFT) emits a Trace.
 The evaluation framework consumes Traces; it never reads agent internals.
 """
+
 from __future__ import annotations
 
 import hashlib
 import json
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
-from typing import Optional
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
@@ -22,48 +22,50 @@ SCHEMA_VERSION = "1.0.0"
 
 # ── Enums ─────────────────────────────────────────────────────────────────────
 
+
 class FindingType(str, Enum):
-    PROCESS       = "process"
-    IP            = "ip"
-    PORT          = "port"
-    TECHNIQUE     = "technique"
-    FILE          = "file"
-    REGISTRY_KEY  = "registry_key"
-    PERSISTENCE   = "persistence"
-    OTHER         = "other"
+    PROCESS = "process"
+    IP = "ip"
+    PORT = "port"
+    TECHNIQUE = "technique"
+    FILE = "file"
+    REGISTRY_KEY = "registry_key"
+    PERSISTENCE = "persistence"
+    OTHER = "other"
 
 
 class HypothesisEventType(str, Enum):
-    FORMED    = "formed"
-    UPDATED   = "updated"
+    FORMED = "formed"
+    UPDATED = "updated"
     CONFIRMED = "confirmed"
     ABANDONED = "abandoned"
 
 
 class Orchestrator(str, Enum):
     SIFTGUARD_NATIVE = "siftguard-native"
-    LANGGRAPH        = "langgraph"
-    OPENAI_FC        = "openai-fc"
-    CLAUDE_CODE      = "claude-code"
-    PROTOCOL_SIFT    = "protocolsift"
-    CUSTOM           = "custom"
+    LANGGRAPH = "langgraph"
+    OPENAI_FC = "openai-fc"
+    CLAUDE_CODE = "claude-code"
+    PROTOCOL_SIFT = "protocolsift"
+    CUSTOM = "custom"
 
 
 class TerminatedReason(str, Enum):
     VERDICT_REACHED = "verdict_reached"
-    MAX_ITERATIONS  = "max_iterations"
-    ERROR           = "error"
-    ABORTED         = "aborted"
+    MAX_ITERATIONS = "max_iterations"
+    ERROR = "error"
+    ABORTED = "aborted"
 
 
 class CorrectionEvent(str, Enum):
     TOOL_FAILURE_RECOVERY = "tool_failure_recovery"
-    HYPOTHESIS_REVISION   = "hypothesis_revision"
-    DATA_CONFLICT         = "data_conflict"
-    GAP_DETECTION         = "gap_detection"
+    HYPOTHESIS_REVISION = "hypothesis_revision"
+    DATA_CONFLICT = "data_conflict"
+    GAP_DETECTION = "gap_detection"
 
 
 # ── Leaf models ───────────────────────────────────────────────────────────────
+
 
 class Finding(BaseModel, frozen=True):
     """Single forensic finding. The hallucination verifier walks this list."""
@@ -74,7 +76,7 @@ class Finding(BaseModel, frozen=True):
     )
     type: FindingType
     value: str = Field(description="The artifact: IP, process name, port, MITRE ID, etc.")
-    confidence: Optional[float] = Field(
+    confidence: float | None = Field(
         default=None,
         ge=0.0,
         le=1.0,
@@ -91,8 +93,11 @@ class Finding(BaseModel, frozen=True):
             "Must be 10–200 characters."
         ),
     )
-    verification: "Optional[VerificationResult]" = Field(default=None, description="Result of hallucination verification. None until verifier has run.")
-    mitre_technique: Optional[str] = Field(default=None)
+    verification: VerificationResult | None = Field(
+        default=None,
+        description="Result of hallucination verification. None until verifier has run.",
+    )
+    mitre_technique: str | None = Field(default=None)
     first_seen_iteration: int = Field(
         ge=0,
         description="Iteration in which agent first claimed this finding.",
@@ -107,13 +112,12 @@ class Finding(BaseModel, frozen=True):
                 "Minimum 10 chars required for verifier reliability."
             )
         if len(v) > 200:
-            raise ValueError(
-                f"evidence_excerpt too long ({len(v)} chars). Maximum 200 chars."
-            )
+            raise ValueError(f"evidence_excerpt too long ({len(v)} chars). Maximum 200 chars.")
         return v
 
 
 Finding.model_rebuild()
+
 
 class ToolCall(BaseModel, frozen=True):
     """Single tool invocation. References the audit DB row."""
@@ -123,10 +127,10 @@ class ToolCall(BaseModel, frozen=True):
     iteration: int = Field(ge=0)
     outcome: str = Field(description="ok | partial | fail")
     duration_ms: int = Field(ge=0)
-    tokens_in: Optional[int] = None
-    tokens_out: Optional[int] = None
-    cost_usd: Optional[float] = None
-    correction_event: Optional[CorrectionEvent] = None
+    tokens_in: int | None = None
+    tokens_out: int | None = None
+    cost_usd: float | None = None
+    correction_event: CorrectionEvent | None = None
     finding_ids_produced: list[str] = Field(
         default_factory=list,
         description="IDs of Finding objects this tool call contributed to.",
@@ -141,9 +145,9 @@ class HypothesisEvent(BaseModel, frozen=True):
     event_type: HypothesisEventType
     hypothesis_id: str
     content: str
-    confidence: Optional[float] = Field(default=None, ge=0.0, le=1.0)
+    confidence: float | None = Field(default=None, ge=0.0, le=1.0)
     created_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
+        default_factory=lambda: datetime.now(UTC),
     )
 
 
@@ -166,7 +170,7 @@ class Verdict(BaseModel, frozen=True):
     """Final agent verdict. Structured for the verifier and comparative panel."""
 
     claim: str = Field(description="Human-readable verdict statement.")
-    confidence: Optional[float] = Field(default=None, ge=0.0, le=1.0)
+    confidence: float | None = Field(default=None, ge=0.0, le=1.0)
     supporting_finding_ids: list[str] = Field(
         description="IDs of Finding objects supporting this verdict.",
     )
@@ -185,7 +189,7 @@ class ExperimentConfig(BaseModel, frozen=True):
     correlation: bool = True
     training_mode: bool = False
     max_iterations: int = Field(default=15, ge=1, le=50)
-    seed: Optional[int] = None
+    seed: int | None = None
     prompt_version: str = Field(
         default="v1",
         description="v1 = original. v2-structured-confidence = explicit JSON confidence.",
@@ -201,8 +205,8 @@ class TraceMeta(BaseModel, frozen=True):
     case_id: str
     schema_version: str = Field(default=SCHEMA_VERSION)
     started_at: datetime
-    completed_at: Optional[datetime] = None
-    sift_image_sha256: Optional[str] = Field(
+    completed_at: datetime | None = None
+    sift_image_sha256: str | None = Field(
         default=None,
         description=(
             "SHA-256 of the evidence image. Proves trace was run against "
@@ -223,6 +227,7 @@ class UsageTotals(BaseModel, frozen=True):
 
 # ── Root model ────────────────────────────────────────────────────────────────
 
+
 class Trace(BaseModel, frozen=True):
     """
     Complete agent run record. Portable, hashable, version-stamped.
@@ -239,11 +244,11 @@ class Trace(BaseModel, frozen=True):
     iterations: tuple[IterationSnapshot, ...] = Field(default_factory=tuple)
     hypothesis_events: tuple[HypothesisEvent, ...] = Field(default_factory=tuple)
     findings: tuple[Finding, ...] = Field(default_factory=tuple)
-    verdict: Optional[Verdict] = None
+    verdict: Verdict | None = None
     usage: UsageTotals = Field(default_factory=UsageTotals)
 
     @model_validator(mode="after")
-    def validate_schema_version(self) -> "Trace":
+    def validate_schema_version(self) -> Trace:
         if self.meta.schema_version != SCHEMA_VERSION:
             raise ValueError(
                 f"Unsupported schema_version '{self.meta.schema_version}'. "
@@ -253,15 +258,14 @@ class Trace(BaseModel, frozen=True):
         return self
 
     @model_validator(mode="after")
-    def validate_verdict_finding_refs(self) -> "Trace":
+    def validate_verdict_finding_refs(self) -> Trace:
         if self.verdict is None:
             return self
         finding_ids = {f.id for f in self.findings}
         for fid in self.verdict.supporting_finding_ids:
             if fid not in finding_ids:
                 raise ValueError(
-                    f"Verdict references finding_id '{fid}' "
-                    "not present in trace.findings."
+                    f"Verdict references finding_id '{fid}' not present in trace.findings."
                 )
         return self
 
@@ -270,14 +274,12 @@ class Trace(BaseModel, frozen=True):
         return self.model_dump_json()
 
     @classmethod
-    def from_json(cls, text: str) -> "Trace":
+    def from_json(cls, text: str) -> Trace:
         return cls.model_validate_json(text)
 
     def sha256(self) -> str:
         """Stable content hash for provenance. Independent of serialisation order."""
-        canonical = json.dumps(
-            json.loads(self.to_json()), sort_keys=True, separators=(",", ":")
-        )
+        canonical = json.dumps(json.loads(self.to_json()), sort_keys=True, separators=(",", ":"))
         return hashlib.sha256(canonical.encode()).hexdigest()
 
     @property

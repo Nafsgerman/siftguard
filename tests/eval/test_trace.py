@@ -1,28 +1,27 @@
 """Tests for Trace Pydantic model — ADR-002."""
+
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
 from pydantic import ValidationError
 
 from siftguard.eval.trace import (
+    SCHEMA_VERSION,
     ExperimentConfig,
     Finding,
     FindingType,
-    HypothesisEventType,
     Orchestrator,
     TerminatedReason,
     Trace,
     TraceMeta,
-    UsageTotals,
     Verdict,
-    SCHEMA_VERSION,
 )
 
-
 # ── Fixtures ──────────────────────────────────────────────────────────────────
+
 
 def _finding(**kwargs) -> Finding:
     defaults = dict(
@@ -39,7 +38,7 @@ def _meta(**kwargs) -> TraceMeta:
     defaults = dict(
         agent_id="siftguard-v1",
         case_id="TEST-001",
-        started_at=datetime(2026, 5, 6, 9, 0, 0, tzinfo=timezone.utc),
+        started_at=datetime(2026, 5, 6, 9, 0, 0, tzinfo=UTC),
     )
     defaults.update(kwargs)
     return TraceMeta(**defaults)
@@ -67,6 +66,7 @@ def _minimal_trace(**kwargs) -> Trace:
 
 
 # ── Finding validation ─────────────────────────────────────────────────────────
+
 
 def test_finding_valid():
     f = _finding()
@@ -102,12 +102,13 @@ def test_finding_none_confidence_allowed():
 
 # ── Trace schema version ────────────────────────────────────────────────────────
 
+
 def test_trace_rejects_unknown_schema_version():
     with pytest.raises(ValidationError, match="Unsupported schema_version"):
         meta = TraceMeta(
             agent_id="test",
             case_id="TEST-001",
-            started_at=datetime(2026, 1, 1, tzinfo=timezone.utc),
+            started_at=datetime(2026, 1, 1, tzinfo=UTC),
             schema_version="9.9.9",
         )
         Trace(meta=meta, config=_config())
@@ -119,6 +120,7 @@ def test_trace_accepts_current_schema_version():
 
 
 # ── Verdict finding-id cross-reference ─────────────────────────────────────────
+
 
 def test_verdict_rejects_unknown_finding_id():
     f = _finding()
@@ -135,6 +137,7 @@ def test_verdict_accepts_valid_finding_ids():
 
 
 # ── Serialisation round-trip ────────────────────────────────────────────────────
+
 
 def test_trace_json_round_trip():
     f = _finding()
@@ -155,6 +158,7 @@ def test_trace_json_is_valid_json():
 
 # ── Hash stability ──────────────────────────────────────────────────────────────
 
+
 def test_trace_sha256_is_stable():
     f = _finding()
     t = Trace(meta=_meta(), config=_config(), findings=(f,))
@@ -174,6 +178,7 @@ def test_different_findings_produce_different_hashes():
 
 # ── Immutability ────────────────────────────────────────────────────────────────
 
+
 def test_trace_is_immutable():
     t = _minimal_trace()
     with pytest.raises(Exception):
@@ -181,6 +186,7 @@ def test_trace_is_immutable():
 
 
 # ── ioc_findings property ───────────────────────────────────────────────────────
+
 
 def test_ioc_findings_filters_correctly():
     f_ip = _finding(type=FindingType.IP)
@@ -196,6 +202,7 @@ def test_ioc_findings_filters_correctly():
 
 
 # ── ExperimentConfig ablation fields ────────────────────────────────────────────
+
 
 def test_config_defaults():
     c = _config()
