@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import io
 import json
 import os
@@ -155,12 +156,10 @@ async def _run_investigation(
 
     def on_event(event_type: str, data: dict):
         mapped = _EVENT_MAP.get(event_type, event_type)
-        try:
+        with contextlib.suppress(Exception):
             _main_loop.call_soon_threadsafe(
                 lambda: _main_loop.create_task(push_event(session_id, {"type": mapped, **data}))
             )
-        except Exception:
-            pass
 
     try:
         report = await run_case(
@@ -256,8 +255,8 @@ async def export_pdf(session_id: str):
     BLUE = colors.HexColor("#1a73e8")
     DARK = colors.HexColor("#202124")
     GRAY = colors.HexColor("#5f6368")
-    RED = colors.HexColor("#d93025")
-    GREEN = colors.HexColor("#1e8e3e")
+    colors.HexColor("#d93025")
+    colors.HexColor("#1e8e3e")
 
     h1 = ParagraphStyle(
         "h1",
@@ -477,7 +476,7 @@ async def orchestrator_comparison(db_id: str, case: str = "all"):
                     continue
                 wall_ms = None
                 if row["started_at"] and row["completed_at"]:
-                    try:
+                    with contextlib.suppress(Exception):
                         wall_ms = int(
                             (
                                 _dt.fromisoformat(row["completed_at"])
@@ -485,8 +484,6 @@ async def orchestrator_comparison(db_id: str, case: str = "all"):
                             ).total_seconds()
                             * 1000
                         )
-                    except Exception:
-                        pass
                 db_results[aid] = {
                     "cost_usd": round(row["total_cost_usd"], 4)
                     if row["total_cost_usd"] is not None

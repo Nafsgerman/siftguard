@@ -106,7 +106,7 @@ def render(ax: matplotlib.axes.Axes, case_id: str = "TEST-001") -> dict:
     x = np.arange(len(labels))
     bars = ax.bar(x, f1s, color=colors, width=0.5, alpha=0.85)
 
-    for bar, f1 in zip(bars, f1s):
+    for bar, f1 in zip(bars, f1s, strict=False):
         ax.text(
             bar.get_x() + bar.get_width() / 2,
             bar.get_height() + 0.01,
@@ -122,8 +122,8 @@ def render(ax: matplotlib.axes.Axes, case_id: str = "TEST-001") -> dict:
     from siftguard.eval.variance import compute_variance_stats as _cvs
 
     HALLUC_THRESHOLD = 0.05
-    for bar, notes_prefix, label, color in zip(
-        bars, [n for n, _, _ in CONFIG_DISPLAY], labels, colors
+    for bar, notes_prefix, _label, _color in zip(
+        bars, [n for n, _, _ in CONFIG_DISPLAY], labels, colors, strict=False
     ):
         cfg_name = NOTES_TO_CONFIG.get(notes_prefix, "")
         seed_runs = load_seed_results(cfg_name, case_id) if cfg_name else []

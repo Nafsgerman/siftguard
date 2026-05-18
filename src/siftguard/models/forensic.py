@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from pathlib import Path
 from typing import Literal
 
@@ -56,7 +56,7 @@ class VolatilityProcess(BaseModel):
     suspicious_indicators: list[str] = Field(default_factory=list)
 
 
-class ToolOutcome(str, Enum):
+class ToolOutcome(StrEnum):
     OK = "ok"
     PARTIAL = "partial"
     FAIL = "fail"

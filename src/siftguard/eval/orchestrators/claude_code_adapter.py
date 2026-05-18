@@ -7,6 +7,7 @@ fully autonomously, and emits a `siftguard-report` JSON block we parse out.
 
 from __future__ import annotations
 
+import contextlib
 import json
 import os
 import re
@@ -113,7 +114,7 @@ class ClaudeCodeAdapter(BaseOrchestrator):
         except subprocess.TimeoutExpired as exc:
             wall = time.monotonic() - t0
             if snap:
-                try:
+                with contextlib.suppress(Exception):
                     snap.write_experiment_run_complete(
                         run_id=run_id,
                         completed_iterations=0,
@@ -123,8 +124,6 @@ class ClaudeCodeAdapter(BaseOrchestrator):
                         total_cost_usd=0.0,
                         final_score=None,
                     )
-                except Exception:
-                    pass
             return OrchestratorResult(
                 agent_id=self.agent_id,
                 case_id=case_id,
@@ -145,7 +144,7 @@ class ClaudeCodeAdapter(BaseOrchestrator):
 
         if proc.returncode != 0:
             if snap:
-                try:
+                with contextlib.suppress(Exception):
                     snap.write_experiment_run_complete(
                         run_id=run_id,
                         completed_iterations=0,
@@ -155,8 +154,6 @@ class ClaudeCodeAdapter(BaseOrchestrator):
                         total_cost_usd=0.0,
                         final_score=None,
                     )
-                except Exception:
-                    pass
             return OrchestratorResult(
                 agent_id=self.agent_id,
                 case_id=case_id,
@@ -183,7 +180,7 @@ class ClaudeCodeAdapter(BaseOrchestrator):
             pass
 
         if snap:
-            try:
+            with contextlib.suppress(Exception):
                 snap.write_experiment_run_complete(
                     run_id=run_id,
                     completed_iterations=tool_calls,
@@ -193,8 +190,6 @@ class ClaudeCodeAdapter(BaseOrchestrator):
                     total_cost_usd=cost_usd,
                     final_score=None,
                 )
-            except Exception:
-                pass
 
         return OrchestratorResult(
             agent_id=self.agent_id,

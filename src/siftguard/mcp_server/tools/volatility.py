@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 import json
 from pathlib import Path
 
@@ -31,10 +32,8 @@ def _load_cache(tool_name: str, path: Path) -> ForensicResult | None:
         for line in path.read_text().splitlines():
             if not line.strip():
                 continue
-            try:
+            with contextlib.suppress(json.JSONDecodeError):
                 findings.append(json.loads(line))
-            except json.JSONDecodeError:
-                pass
         return ForensicResult(
             tool=tool_name,
             outcome=ToolOutcome.OK,
@@ -48,7 +47,7 @@ def _load_cache(tool_name: str, path: Path) -> ForensicResult | None:
 
 def _save_cache(path: Path, result: ForensicResult) -> None:
     try:
-        _CACHE_DIR.mkdir(parents=True, exist_ok=True)
+        path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text("\n".join(json.dumps(f) for f in result.findings))
     except Exception:
         pass

@@ -16,6 +16,7 @@ import os
 import uuid
 
 from dotenv import load_dotenv
+from collections.abc import Callable
 
 load_dotenv()
 
@@ -67,7 +68,7 @@ async def run_case_openai_fc(
     model: str = "gpt-5.5",
     config_override: dict | None = None,
     ground_truth_path: str | None = None,
-    on_event: callable | None = None,
+    on_event: Callable[..., Any] | None = None,
     system_prompt_prefix: str = "",
 ) -> tuple[str, str]:
     """OpenAI FC-orchestrated investigation. Returns (report, run_id).

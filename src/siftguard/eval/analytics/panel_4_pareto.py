@@ -123,7 +123,7 @@ def render(ax: matplotlib.axes.Axes, case_id: str = "TEST-001") -> dict:
     f1s = [p["f1"] for p in points]
     on_f = _is_pareto(costs, f1s)
 
-    for i, (p, frontier) in enumerate(zip(points, on_f)):
+    for _i, (p, frontier) in enumerate(zip(points, on_f, strict=False)):
         color = BLUE if frontier else GRAY
         marker = "*" if frontier else "o"
         size = 120 if frontier else 60
@@ -138,11 +138,11 @@ def render(ax: matplotlib.axes.Axes, case_id: str = "TEST-001") -> dict:
         )
 
     frontier_pts = sorted(
-        [(c, f) for c, f, on in zip(costs, f1s, on_f) if on],
+        [(c, f) for c, f, on in zip(costs, f1s, on_f, strict=False) if on],
         key=lambda x: x[0],
     )
     if len(frontier_pts) > 1:
-        fx, fy = zip(*frontier_pts)
+        fx, fy = zip(*frontier_pts, strict=False)
         ax.step(
             fx,
             fy,

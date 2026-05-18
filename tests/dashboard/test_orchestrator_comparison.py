@@ -78,7 +78,7 @@ def test_comparison_row_shape():
 
     client = TestClient(app)
     data = client.get("/api/orchestrator-comparison/CASE-001").json()
-    for orch_id, row in data["rows"].items():
+    for _orch_id, row in data["rows"].items():
         assert "n_cases" in row
         assert "case_scores" in row
         # mean_f1 may be None if no runs yet — that's valid

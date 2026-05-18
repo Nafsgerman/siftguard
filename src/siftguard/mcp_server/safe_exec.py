@@ -105,7 +105,7 @@ async def safe_exec(
         stdout_b, stderr_b = await asyncio.wait_for(proc.communicate(), timeout=timeout_s)
     except TimeoutError:
         proc.kill()
-        raise SafeExecError(f"timeout after {timeout_s}s: {binary} {shlex.join(args)}")
+        raise SafeExecError(f"timeout after {timeout_s}s: {binary} {shlex.join(args)}") from None
 
     return ExecResult(
         stdout=stdout_b.decode(errors="replace"),

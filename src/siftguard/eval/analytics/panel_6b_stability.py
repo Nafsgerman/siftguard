@@ -59,7 +59,7 @@ def render(ax: matplotlib.axes.Axes, case_id: str = "TEST-001") -> dict:
     apply_style()
 
     try:
-        from siftguard.eval.ablation_runner import ABLATION_DIR, load_seed_results
+        from siftguard.eval.ablation_runner import load_seed_results
     except ImportError:
         placeholder(ax, "Panel 6b — Seed Stability", "ablation_runner not available.")
         return {"status": "placeholder"}
@@ -119,8 +119,8 @@ def render(ax: matplotlib.axes.Axes, case_id: str = "TEST-001") -> dict:
     ns = [r["n"] for r in rows]
     y_pos = np.arange(len(rows))
 
-    for i, (y, mean, std, lo, hi, n, row) in enumerate(
-        zip(y_pos, means, stds, ci_lo, ci_hi, ns, rows)
+    for _i, (y, mean, std, lo, hi, n, _row) in enumerate(
+        zip(y_pos, means, stds, ci_lo, ci_hi, ns, rows, strict=False)
     ):
         if n == 0:
             ax.scatter(0.0, y, color=GRAY, s=40, zorder=3)

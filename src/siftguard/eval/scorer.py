@@ -82,7 +82,7 @@ class ScoreResult:
     found_ioc_keys: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict:
-        return {k: v for k, v in self.__dict__.items()}
+        return dict(self.__dict__.items())
 
 
 # ---------------------------------------------------------------------------
@@ -185,12 +185,8 @@ EXTRACTORS: dict[str, Callable[[list[dict]], set[str]]] = {
     "vol_psscan": _extract_psscan,
     "vol_netscan": _extract_netscan,
     "vol_malfind": _extract_malfind,
-    "vol_pslist": _extract_psscan,
-    "vol_psscan": _extract_psscan,
     "windows_psscan": _extract_psscan,
-    "vol_netscan": _extract_netscan,
     "windows_netscan": _extract_netscan,
-    "vol_malfind": _extract_malfind,
     "windows_malfind": _extract_malfind,
     "windows_registry_printkey": _extract_registry,
     "windows_mftscan": _extract_mftscan,
@@ -255,7 +251,7 @@ def extract_findings_from_db(
         output_col = _discover_output_column(cur)
 
         tool_placeholders = ",".join("?" * len(IOC_PRODUCING_TOOLS))
-        evt_placeholders = ",".join("?" * len(_TOOL_OUTPUT_EVENT_TYPES))
+        ",".join("?" * len(_TOOL_OUTPUT_EVENT_TYPES))
 
         # event_type column may not exist in older schemas — skip that filter
         cur.execute(

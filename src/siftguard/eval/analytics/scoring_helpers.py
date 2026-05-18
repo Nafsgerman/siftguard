@@ -28,7 +28,7 @@ def _find_latest_result(config_name: str, case_id: str) -> dict | None:
             try:
                 data = json.loads(f.read_text())
                 if data.get("status") == "ok":
-                    return data
+                    return data  # type: ignore[no-any-return]
             except Exception:
                 continue
     return None

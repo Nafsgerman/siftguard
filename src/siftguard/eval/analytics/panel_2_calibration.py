@@ -133,7 +133,7 @@ def render(ax: matplotlib.axes.Axes, case_id: str = "TEST-001") -> dict:
         zorder=2,
     )
 
-    for x, y, n in zip(bin_means_conf, bin_means_acc, bin_counts):
+    for x, y, n in zip(bin_means_conf, bin_means_acc, bin_counts, strict=False):
         ax.annotate(
             f"n={n}", (x, y), textcoords="offset points", xytext=(5, 5), fontsize=7, color=GRAY
         )
@@ -142,7 +142,7 @@ def render(ax: matplotlib.axes.Axes, case_id: str = "TEST-001") -> dict:
     brier = float(np.mean((confs - cors) ** 2))
     ece_parts = [
         abs(cm - ca) * (cnt / len(confs))
-        for cm, ca, cnt in zip(bin_means_conf, bin_means_acc, bin_counts)
+        for cm, ca, cnt in zip(bin_means_conf, bin_means_acc, bin_counts, strict=False)
     ]
     ece = sum(ece_parts)
 
@@ -153,7 +153,7 @@ def render(ax: matplotlib.axes.Axes, case_id: str = "TEST-001") -> dict:
         transform=ax.transAxes,
         fontsize=8,
         color=GRAY,
-        bbox=dict(boxstyle="round,pad=0.3", facecolor="white", edgecolor=LGRAY),
+        bbox={"boxstyle": "round,pad=0.3", "facecolor": "white", "edgecolor": LGRAY},
     )
 
     ax.set_xlim(0.25, 1.05)
@@ -169,5 +169,5 @@ def render(ax: matplotlib.axes.Axes, case_id: str = "TEST-001") -> dict:
         "brier": brier,
         "ece": ece,
         "n_findings": len(confs),
-        "bin_data": list(zip(bin_means_conf, bin_means_acc, bin_counts)),
+        "bin_data": list(zip(bin_means_conf, bin_means_acc, bin_counts, strict=False)),
     }

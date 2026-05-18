@@ -28,8 +28,8 @@ dev = [
     "pytest>=8.3.0",
     "pytest-asyncio>=0.24.0",
     "pytest-cov>=6.0.0",
-    "ruff>=0.7.0",
-    "mypy>=1.13.0",
+    "ruff==0.15.12",
+    "mypy==1.20.2",
     "matplotlib>=3.9.0",
     "numpy>=1.26.0",
     "ipython>=8.0.0",
@@ -44,31 +44,38 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.ruff]
-line-length = 100
+line-length = 120
 target-version = "py311"
 
 [tool.ruff.lint]
-select = ["E", "F", "W", "I", "N", "UP", "B", "A", "C4", "SIM", "RET"]
+select = ["E", "F", "W", "I", "N", "UP", "B", "A", "C4", "SIM", "RET", "DTZ", "PTH", "RUF", "ASYNC"]
 ignore = [
-    "E402",   # load_dotenv() before imports; fix in T20
-    "E501",   # line too long; fix in T20
-    "N806",   # local var uppercase; cosmetic
-    "N818",   # exception name suffix; cosmetic
-    "B905",   # zip() without strict=; fix in T20
-    "B007",   # unused loop var; cosmetic
-    "B904",   # raise from in except; fix in T20
-    "B017",   # blind exception in pytest.raises; intentional
-    "C408",   # dict() literal style; cosmetic
-    "C416",   # dict comprehension; cosmetic
-    "F401",   # unused import residual; T20
-    "F601",   # repeated dict key; intentional aliases
-    "F821",   # undefined name; fix in T20
-    "F841",   # unused local var; cosmetic
-    "SIM105", # contextlib.suppress; cosmetic
-    "SIM108", # ternary operator; cosmetic
-    "SIM115", # context manager for open; cosmetic
-    "UP042",  # StrEnum migration; fix in T20
+    # Forensic domain — permanent
+    "N806",    # MFTRecord, IOC, SHA1 legitimately uppercase as locals
+    "N818",    # SiftError convention matches stdlib
+    "SIM108",  # ternary not always clearer; human decision
+    # Pathlib migration — separate refactor, not T20 scope (22 violations)
+    "PTH105", "PTH108", "PTH110", "PTH118", "PTH120", "PTH123",
+    # Blocking I/O — Volatility3 subprocess calls are inherently blocking (8+1 violations)
+    "ASYNC230", "ASYNC240",
+    # Forensic strings — APT report text contains legitimate non-ASCII characters
+    "RUF001", "RUF002", "RUF003",
+    # Intentional patterns
+    "RUF006",  # SSE fire-and-forget dangling task is intentional
+    "RUF043",  # pytest.raises pattern matching intentional in spoliation tests
+    "DTZ007",  # forensic timestamps are intentionally naive (parsed from evidence)
 ]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["B017", "E501"]                                        # spoliation raises + forensic report strings
+"src/siftguard/agent/loop_v1.py" = ["E402"]                          # load_dotenv() must precede domain imports
+"src/siftguard/agent/loop_v2.py" = ["E402"]                          # load_dotenv() must precede domain imports
+"src/siftguard/eval/loop_v2.py" = ["E402"]                           # load_dotenv() must precede domain imports
+"src/siftguard/eval/ablation_runner.py" = ["E402"]                   # load_dotenv() must precede domain imports
+"src/siftguard/orchestrators/gemini_adapter.py" = ["E402"]           # load_dotenv() must precede domain imports
+"src/siftguard/orchestrators/langgraph_adapter.py" = ["E402"]        # load_dotenv() must precede domain imports
+"src/siftguard/orchestrators/openai_fc_adapter.py" = ["E402"]        # load_dotenv() must precede domain imports
+
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
@@ -90,3 +97,5 @@ ignore_missing_imports = true
 warn_return_any = true
 warn_unused_ignores = true
 no_implicit_optional = true
+disallow_untyped_defs = true
+warn_redundant_casts = true

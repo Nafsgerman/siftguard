@@ -1,9 +1,9 @@
-from enum import Enum
+from enum import StrEnum
 
 from pydantic import BaseModel
 
 
-class SelfCorrectionType(str, Enum):
+class SelfCorrectionType(StrEnum):
     FORMAT_RETRY = "FORMAT_RETRY"
     TOOL_RETRY = "TOOL_RETRY"
     VERDICT_REVISION = "VERDICT_REVISION"

@@ -34,12 +34,12 @@ REGISTRY: dict[str, type[BaseOrchestrator]] = {
 }
 
 __all__ = [
+    "REGISTRY",
     "BaseOrchestrator",
-    "OrchestratorResult",
     "ClaudeCodeAdapter",
     "GeminiAdapter",
     "LangGraphAdapter",
     "NativeLoopAdapter",
     "OpenAIFunctionCallingAdapter",
-    "REGISTRY",
+    "OrchestratorResult",
 ]

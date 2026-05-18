@@ -30,7 +30,7 @@ def apply_style() -> None:
             "axes.titlesize": 13,
             "axes.labelsize": 10,
             "axes.grid": True,
-            "axes.prop_cycle": mpl.cycler(color=PALETTE),
+            "axes.prop_cycle": mpl.cycler(color=PALETTE),  # type: ignore[attr-defined]
             "grid.color": LGRAY,
             "grid.linewidth": 0.8,
             "xtick.color": GRAY,
@@ -84,7 +84,7 @@ def placeholder(ax: mpl.axes.Axes, title: str, reason: str) -> None:
         fontsize=10,
         color=GRAY,
         style="italic",
-        bbox=dict(boxstyle="round,pad=0.5", facecolor=BG, edgecolor=LGRAY, linewidth=1),
+        bbox={"boxstyle": "round,pad=0.5", "facecolor": BG, "edgecolor": LGRAY, "linewidth": 1},
     )
     ax.set_xticks([])
     ax.set_yticks([])

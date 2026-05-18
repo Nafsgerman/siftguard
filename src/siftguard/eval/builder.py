@@ -66,7 +66,7 @@ class TraceBuilder:
         findings = self._build_findings(run_id, tool_calls)
         if not skip_verify:
             db_path = self.conn.execute("PRAGMA database_list").fetchone()[2]
-            findings = self._verify_findings(findings, run_id, db_path)
+            findings = self._verify_findings(findings, run_id, db_path)  # type: ignore[assignment, arg-type]
         verdict = self._build_verdict(run, findings)
         config = self._build_config(run)
         meta = TraceMeta(
@@ -113,7 +113,7 @@ class TraceBuilder:
         row = cur.fetchone()
         if row is None:
             raise ValueError(f"No experiment_run found for run_id={run_id!r}")
-        return row
+        return row  # type: ignore[no-any-return]
 
     def _fetch_tool_calls(self, run_id: str) -> list[ToolCall]:
         cur = self.conn.execute(

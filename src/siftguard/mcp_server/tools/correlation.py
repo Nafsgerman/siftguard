@@ -92,7 +92,11 @@ async def correlate_findings(*, memory_image: str) -> ForensicResult:
                     "proto": proto,
                     "state": state,
                     "foreign_addr": foreign,
-                    "reason": "Network connection from PID not present in process list — process may have terminated after establishing connection or be hidden",
+                    "reason": (
+                        "Network connection from PID not present in process list"
+                        " \u2014 process may have terminated after establishing"
+                        " connection or be hidden"
+                    ),
                     "mitre": "T1071",
                 }
             )
@@ -110,7 +114,10 @@ async def correlate_findings(*, memory_image: str) -> ForensicResult:
                     "pid": pid,
                     "name": name,
                     "ppid": row.get("PPID"),
-                    "reason": "Process name truncated at 14 chars — binary likely has longer name to evade name-based detection",
+                    "reason": (
+                        "Process name truncated at 14 chars — binary likely has"
+                        " longer name to evade name-based detection"
+                    ),
                     "mitre": "T1036",
                 }
             )
@@ -131,7 +138,10 @@ async def correlate_findings(*, memory_image: str) -> ForensicResult:
                     "pid": pid,
                     "name": name,
                     "ppid": ppid,
-                    "reason": "32-bit (Wow64) process spawned directly from system process — unusual, warrants inspection",
+                    "reason": (
+                        "32-bit (Wow64) process spawned directly from system process"
+                        " — unusual, warrants inspection"
+                    ),
                     "mitre": "T1055",
                 }
             )

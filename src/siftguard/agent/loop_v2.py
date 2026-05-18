@@ -25,6 +25,7 @@ from dotenv import load_dotenv
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
+from collections.abc import Callable
 
 load_dotenv()
 
@@ -137,7 +138,10 @@ TOOL_SCHEMAS = [
     },
     {
         "name": "run_regripper",
-        "description": "Run regripper plugin against registry hive. Plugins: autoruns,services,run,userassist,shellbags,recentdocs,networklist,timezone,samparse. READ-ONLY.",
+        "description": (
+            "Run regripper plugin against registry hive. Plugins: autoruns,services,run,"
+            "userassist,shellbags,recentdocs,networklist,timezone,samparse. READ-ONLY."
+        ),
         "input_schema": {
             "type": "object",
             "properties": {
@@ -204,7 +208,7 @@ async def _dispatch_tool(name: str, args: dict) -> ForensicResult:
             duration_ms=0,
             error="tool not found in registry",
         )
-    return await fn(**args)
+    return await fn(**args)  # type: ignore[operator, no-any-return]
 
 
 def _extract_text_blocks(content: list) -> str:
@@ -247,7 +251,7 @@ async def run_case_v2(
     max_iterations: int | None = None,
     config_override: dict | None = None,
     ground_truth_path: str | None = None,
-    on_event: callable | None = None,
+    on_event: Callable[..., Any] | None = None,
     system_prompt_prefix: str = "",
 ) -> tuple[str, str]:
     """
@@ -334,8 +338,8 @@ async def run_case_v2(
             model=model,
             max_tokens=8192,  # was 4096
             system=system_prompt,
-            tools=TOOL_SCHEMAS,
-            messages=messages,
+            tools=TOOL_SCHEMAS,  # type: ignore[arg-type]
+            messages=messages,  # type: ignore[arg-type]
         )
 
         tokens_in = response.usage.input_tokens
@@ -414,11 +418,11 @@ async def run_case_v2(
                     model=model,
                     max_tokens=8192,  # was 4096
                     system=system_prompt,
-                    tools=TOOL_SCHEMAS,
-                    messages=messages,
+                    tools=TOOL_SCHEMAS,  # type: ignore[arg-type]
+                    messages=messages,  # type: ignore[arg-type]
                 )
                 retry_text = _extract_text_blocks(retry_resp.content)
-                agent_out, error2 = parse_agent_output(retry_text)
+                agent_out, _error2 = parse_agent_output(retry_text)
                 if agent_out is None:
                     agent_out = _synthesize_v1_fallback(response_text, iteration)
                 else:

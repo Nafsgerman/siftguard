@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import ClassVar
+
 from siftguard.cases.tool_injection import (
     ToolManifest,
     build_tools_preamble,
@@ -99,8 +101,8 @@ class TestManifestFromCaseLoader:
     def test_from_object_with_attrs(self):
         class FakeCaseModel:
             case_id = "TEST-001"
-            available_tools = ["windows_psscan"]
-            unavailable_tools = []
+            available_tools: ClassVar[list[str]] = ["windows_psscan"]
+            unavailable_tools: ClassVar[list[str]] = []
 
         m = manifest_from_case_loader(FakeCaseModel())
         assert m.case_id == "TEST-001"
