@@ -5,10 +5,12 @@ from enum import StrEnum
 from pathlib import Path
 from typing import Literal
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class EvidencePath(BaseModel):
+    # strict=True: path is always a plain string; coercion would mask injection attempts
+    model_config = ConfigDict(strict=True)
     path: str = Field(description="Path relative to evidence root")
 
     @field_validator("path")
