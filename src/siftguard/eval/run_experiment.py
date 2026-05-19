@@ -134,7 +134,7 @@ def _write_raw_result(agent_id: str, case_id: str, payload: Any, ts: str) -> Pat
     out_file = out_dir / f"result_{ts}.json"
     body = (
         payload
-        if isinstance(payload, (dict, list, str, int, float))
+        if isinstance(payload, dict | list | str | int | float)
         else (payload.report if hasattr(payload, "report") else {"raw": str(payload)})
     )
     out_file.write_text(json.dumps(body, indent=2, default=str))

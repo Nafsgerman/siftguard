@@ -307,7 +307,7 @@ async def export_pdf(session_id: str):
         for block in report_blocks:
             if isinstance(block, dict):
                 block = json.dumps(block, indent=2)
-            elif isinstance(block, (tuple, list)):
+            elif isinstance(block, tuple | list):
                 block = str(block[0]) if block else ""
             elif not isinstance(block, str):
                 block = str(block)
