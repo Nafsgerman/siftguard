@@ -1,4 +1,4 @@
-# ADR-007 — Scorer Source: Report-Text Fallback vs Audit-DB Mode
+# ADR-009 — Scorer Source: Report-Text Fallback vs Audit-DB Mode
 
 **Status:** Accepted
 **Date:** 2026-05-17
@@ -65,7 +65,7 @@ class ScorerResult:
 class AuditDBScorer:
     """
     Score a completed investigation run from the audit DB.
-    Active implementation deferred post-deadline (see ADR-007 §5).
+    Active implementation deferred post-deadline (see ADR-009 §5).
     """
 
     def __init__(self, db_path: Path, ground_truth_path: Path) -> None:
@@ -76,7 +76,7 @@ class AuditDBScorer:
         raise NotImplementedError(
             "AuditDBScorer.score() is stubbed. "
             "Active scorer: siftguard.eval.scoring.report_text_scorer. "
-            "See ADR-007 §5 for migration plan."
+            "See ADR-009 §5 for migration plan."
         )
 
     # ── Future implementation queries ──────────────────────────────────────

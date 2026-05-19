@@ -38,7 +38,7 @@ are isolated as the single variable against identical MCP tools and model weight
 | ADR | Decision |
 |-----|----------|
 | [ADR-001](docs/adr/ADR-001-empirical-evaluation-framework.md) | Empirical evaluation framework |
-| [ADR-006](docs/adr/ADR-006-multi-orchestrator.md) | Multi-orchestrator design + vendor lock-in |
+| [ADR-006](docs/adr/ADR-006-multi-orchestrator-vendor-lockin.md) | Multi-orchestrator design + vendor lock-in |
 | [ADR-007](docs/adr/ADR-007-spoliation-moat.md) | Append-only spoliation moat |
 
 Orchestrator cost spread: **4.72×** across five paradigms (ADR-006 §5.2). Volatility 3 runs
