@@ -414,7 +414,7 @@ body.mode-results .nav-item[data-panel="p0"]{display:none !important}
           <div class="note-warn">Gemini 0.250 confirmed genuine hallucination — not tool failure. LangGraph 0.750 is reasoning gap, not environment gap.</div>
         </div>
         <div id="case-002" style="display:none">
-          <div class="gaps"><strong>Known gaps — carry to T15</strong><ul><li>LangGraph + ClaudeCode 0.000 = tool access failure on raw disk image — ADR-006</li><li>Scorer running in report-text fallback mode — ADR-007</li></ul></div>
+          <div class="gaps"><strong>Known gaps — carry to T15</strong><ul><li>LangGraph + ClaudeCode 0.000 = tool access failure on raw disk image — ADR-006</li><li>Scorer running in report-text fallback mode — ADR-009</li></ul></div>
           <div class="f1-grid">
             <div class="f1-card good"><div class="f1-orch">OpenAI FC</div><div class="f1-score good">0.800</div><div class="f1-bar"><div class="f1-bar-fill" style="width:80%;background:var(--blue)"></div></div></div>
             <div class="f1-card mid"><div class="f1-orch">Native Claude</div><div class="f1-score mid">0.600</div><div class="f1-bar"><div class="f1-bar-fill" style="width:60%;background:var(--amber)"></div></div></div>
@@ -518,7 +518,7 @@ body.mode-results .nav-item[data-panel="p0"]{display:none !important}
     <div class="panel" id="p5">
       <div class="panel-hdr"><h1>Evaluation Methodology</h1><p>Scorer design, F1 computation, ground truth construction</p></div>
       <div class="card">
-        <div class="gaps"><strong>Known gap — carry to T15 / ADR-007</strong><ul><li>Scorer running in report-text fallback mode, not audit-DB mode.</li></ul></div>
+        <div class="gaps"><strong>Known gap — carry to T15 / ADR-009</strong><ul><li>Scorer running in report-text fallback mode, not audit-DB mode.</li></ul></div>
         <div class="ph-card"><h4>Workbench eval suite — extract-v2.2</h4><p>Sonnet vs Haiku comparison complete. F1 computed against NIST CFReDS ground truth.</p></div>
       </div>
     </div>
@@ -526,7 +526,7 @@ body.mode-results .nav-item[data-panel="p0"]{display:none !important}
     <div class="panel" id="p6">
       <div class="panel-hdr"><h1>Known Limitations</h1><p>Honest gaps carried from T12.5 / T13 — acknowledged, not hidden</p></div>
       <div class="card"><div class="ph-grid">
-        <div class="ph-card" style="border-color:var(--red)"><h4>Scorer fallback mode</h4><p>Report-text path active. ADR-007 — resolve in T15.</p></div>
+        <div class="ph-card" style="border-color:var(--red)"><h4>Scorer fallback mode</h4><p>Report-text path active. ADR-009 — resolve in T15.</p></div>
         <div class="ph-card" style="border-color:var(--amber)"><h4>LangGraph + ClaudeCode 0.000</h4><p>Tool config failure on raw disk image. ADR-006.</p></div>
         <div class="ph-card"><h4>Panel 7 visual verification</h4><p>Previously curl-only. T14 visual confirm complete.</p></div>
       </div></div>

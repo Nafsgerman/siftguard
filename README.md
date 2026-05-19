@@ -395,7 +395,7 @@ Key design decisions are documented in [`docs/adr/`](docs/adr/).
 
 3. **TEST-002 tool infrastructure:** SCHARDT.img requires partition-offset mount before TSK tools work. The dashboard demo includes the mount step. Agents running blind (no mount) score 0.000.
 
-4. **Single-judge hackathon timeline:** Production-grade items deferred — see ADR-007 for the full list (audit-DB schema migration, formal threat model implementation, multi-evaluator scoring).
+4. **Single-judge hackathon timeline:** Production-grade items deferred — see ADR-009 for the full list (audit-DB schema migration, formal threat model implementation, multi-evaluator scoring).
 
 **Dataset coverage.** Benchmark results are validated on SRL-2018 (TEST-001)
 and NIST CFReDS Hacking Case (TEST-002). Generalization to other memory image
@@ -411,7 +411,7 @@ before deadline.
 
 **Scorer brittleness.** F1 scores are derived from report-text parsing, not
 from the audit DB directly. Prompt format changes can silently shift scores.
-The audit-DB scorer interface is defined (ADR-007) but not yet active.
+The audit-DB scorer interface is defined (ADR-009) but not yet active.
 
 **No live disk correlation.** SIFTGuard operates on memory images only.
 Disk-vs-memory correlation (timeline reconstruction, MFT cross-reference) is
