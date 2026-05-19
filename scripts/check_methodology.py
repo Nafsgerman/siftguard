@@ -6,12 +6,13 @@ Exit 0 if matched, 1 otherwise.
 from __future__ import annotations
 
 import sys
+
 from siftguard.eval.methodology import (
-    METHODOLOGY_VERSION,
     METHODOLOGY_DOC_NAME,
     METHODOLOGY_DOC_SHA256,
-    doc_path,
+    METHODOLOGY_VERSION,
     _compute_doc_sha256,
+    doc_path,
 )
 
 

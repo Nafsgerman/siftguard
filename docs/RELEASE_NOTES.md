@@ -9,7 +9,7 @@
 | Orchestrators compared | 5 (Native, LangGraph, OpenAI FC, Gemini 2.5 Pro, Claude Code) |
 | Tests passing | 270 |
 | mypy | strict, 0 errors |
-| ruff | 0.11.13 pinned, 0 violations |
+| ruff | 0.15.13 pinned, 0 violations |
 | SBOM | Unfiltered SPDX 2.3 + CycloneDX 1.5, cosign-signed |
 | Datasets | SRL-2018 (TEST-001) + NIST CFReDS (TEST-002) |
 

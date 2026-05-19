@@ -126,22 +126,9 @@ def verify_migration_001(conn: sqlite3.Connection) -> bool:
     return ok
 
 
-def verify_migration_003(conn: sqlite3.Connection) -> bool:
-    present = table_exists(conn, "blocked_mutation")
-    print(f"  [{'OK  ' if present else 'FAIL'}] table blocked_mutation")
-    return present
-
-
 def verify_migration_002(conn: sqlite3.Connection) -> bool:
     present = column_exists(conn, "auditentry", "run_id")
     print(f"  [{'OK  ' if present else 'FAIL'}] auditentry.run_id")
-    return present
-
-
-
-def verify_migration_003(conn: sqlite3.Connection) -> bool:
-    present = table_exists(conn, "blocked_mutation")
-    print(f"  [{'OK  ' if present else 'FAIL'}] table blocked_mutation")
     return present
 
 MIGRATIONS = [
@@ -205,7 +192,7 @@ def main() -> int:
                 conn.commit()
                 print(f"  [done]  migration {version} recorded with checksum {checksum[:12]}...")
             else:
-                print(f"  [dry-run] no changes committed")
+                print("  [dry-run] no changes committed")
 
         return 0
     finally:
