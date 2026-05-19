@@ -3,6 +3,7 @@
 Seed 3 blocked mutation receipts into the audit DB so Panel 8 renders authentic data.
 Usage: python3 scripts/seed_spoliation_receipts.py [--db PATH]
 """
+
 import argparse
 import sys
 from pathlib import Path

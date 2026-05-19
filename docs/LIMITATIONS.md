@@ -1,7 +1,7 @@
 # SIFTGuard — Known Limitations
 
-Version: 1.0  
-Date: 2026-05-17  
+Version: 1.0
+Date: 2026-05-17
 Relates to: [THREAT_MODEL.md](THREAT_MODEL.md), [ADR-006](adr/ADR-006-multi-orchestrator-vendor-lockin.md)
 
 This document describes the operational boundaries of SIFTGuard v1.x. It is intended
@@ -119,7 +119,7 @@ Two simultaneous agent runs against the same `case_id` will produce interleaved
 computation remains correct, but the Panel 7 dashboard renders per-case views and
 will show interleaved findings without a clear per-run boundary.
 
-**Supported:** `agent_A --case TEST-001` + `agent_B --case TEST-002` simultaneously  
+**Supported:** `agent_A --case TEST-001` + `agent_B --case TEST-002` simultaneously
 **Unsupported:** `agent_A --case TEST-001` + `agent_B --case TEST-001` simultaneously
 
 ---

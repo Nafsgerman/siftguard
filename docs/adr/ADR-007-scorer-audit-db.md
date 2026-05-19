@@ -1,8 +1,8 @@
 # ADR-007 — Scorer Source: Report-Text Fallback vs Audit-DB Mode
 
-**Status:** Accepted  
-**Date:** 2026-05-17  
-**Deciders:** Nafees Ahmad  
+**Status:** Accepted
+**Date:** 2026-05-17
+**Deciders:** Nafees Ahmad
 **Tag at decision:** v1.19.2-task14-v2-merged-modes
 
 ---

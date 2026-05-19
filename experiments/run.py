@@ -8,6 +8,7 @@ Usage:
 
 ADR: docs/adr/ADR-001-empirical-evaluation-framework.md
 """
+
 from __future__ import annotations
 
 import argparse
@@ -26,9 +27,9 @@ sys.path.insert(0, str(REPO_ROOT))
 
 from siftguard.agent.loop import run_case
 
-CONFIGS_DIR  = Path(__file__).parent / "configs"
-RESULTS_DIR  = Path(__file__).parent / "results"
-CASES_ROOT   = Path(os.environ.get("SIFTGUARD_CASES_ROOT", "/cases"))
+CONFIGS_DIR = Path(__file__).parent / "configs"
+RESULTS_DIR = Path(__file__).parent / "results"
+CASES_ROOT = Path(os.environ.get("SIFTGUARD_CASES_ROOT", "/cases"))
 
 CASE_EVIDENCE = {
     "TEST-001": {
@@ -56,8 +57,7 @@ CASE_BRIEFINGS = {
         "harvesting software, and evidence of war-driving activity."
     ),
     "TEST-004": (
-        "Windows 10 x64 memory image. Focus: registry persistence "
-        "and truncated process names."
+        "Windows 10 x64 memory image. Focus: registry persistence " "and truncated process names."
     ),
     "TEST-005": (
         "Windows 10 x64 memory image. Focus: full C2 infrastructure "
@@ -87,9 +87,7 @@ def evidence_available(case_id: str) -> bool:
 def audit_db_for_case(case_id: str) -> str:
     db_dir = CASES_ROOT / case_id / "siftguard" / "audit"
     db_dir.mkdir(parents=True, exist_ok=True)
-    return str(db_dir / "CASE-001.db") if case_id == "TEST-001" else str(
-        db_dir / f"{case_id}.db"
-    )
+    return str(db_dir / "CASE-001.db") if case_id == "TEST-001" else str(db_dir / f"{case_id}.db")
 
 
 async def run_single(
@@ -108,9 +106,9 @@ async def run_single(
         }
 
     evidence_files = CASE_EVIDENCE[case_id]
-    briefing       = CASE_BRIEFINGS[case_id]
-    audit_db       = audit_db_for_case(case_id)
-    ground_truth   = str(GROUND_TRUTH_DIR / f"{case_id}.json")
+    briefing = CASE_BRIEFINGS[case_id]
+    audit_db = audit_db_for_case(case_id)
+    ground_truth = str(GROUND_TRUTH_DIR / f"{case_id}.json")
 
     result_dir = RESULTS_DIR / config["name"] / case_id
     result_dir.mkdir(parents=True, exist_ok=True)
@@ -143,9 +141,13 @@ async def run_single(
             config_override={
                 k: config[k]
                 for k in [
-                    "self_correction", "correlation",
-                    "max_iterations", "seed", "notes",
-                    "orchestrator", "agent_id",
+                    "self_correction",
+                    "correlation",
+                    "max_iterations",
+                    "seed",
+                    "notes",
+                    "orchestrator",
+                    "agent_id",
                 ]
                 if k in config
             },
@@ -159,25 +161,25 @@ async def run_single(
         report_path.write_text(report)
 
         result = {
-            "status":              "ok",
-            "config":              config["name"],
-            "case_id":             case_id,
-            "wall_time":           round(wall_time, 1),
-            "hallucination_rate":  None,
-            "verified_rate":       None,
-            "unverifiable_rate":   None,
-            "report":              str(report_path),
-            "timestamp":           _timestamp(),
-            "methodology":         current_block().to_dict(),
+            "status": "ok",
+            "config": config["name"],
+            "case_id": case_id,
+            "wall_time": round(wall_time, 1),
+            "hallucination_rate": None,
+            "verified_rate": None,
+            "unverifiable_rate": None,
+            "report": str(report_path),
+            "timestamp": _timestamp(),
+            "methodology": current_block().to_dict(),
         }
 
     except Exception as exc:
         wall_time = time.time() - start
         result = {
-            "status":    "error",
-            "config":    config["name"],
-            "case_id":   case_id,
-            "error":     str(exc),
+            "status": "error",
+            "config": config["name"],
+            "case_id": case_id,
+            "error": str(exc),
             "wall_time": round(wall_time, 1),
             "timestamp": _timestamp(),
         }
@@ -198,7 +200,7 @@ def _timestamp() -> str:
 async def run_all(configs: list[dict], dry_run: bool = False) -> list[dict]:
     results = []
     total = sum(len(c.get("cases", ["TEST-001"])) for c in configs)
-    done  = 0
+    done = 0
     for config in configs:
         for case_id in config.get("cases", ["TEST-001"]):
             done += 1
@@ -212,9 +214,9 @@ def print_summary(results: list[dict]) -> None:
     print(f"\n{'='*60}")
     print("  EXPERIMENT MATRIX SUMMARY")
     print(f"{'='*60}")
-    ok      = [r for r in results if r["status"] == "ok"]
+    ok = [r for r in results if r["status"] == "ok"]
     skipped = [r for r in results if r["status"] == "skipped"]
-    errors  = [r for r in results if r["status"] == "error"]
+    errors = [r for r in results if r["status"] == "error"]
     print(f"  Total:   {len(results)}")
     print(f"  OK:      {len(ok)}")
     print(f"  Skipped: {len(skipped)}")
@@ -233,9 +235,9 @@ def print_summary(results: list[dict]) -> None:
 def main() -> int:
     parser = argparse.ArgumentParser(description="SIFTGuard experiment runner")
     parser.add_argument("--config", help="Config name (without .json)")
-    parser.add_argument("--case",   help="Override case ID")
-    parser.add_argument("--all",    action="store_true", help="Run all configs")
-    parser.add_argument("--list",   action="store_true", help="List available configs")
+    parser.add_argument("--case", help="Override case ID")
+    parser.add_argument("--all", action="store_true", help="Run all configs")
+    parser.add_argument("--list", action="store_true", help="List available configs")
     parser.add_argument("--dry-run", action="store_true", help="Print plan, no API calls")
     args = parser.parse_args()
 

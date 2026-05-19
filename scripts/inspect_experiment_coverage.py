@@ -3,6 +3,7 @@
 Checks each run's audit.db for tool_call rows + ioc_detected events.
 Emits a coverage table — no API calls, no mutations.
 """
+
 import json
 import sqlite3
 from dataclasses import dataclass, field
@@ -72,9 +73,14 @@ def inspect_run(run_dir: Path) -> RunCoverage | None:
     audit_db = run_dir / "audit.db"
     if not audit_db.exists():
         return RunCoverage(
-            run_id=run_id, agent_id=agent_id, agent_label=agent_label,
-            audit_db_exists=False, tool_call_rows=0, ioc_detected_rows=0,
-            verdict_reached=False, existing_f1=None,
+            run_id=run_id,
+            agent_id=agent_id,
+            agent_label=agent_label,
+            audit_db_exists=False,
+            tool_call_rows=0,
+            ioc_detected_rows=0,
+            verdict_reached=False,
+            existing_f1=None,
         )
 
     try:
@@ -101,9 +107,13 @@ def inspect_run(run_dir: Path) -> RunCoverage | None:
     existing_f1 = get_existing_f1(run_dir, agent_id)
 
     return RunCoverage(
-        run_id=run_id, agent_id=agent_id, agent_label=agent_label,
-        audit_db_exists=True, tool_call_rows=tool_calls,
-        ioc_detected_rows=ioc_events, verdict_reached=bool(verdict),
+        run_id=run_id,
+        agent_id=agent_id,
+        agent_label=agent_label,
+        audit_db_exists=True,
+        tool_call_rows=tool_calls,
+        ioc_detected_rows=ioc_events,
+        verdict_reached=bool(verdict),
         existing_f1=existing_f1,
     )
 

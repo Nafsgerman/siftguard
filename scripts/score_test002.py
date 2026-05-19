@@ -1,4 +1,5 @@
 """Score all TEST-002 results and write experiments/analysis/TEST-002/data.json."""
+
 from __future__ import annotations
 
 import ast
@@ -12,11 +13,11 @@ RESULTS_ROOT = REPO / "experiments/results"
 OUT_PATH = REPO / "experiments/analysis/TEST-002/data.json"
 
 ORCH_MAP = {
-    "baseline_langgraph":  "langgraph",
-    "baseline_openai-fc":  "openai_fc",
-    "baseline_gemini":     "gemini",
+    "baseline_langgraph": "langgraph",
+    "baseline_openai-fc": "openai_fc",
+    "baseline_gemini": "gemini",
     "baseline_claudecode": "claudecode",
-    "baseline":            "baseline",
+    "baseline": "baseline",
 }
 
 gt = json.loads(GT_PATH.read_text())
@@ -43,10 +44,7 @@ def score_text(text: str) -> float:
     if not text:
         return 0.0
     text_lower = text.lower()
-    matched = sum(
-        1 for ioc in gt_iocs
-        if ioc["value"].lower() in text_lower
-    )
+    matched = sum(1 for ioc in gt_iocs if ioc["value"].lower() in text_lower)
     total = len(gt_iocs)
     if total == 0:
         return 0.0

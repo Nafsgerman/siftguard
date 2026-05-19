@@ -3,6 +3,7 @@
 Run: python -m scripts.check_methodology
 Exit 0 if matched, 1 otherwise.
 """
+
 from __future__ import annotations
 
 import sys

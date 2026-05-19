@@ -7,6 +7,7 @@ Usage:
 
 ADR: docs/adr/ADR-001-empirical-evaluation-framework.md
 """
+
 from __future__ import annotations
 
 import argparse
@@ -70,9 +71,7 @@ def apply_migration(
     sql_path: Path,
     dry_run: bool = False,
 ) -> None:
-    alter_re = re.compile(
-        r"ALTER\s+TABLE\s+(\w+)\s+ADD\s+COLUMN\s+(\w+)", re.IGNORECASE
-    )
+    alter_re = re.compile(r"ALTER\s+TABLE\s+(\w+)\s+ADD\s+COLUMN\s+(\w+)", re.IGNORECASE)
     statements = split_sql_statements(sql_path.read_text())
     for stmt in statements:
         m = alter_re.match(stmt)
@@ -95,16 +94,17 @@ def apply_migration(
 
 # Keep explicit function for backwards compat with test imports
 def apply_migration_001(conn: sqlite3.Connection, dry_run: bool = False) -> None:
-    apply_migration(
-        conn, "001", MIGRATIONS_DIR / "001_eval_framework_schema.sql", dry_run
-    )
+    apply_migration(conn, "001", MIGRATIONS_DIR / "001_eval_framework_schema.sql", dry_run)
 
 
 def verify_migration_001(conn: sqlite3.Connection) -> bool:
     expected_columns = {
         "auditentry": [
-            "tokens_in", "tokens_out", "cost_usd",
-            "confidence_score", "correction_event",
+            "tokens_in",
+            "tokens_out",
+            "cost_usd",
+            "confidence_score",
+            "correction_event",
         ],
     }
     expected_tables = [
@@ -137,10 +137,11 @@ def verify_migration_003(conn: sqlite3.Connection) -> bool:
     print(f"  [{'OK  ' if present else 'FAIL'}] table blocked_mutation")
     return present
 
+
 MIGRATIONS = [
     ("001", "001_eval_framework_schema.sql", verify_migration_001),
-    ("002", "002_run_id.sql",               verify_migration_002),
-    ("003", "003_blocked_mutation.sql",      verify_migration_003),
+    ("002", "002_run_id.sql", verify_migration_002),
+    ("003", "003_blocked_mutation.sql", verify_migration_003),
 ]
 
 
@@ -148,8 +149,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="SIFTGuard schema migrator")
     parser.add_argument("--db", required=True, help="Path to SQLite DB")
     parser.add_argument("--dry-run", action="store_true")
-    parser.add_argument("--verify", action="store_true",
-                        help="Only verify schema, do not apply")
+    parser.add_argument("--verify", action="store_true", help="Only verify schema, do not apply")
     args = parser.parse_args()
 
     db_path = Path(args.db)

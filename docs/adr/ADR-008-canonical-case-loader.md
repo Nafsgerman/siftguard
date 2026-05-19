@@ -1,8 +1,8 @@
 # ADR-008: Canonical Case Loader — Delete Flat Registry
 
-**Date:** 2026-05-15  
-**Status:** Accepted  
-**Deciders:** Nafees Ahmad  
+**Date:** 2026-05-15
+**Status:** Accepted
+**Deciders:** Nafees Ahmad
 **Tag:** v1.17.1-t11-gaps-closed
 
 ---
@@ -32,16 +32,16 @@ from siftguard.cases.loader import get_case, list_cases, list_case_ids, evidence
 
 ## Rationale
 
-**1. Manifest-per-case scales; dict-in-source does not.**  
+**1. Manifest-per-case scales; dict-in-source does not.**
 Adding TEST-003 requires one new JSON file. The flat registry required editing Python source, bumping imports, and re-running tests to catch regressions.
 
-**2. Manifests encode tool availability explicitly.**  
+**2. Manifests encode tool availability explicitly.**
 `CaseManifest.available_tools` / `unavailable_tools` lets the MCP server and scorer filter IOC expectations by evidence surface at load time — not at runtime guess. This is the contract that makes TEST-002 (disk-only) and TEST-001 (memory-only) comparable on the same benchmark without special-casing.
 
-**3. TEST-002 is the proof case.**  
+**3. TEST-002 is the proof case.**
 The flat registry could not represent a disk-only case cleanly. The manifest for TEST-002 lists `volatility_*` tools under `unavailable_tools` with `reason: no_memory_image`. The scorer reads this and filters ground-truth IOCs with `evidence_location: memory_only` — preventing false negatives from un-reachable IOCs inflating the miss rate.
 
-**4. Silent failure → loud failure.**  
+**4. Silent failure → loud failure.**
 `SnapshotWriter.__init__` now raises `RuntimeError` if `experiment_run` table is missing, referencing the exact migrate command. The flat registry's `evidence_available` returned `False` silently and let the benchmark proceed with no evidence, producing meaningless scores.
 
 ---

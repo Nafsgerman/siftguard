@@ -228,11 +228,11 @@ Report sections: Executive Summary · Timeline of Events · Indicators of Compro
 
 ## Dataset Documentation
 
-**Case:** TEST-001  
-**Evidence Type:** Windows 10 x64 memory image  
-**File:** `/cases/TEST-001/base-hunt-memory.img`  
-**Source:** Protocol SIFT starter dataset (SANS SIFT Workstation sample case data)  
-**Scenario:** APT hunt — suspected compromise, unknown initial vector  
+**Case:** TEST-001
+**Evidence Type:** Windows 10 x64 memory image
+**File:** `/cases/TEST-001/base-hunt-memory.img`
+**Source:** Protocol SIFT starter dataset (SANS SIFT Workstation sample case data)
+**Scenario:** APT hunt — suspected compromise, unknown initial vector
 
 **What the agent found (TEST-001):**
 - 91 running processes at time of capture
