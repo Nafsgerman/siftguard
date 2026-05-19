@@ -8,7 +8,7 @@ PORT := 8080
 PLATFORM := linux/amd64
 VOLATILITY3_REF ?= develop
 
-.PHONY: help build demo demo-logs demo-stop test lint type lock clean
+.PHONY: help build demo demo-logs demo-stop test tool-catalog lint type lock clean
 
 help: ## Show available targets
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
@@ -38,6 +38,10 @@ demo-stop: ## Stop + remove demo container
 
 test: ## Run pytest suite
 	python3 -m pytest -q
+	
+# insert after the test target block, before lint:
+tool-catalog: ## Regenerate docs/TOOL_CATALOG.md from MCP server definitions
+	python3 -m siftguard.release.tool_catalog
 
 lint: ## ruff check + format check
 	python3 -m ruff check src/ tests/
