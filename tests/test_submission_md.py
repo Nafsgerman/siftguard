@@ -49,9 +49,9 @@ def test_spoliation_12_of_12() -> None:
 def test_no_dropped_test_cases() -> None:
     text = _read()
     for dropped in ("TEST-004", "TEST-005"):
-        assert (
-            dropped not in text
-        ), f"{dropped} is permanently dropped per ship list — must not appear"
+        assert dropped not in text, (
+            f"{dropped} is permanently dropped per ship list — must not appear"
+        )
 
 
 def test_evaluation_methodology_linked() -> None:
@@ -64,6 +64,6 @@ def test_limitations_linked() -> None:
 
 def test_no_broken_adr_007_link() -> None:
     """ADR-007 file currently missing (T15 scope); do not link from submission."""
-    assert (
-        "ADR-007" not in _read()
-    ), "ADR-007 file does not exist yet — do not reference until T15 lands"
+    assert "ADR-007" not in _read(), (
+        "ADR-007 file does not exist yet — do not reference until T15 lands"
+    )
