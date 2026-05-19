@@ -2,6 +2,7 @@
 
 Skips gracefully if SBOMs not yet generated — run `make sbom` first.
 """
+
 import json
 import pathlib
 
