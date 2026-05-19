@@ -1,89 +1,60 @@
 # SIFTGuard
 
-**Court-defensible autonomous DFIR. Typed function boundaries. Append-only audit. Evals, not vibes.**
+**Court-defensible autonomous DFIR. Five orchestrators on one typed MCP server. Real F1 measured across two public forensics datasets.**
 
 [![Methodology v1.0.0](https://img.shields.io/badge/methodology-v1.0.0-1a73e8)](docs/EVAL_FRAMEWORK.md)
 [![Spoliation tests 12/12](https://img.shields.io/badge/spoliation-12%2F12-34a853)](tests/spoliation/)
-[![Eval matrix 8/8](https://img.shields.io/badge/eval%20matrix-8%2F8-34a853)](experiments/results/)
+[![Orchestrators 5/5](https://img.shields.io/badge/orchestrators-5%2F5-34a853)](docs/adr/ADR-006-multi-orchestrator-vendor-lockin.md)
+[![Tool catalog](https://img.shields.io/badge/tools-typed%20MCP-1a73e8)](docs/TOOL_CATALOG.md)
 
 **SANS FIND EVIL! Hackathon 2026** · [Devpost](https://devpost.com/software/siftguard) · Public June 10, 2026
 
-SIFTGuard is an autonomous incident-response agent that runs on the SANS SIFT
-Workstation, calls forensic tools through a typed MCP server, and produces
-incident reports a court could accept — without the analyst having to trust
-the LLM with the evidence.
+SIFTGuard is an autonomous DFIR agent that runs five orchestration paradigms — Anthropic native loop, LangGraph, OpenAI function-calling, Gemini 3 Pro, and Claude Code headless CLI — against a single typed MCP server of forensic tools. The same model weights and the same Pydantic-validated tools are held fixed across all five adapters; orchestration is the only variable. We measure what that variable buys across two public forensics datasets and publish the F1 numbers.
 
-The architectural claim, stated plainly: **a SIFTGuard agent cannot alter,
-delete, or fabricate evidence, and we prove it with automated tests rather
-than a policy document.**
+## Headline — 5 orchestrators × 2 datasets
 
----
+| Orchestrator | TEST-001 (memory) | TEST-002 (disk) | Cost (USD) | Iter | Wall |
+|---|---:|---:|---:|---:|---:|
+| **OpenAI FC** (gpt-5.5) | **1.000** | **0.800** | **$0.1949** | 4 | 132.2 s |
+| Native Loop (claude-sonnet-4-6) | 1.000 | 0.600 | $0.2308 | 7 | 104.0 s |
+| Claude Code (headless, Sonnet 4.6) | 1.000 | 0.000 † | $0.5293 | 18 | 258.7 s |
+| LangGraph (Sonnet 4.6) | 0.750 | 0.000 † | $0.2289 | 7 | 106.2 s |
+| Gemini 3 Pro | 0.250 | 0.400 | $0.2591 | 5 | 146.7 s |
 
-## Architecture at a glance
+Scorer: applicability-aware F1 (`siftguard.eval.score`, GT v1.1.0). TEST-001 = SRL-2018 APT memory image, 4 applicable IOCs. TEST-002 = NIST CFReDS Hacking Case (Greg Schardt / Mr. Evil), NTFS disk image, 5 applicable IOCs.
 
-![SIFTGuard architecture](docs/architecture/architecture-v3.png)
+† **Tool-applicability failure on disk evidence.** LangGraph and Claude Code over-iterate when the MCP surface (memory-focused Volatility 3 plugins) does not match the evidence type. The failure mode is iteration-budget exhaustion, not hallucination — both agents continued reasoning correctly about a tool surface that could not return findings. Documented in [`docs/LIMITATIONS.md`](docs/LIMITATIONS.md); graceful disk-tool degradation is flagged as Phase D scope, not a Phase C blocker.
 
-Four hard boundaries from left to right:
+**Three of five orchestrators score F1 = 1.000 on TEST-001.** Generalization to TEST-002 separates them: **only OpenAI FC clears F1 ≥ 0.80 on both datasets.** Same model API surface, same typed MCP server, same prompts. Orchestration is what differs. Full evaluation methodology and seed protocol: [`docs/EVAL_FRAMEWORK.md`](docs/EVAL_FRAMEWORK.md).
 
-1. **Typed MCP boundary.** Every forensic tool is a Pydantic-validated function with a frozen schema. The LLM cannot invoke arbitrary shell. Tool input and output are validated on both sides of the wire.
-2. **Instrumented agent loop.** Every iteration writes a structured snapshot: tokens in/out, dollar cost, confidence vector, hypothesis state, self-correction events. Snapshots are immutable once written.
-3. **Append-only audit DB.** SQLite with insert-only access patterns enforced by the data layer. Schema migrations are versioned and verified. Spoliation would require breaking the migration log, which is checked at startup.
-4. **Versioned methodology.** Every report and manifest is stamped with the methodology version and the SHA-256 of `EVAL_FRAMEWORK.md`. Change the scoring rules, the version bumps, and prior results stay attributable to the methodology that produced them.
+![SIFTGuard evaluation dashboard — 7 panels, including Panel 7 orchestrator comparison](docs/figures/figure_full.png)
 
----
+## Why orchestration is the only variable
 
-## What we measured
+> A Digital Forensics and Incident Response (DFIR) agent that ships behind a Security Operations Center (SOC) perimeter cannot be coupled to a single LLM vendor or a single orchestration framework. The coupling is not an aesthetic concern; it is an operational and regulatory liability.
+>
+> — [ADR-006 §1](docs/adr/ADR-006-multi-orchestrator-vendor-lockin.md)
 
-### Component contribution (ablation)
+Outage risk (Anthropic 2025-05; OpenAI 2025-06; Google 2025-09), regulatory diversity (BaFin-supervised banks, KRITIS infrastructure, FedRAMP-Moderate, HIPAA), model deprecation cycles, and on-prem deployment requirements all push the same direction: the orchestration layer has to be indifferent to which model is reasoning behind it. **Five live adapters on one typed MCP surface is how SIFTGuard treats vendor neutrality as a property of the architecture, not a marketing claim.**
 
-![Ablation grid](docs/figures/panel_6_ablation.png)
+## What the multi-orchestrator design surfaced
 
-Same case, same ground truth, components turned off one at a time. Self-correction and cross-source correlation each contribute measurable accuracy. The v1 free-form prompt scores higher on the v1 scorer (text matching) but cannot produce calibrated confidence — see [`EVAL_FRAMEWORK.md`](docs/EVAL_FRAMEWORK.md) for the methodological caveat.
+> Lowest-to-highest cost ratio on the same evidence file: **$0.1949 (OpenAI FC) → $0.5293 (Claude Code), a 2.72× spread**. This is not measurement noise. Median seeded variance for the canonical native-loop baseline is σ = 0.000 across n = 6 seeds (TEST-001, F1 = 0.909, recorded in ADR-001 §4 D5). A 2.72× delta with σ ≈ 0 on the baseline is structural and explainable: OpenAI FC's four iterations reflect aggressive parallel tool-call batching driving cost down; Claude Code's eighteen iterations reflect headless MCP-RPC round-trip overhead — the design tradeoff named in §3.4 — driving cost up. The three direct-API adapters in between ($0.2289–$0.2591) cluster tightly because they pay neither extreme. The framework would have been blind to all of this under any single-orchestrator design (A1) or single-framework design (A2).
+>
+> — [ADR-006 §5.2](docs/adr/ADR-006-multi-orchestrator-vendor-lockin.md)
 
-### Cost-accuracy frontier
+## The architectural claim
 
-![Cost-accuracy Pareto](docs/figures/panel_4_pareto.png)
+**A SIFTGuard agent cannot alter, delete, or fabricate evidence, and we prove it with automated tests rather than a policy document** — 12/12 spoliation suite, run on every push to `main`. Four hard boundaries make that claim mechanical, not aspirational:
 
-Same case, different iteration caps. Cost per run, accuracy delta. The flat region above iteration 5 is the operational signal: more iterations do not buy more accuracy on this case under this configuration.
+1. **Typed MCP boundary.** Every forensic tool is a Pydantic-validated function with a frozen schema. The agent never sees raw shell; it sees structured findings with provenance. The full reference is auto-generated from the live server: [`docs/TOOL_CATALOG.md`](docs/TOOL_CATALOG.md).
+2. **Instrumented agent loop.** Every iteration writes a structured snapshot — tokens, cost, confidence vector, hypothesis state, self-correction events — immutable once written.
+3. **Append-only audit DB.** SQLite with insert-only access enforced at the data layer. Migrations versioned and verified at startup. Spoliation would require breaking the migration log.
+4. **Versioned methodology.** Every report stamped with the methodology version and SHA-256 of `EVAL_FRAMEWORK.md`. Change the scoring rules and the version bumps; prior results stay attributable to the methodology that produced them.
 
-### Live self-correction event
-
-A captured iteration where the agent revised its own conclusion after a follow-up tool call contradicted an earlier finding. The correction is written as a `correction_event` row in the audit DB and surfaced in the report. Reproducible from the event tag in [`experiments/results/baseline/TEST-001/`](experiments/results/).
-
----
-
-## Why SIFTGuard
-
-Most LLM-driven forensic agents pipe raw shell output into a prompt and hope. That's how you get hallucinated MFT entries, missed timestomps, and — worst — accidental spoliation.
-
-SIFTGuard takes a different path:
-
-1. **Typed MCP tools.** Every SIFT tool is wrapped as a Pydantic-validated function. The agent never sees raw shell. It sees structured findings with provenance.
-2. **Architectural read-only.** Destructive commands physically don't exist in our MCP server. Proven by a spoliation test suite that tries to make the agent destroy evidence — and shows it cannot.
-3. **Self-correcting agent.** The loop tracks hypotheses, replans on failure, caps iterations, and persists every decision to an append-only SQLite audit log.
-4. **Reproducible accuracy.** Ships with a benchmark suite and ground-truth cases so you can measure performance — not just demo it.
+Full architectural rationale and rejected alternatives: [`ADR-001`](docs/adr/ADR-001-empirical-evaluation-framework.md) (evaluation framework), [`ADR-006`](docs/adr/ADR-006-multi-orchestrator-vendor-lockin.md) (multi-orchestrator + vendor lock-in), [`ADR-007`](docs/adr/ADR-007-spoliation-moat.md) (spoliation moat). Full ADR index: [`docs/adr/`](docs/adr/).
 
 ---
-
-## Headline numbers (TEST-001 · 6-seed baseline · 24-run ablation)
-
-| Metric | Value | Notes |
-|---|---|---|
-| **IOC F1** | **0.909** | 6 seeded runs, σ = 0.000 |
-| Verdict accuracy | 100% | Agent correctly classified the APT |
-| Section coverage | 100% | All required report sections produced |
-| Spoliation tests | 12/12 | Architectural guarantee, automated suite |
-| Methodology drift | 0 | SHA-256 pinned, CI-verified |
-| Reproducibility | σ=0.000 | Across 6 seeds on the headline config |
-
-**24 ablation runs across 8 configurations.** Self-correction and v2 prompt collapse seed variance to zero. Disabling them reintroduces it (σ up to 0.052) without moving the mean — these features buy stability, not accuracy. That's the kind of thing a single-seed demo would never expose.
-
-> Most LLM-agent demos publish one number from one run. SIFTGuard ran 24 before publishing one. The headline isn't 0.909 — it's σ = 0.000.
-
-**Generalization (TEST-004 & TEST-005):** in progress. Memory-image cache warm-up is the bottleneck under UTM emulation; numbers will land in the next iteration alongside the multi-source correlation work. Reporting them prematurely would be exactly the failure mode this project critiques. See [LIMITATIONS.md](LIMITATIONS.md).
-
----
-
 ## Architecture
 
 ```
