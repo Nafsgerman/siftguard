@@ -3,10 +3,10 @@
 Checks each run's audit.db for tool_call rows + ioc_detected events.
 Emits a coverage table — no API calls, no mutations.
 """
-import sqlite3
 import json
-from pathlib import Path
+import sqlite3
 from dataclasses import dataclass, field
+from pathlib import Path
 
 EXPERIMENTS_DIR = Path("experiments/runs")
 AGENT_IDS = {

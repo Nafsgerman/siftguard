@@ -119,6 +119,19 @@ SIFTGuard takes a different path:
 
 ---
 
+[![SBOM](https://img.shields.io/badge/SBOM-SPDX%202.3%20%2B%20CycloneDX%201.5-blue)](sbom.spdx.json)
+[![Supply Chain](https://img.shields.io/badge/signed-Sigstore%20keyless-green)](https://www.sigstore.dev/)
+[![SLSA](https://img.shields.io/badge/SLSA-Level%203-green)](https://slsa.dev/)
+
+**Verify SBOM signature** (requires release bundles):
+```bash
+cosign verify-blob \
+  --bundle sbom.spdx.json.bundle \
+  --certificate-identity-regexp 'https://github.com/Nafsgerman/siftguard/.github/workflows/release.yml' \
+  --certificate-oidc-issuer 'https://token.actions.githubusercontent.com' \
+  sbom.spdx.json
+```
+
 ## Quickstart
 
 ```bash

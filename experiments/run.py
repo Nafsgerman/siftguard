@@ -16,9 +16,10 @@ import json
 import os
 import sys
 import time
-from datetime import datetime, timezone
-from siftguard.eval.methodology import current_block
+from datetime import UTC, datetime, timezone
 from pathlib import Path
+
+from siftguard.eval.methodology import current_block
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT))
@@ -191,7 +192,7 @@ async def run_single(
 
 
 def _timestamp() -> str:
-    return datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+    return datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
 
 
 async def run_all(configs: list[dict], dry_run: bool = False) -> list[dict]:
@@ -209,7 +210,7 @@ async def run_all(configs: list[dict], dry_run: bool = False) -> list[dict]:
 
 def print_summary(results: list[dict]) -> None:
     print(f"\n{'='*60}")
-    print(f"  EXPERIMENT MATRIX SUMMARY")
+    print("  EXPERIMENT MATRIX SUMMARY")
     print(f"{'='*60}")
     ok      = [r for r in results if r["status"] == "ok"]
     skipped = [r for r in results if r["status"] == "skipped"]
@@ -219,11 +220,11 @@ def print_summary(results: list[dict]) -> None:
     print(f"  Skipped: {len(skipped)}")
     print(f"  Errors:  {len(errors)}")
     if errors:
-        print(f"\n  Errors:")
+        print("\n  Errors:")
         for r in errors:
             print(f"    {r['config']} × {r['case_id']}: {r.get('error','')[:80]}")
     if skipped:
-        print(f"\n  Skipped:")
+        print("\n  Skipped:")
         for r in skipped:
             print(f"    {r['config']} × {r['case_id']}: {r.get('reason','')}")
     print(f"{'='*60}\n")

@@ -1,6 +1,9 @@
 """Score all TEST-002 results and write experiments/analysis/TEST-002/data.json."""
 from __future__ import annotations
-import ast, json, re
+
+import ast
+import json
+import re
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent

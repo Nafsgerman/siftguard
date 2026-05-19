@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """T13: Score all 5 orchestrators against TEST-001. Zero API cost for existing runs."""
 from __future__ import annotations
-import ast, json
+
+import ast
+import json
 from pathlib import Path
 
 REPO         = Path(__file__).resolve().parent.parent
