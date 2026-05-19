@@ -1,4 +1,5 @@
 """Tool catalog generator — introspects TOOLS from mcp_server/server.py and emits docs/TOOL_CATALOG.md."""
+
 from __future__ import annotations
 
 import json

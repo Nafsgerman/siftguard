@@ -1,4 +1,5 @@
 """T22 — asserts every MCP-registered tool appears in the generated catalog."""
+
 from __future__ import annotations
 
 import pytest
@@ -32,7 +33,7 @@ def test_each_tool_has_input_schema_section():
     catalog = generate()
     for tool in TOOLS:
         idx = catalog.index(f"## {tool.name}")
-        section = catalog[idx: idx + 800]
+        section = catalog[idx : idx + 800]
         assert "### Input Schema" in section, f"Input schema missing: {tool.name}"
 
 
@@ -40,7 +41,7 @@ def test_each_tool_has_example_invocation():
     catalog = generate()
     for tool in TOOLS:
         idx = catalog.index(f"## {tool.name}")
-        section = catalog[idx: idx + 800]
+        section = catalog[idx : idx + 800]
         assert "### Example Invocation" in section, f"Example missing: {tool.name}"
 
 
