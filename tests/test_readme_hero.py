@@ -5,6 +5,7 @@ catalog, (c) link to ADR-006 (multi-orchestrator + vendor lock-in),
 (d) embed at least one figure, (e) lead with multi-dataset numbers,
 (f) carry the ADR-006 §5.2 cost-spread verbatim quote.
 """
+
 from pathlib import Path
 
 README = Path(__file__).resolve().parents[1] / "README.md"
@@ -24,21 +25,22 @@ def test_h1_is_siftguard() -> None:
 
 
 def test_links_tool_catalog() -> None:
-    assert "docs/TOOL_CATALOG.md" in _read(), \
-        "README must link to TOOL_CATALOG.md (T22)"
+    assert "docs/TOOL_CATALOG.md" in _read(), "README must link to TOOL_CATALOG.md (T22)"
 
 
 def test_links_adr_006() -> None:
     text = _read()
     assert "ADR-006" in text, "README must reference ADR-006"
-    assert "docs/adr/ADR-006-multi-orchestrator-vendor-lockin.md" in text, \
+    assert "docs/adr/ADR-006-multi-orchestrator-vendor-lockin.md" in text, (
         "README must link to the ADR-006 file"
+    )
 
 
 def test_embeds_at_least_one_figure() -> None:
     text = _read()
-    assert "](docs/figures/" in text or "](docs/architecture/" in text, \
+    assert "](docs/figures/" in text or "](docs/architecture/" in text, (
         "README must embed at least one figure from docs/figures or docs/architecture"
+    )
 
 
 def test_hero_leads_with_multi_dataset_numbers() -> None:
@@ -50,8 +52,7 @@ def test_hero_leads_with_multi_dataset_numbers() -> None:
 
 def test_hero_quotes_adr_006_cost_spread() -> None:
     """ADR-006 §5.2 verbatim per T10 flag — 2.72x cost spread is the empirical knockout."""
-    assert "2.72×" in _read(), \
-        "Hero must quote ADR-006 §5.2 cost-spread number (2.72×)"
+    assert "2.72×" in _read(), "Hero must quote ADR-006 §5.2 cost-spread number (2.72×)"
 
 
 def test_hero_names_all_five_orchestrators() -> None:
