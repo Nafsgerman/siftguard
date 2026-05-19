@@ -10,7 +10,7 @@ Available tools: filesystem_walk, mft_parse, registry_hive_parse, timeline_build
 DO NOT call volatility_pslist, volatility_netscan, volatility_malfind — no_memory_image.
 
 ## Investigation objective
-Find evidence of hacking activity. Suspect: Greg Schardt / "Mr. Evil". 
+Find evidence of hacking activity. Suspect: Greg Schardt / "Mr. Evil".
 Look for: hacking tools installed, wireless sniffing artifacts, credential harvesting tools, IRC communication logs, registry owner confirmation.
 
 ## MCP server

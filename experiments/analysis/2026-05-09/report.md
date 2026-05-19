@@ -1,7 +1,7 @@
 # SIFTGuard Empirical Operating Characteristic Report
 
-**Case:** TEST-001  
-**Generated:** 2026-05-09 03:25 UTC  
+**Case:** TEST-001
+**Generated:** 2026-05-09 03:25 UTC
 
 ## Data Quality Notes
 

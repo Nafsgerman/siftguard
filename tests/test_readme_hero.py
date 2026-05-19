@@ -31,16 +31,16 @@ def test_links_tool_catalog() -> None:
 def test_links_adr_006() -> None:
     text = _read()
     assert "ADR-006" in text, "README must reference ADR-006"
-    assert "docs/adr/ADR-006-multi-orchestrator-vendor-lockin.md" in text, (
-        "README must link to the ADR-006 file"
-    )
+    assert (
+        "docs/adr/ADR-006-multi-orchestrator-vendor-lockin.md" in text
+    ), "README must link to the ADR-006 file"
 
 
 def test_embeds_at_least_one_figure() -> None:
     text = _read()
-    assert "](docs/figures/" in text or "](docs/architecture/" in text, (
-        "README must embed at least one figure from docs/figures or docs/architecture"
-    )
+    assert (
+        "](docs/figures/" in text or "](docs/architecture/" in text
+    ), "README must embed at least one figure from docs/figures or docs/architecture"
 
 
 def test_hero_leads_with_multi_dataset_numbers() -> None:

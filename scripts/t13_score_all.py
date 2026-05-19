@@ -1,40 +1,45 @@
 #!/usr/bin/env python3
 """T13: Score all 5 orchestrators against TEST-001. Zero API cost for existing runs."""
+
 from __future__ import annotations
 
 import ast
 import json
 from pathlib import Path
 
-REPO         = Path(__file__).resolve().parent.parent
+REPO = Path(__file__).resolve().parent.parent
 RESULTS_ROOT = REPO / "experiments" / "results"
-GT_ROOT      = REPO / "experiments" / "ground_truth"
+GT_ROOT = REPO / "experiments" / "ground_truth"
 ANALYSIS_OUT = REPO / "experiments" / "analysis" / "TEST-001" / "data.json"
-CASE_ID      = "TEST-001"
-GT_VERSION   = "1.1.0"
+CASE_ID = "TEST-001"
+GT_VERSION = "1.1.0"
 
 AGENT_MAP = {
-    "baseline_v2":         "siftguard-v2",
-    "baseline_langgraph":  "siftguard-langgraph",
-    "baseline_openai-fc":  "siftguard-openai-fc",
-    "baseline_gemini":     "siftguard-gemini",
+    "baseline_v2": "siftguard-v2",
+    "baseline_langgraph": "siftguard-langgraph",
+    "baseline_openai-fc": "siftguard-openai-fc",
+    "baseline_gemini": "siftguard-gemini",
     "baseline_claudecode": "siftguard-claudecode",
 }
 LABEL_MAP = {
-    "siftguard-v2":          "Native Loop  ",
-    "siftguard-langgraph":   "LangGraph    ",
-    "siftguard-openai-fc":   "OpenAI FC    ",
-    "siftguard-gemini":      "Gemini       ",
-    "siftguard-claudecode":  "Claude Code  ",
+    "siftguard-v2": "Native Loop  ",
+    "siftguard-langgraph": "LangGraph    ",
+    "siftguard-openai-fc": "OpenAI FC    ",
+    "siftguard-gemini": "Gemini       ",
+    "siftguard-claudecode": "Claude Code  ",
 }
 COST_MAP = {
-    "siftguard-v2": 0.05, "siftguard-langgraph": 0.10,
-    "siftguard-openai-fc": 0.25, "siftguard-gemini": 0.05,
+    "siftguard-v2": 0.05,
+    "siftguard-langgraph": 0.10,
+    "siftguard-openai-fc": 0.25,
+    "siftguard-gemini": 0.05,
     "siftguard-claudecode": 0.65,
 }
 PROXY_MAP = {
-    "siftguard-v2": "1.000", "siftguard-langgraph": "?",
-    "siftguard-openai-fc": "?", "siftguard-gemini": "?",
+    "siftguard-v2": "1.000",
+    "siftguard-langgraph": "?",
+    "siftguard-openai-fc": "?",
+    "siftguard-gemini": "?",
     "siftguard-claudecode": "?",
 }
 
@@ -114,8 +119,16 @@ def write_score(data: dict, agent_id: str, f1: float, tp: int, fn: int, ts: str)
     p7 = data.setdefault("panel_7", {}).setdefault("data", {})
     blk = p7.setdefault(agent_id, {"runs": [], "mean": None, "n": 0})
     blk["runs"] = [r for r in blk.get("runs", []) if r.get("timestamp") != ts]
-    blk["runs"].append({"f1": f1, "timestamp": ts, "gt_version": GT_VERSION,
-                        "applicable_count": 4, "tp": tp, "fn": fn})
+    blk["runs"].append(
+        {
+            "f1": f1,
+            "timestamp": ts,
+            "gt_version": GT_VERSION,
+            "applicable_count": 4,
+            "tp": tp,
+            "fn": fn,
+        }
+    )
     valid = [r["f1"] for r in blk["runs"] if r.get("f1") is not None]
     blk["mean"] = round(sum(valid) / len(valid), 4) if valid else None
     blk["n"] = len(valid)
@@ -147,7 +160,12 @@ def main() -> None:
             continue
 
         f1, tp, fn = score_text(text, iocs)
-        ts = fname.replace("report_", "").replace("result_", "").replace(".md", "").replace(".json", "")
+        ts = (
+            fname.replace("report_", "")
+            .replace("result_", "")
+            .replace(".md", "")
+            .replace(".json", "")
+        )
         print(f"{label} {fname:<42} {tp:>4} {fn:>4} {f1:>8.3f}  OK")
         write_score(data, agent_id, f1, tp, fn, ts)
 
@@ -167,8 +185,8 @@ def main() -> None:
     print("-" * 48)
     for agent_id, label in LABEL_MAP.items():
         proxy = PROXY_MAP.get(agent_id, "?")
-        real  = p7d.get(agent_id, {}).get("mean")
-        rs    = f"{real:.3f}" if real is not None else "pending"
+        real = p7d.get(agent_id, {}).get("mean")
+        rs = f"{real:.3f}" if real is not None else "pending"
         try:
             delta = f"{real - float(proxy):+.3f}" if real is not None and proxy != "?" else "—"
         except Exception:
