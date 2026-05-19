@@ -221,6 +221,8 @@ ssh -f -N -L 8080:localhost:8080 sansforensics@<VM_IP>
 
 ## Forensic Tools (MCP Server)
 
+> Full schema, parameters, and example invocations: [docs/TOOL_CATALOG.md](docs/TOOL_CATALOG.md)
+
 | Tool | Underlying Binary | Purpose |
 |------|------------------|---------|
 | `vol_pslist` | Volatility 3 `psscan` | Process enumeration, orphan detection |
