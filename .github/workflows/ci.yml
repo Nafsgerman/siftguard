@@ -25,7 +25,7 @@ jobs:
       - run: ruff format --check src/ tests/
 
   type:
-    name: Type - mypy (non-blocking until T20)
+    name: Type - mypy (strict)
     runs-on: ubuntu-latest
     continue-on-error: false
     steps:

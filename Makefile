@@ -53,3 +53,33 @@ lock: ## Regenerate requirements*.txt from pyproject.toml
 clean: ## Wipe caches + build artifacts
 	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
 	rm -rf .pytest_cache .ruff_cache .mypy_cache build dist *.egg-info
+
+# ── T21: SBOM + Release ────────────────────────────────────────────────────────
+
+.PHONY: sbom sbom-verify deps-doc
+
+sbom:
+	syft . -o spdx-json=sbom.spdx.json -o cyclonedx-json=sbom.cyclonedx.json
+	@echo "✓ sbom.spdx.json + sbom.cyclonedx.json generated"
+
+sbom-verify:
+	@test -f sbom.spdx.json.bundle || { echo "No bundle — bundles are generated in CI after cosign sign-blob."; exit 1; }
+	cosign verify-blob \
+		--bundle sbom.spdx.json.bundle \
+		--certificate-identity-regexp 'https://github.com/Nafsgerman/siftguard/.github/workflows/release.yml' \
+		--certificate-oidc-issuer 'https://token.actions.githubusercontent.com' \
+		sbom.spdx.json
+
+deps-doc:
+	python3 -c "\
+import tomllib, pathlib, datetime; \
+data = tomllib.loads(pathlib.Path('pyproject.toml').read_text()); \
+deps = data.get('project', {}).get('dependencies', []); \
+dev = data.get('project', {}).get('optional-dependencies', {}).get('dev', []); \
+lines = ['# SIFTGuard — Direct Dependencies', '', \
+'_Auto-generated from \`pyproject.toml\`. **Not the SBOM.** For the full supply-chain inventory see \`sbom.spdx.json\` (SPDX 2.3) or \`sbom.cyclonedx.json\` (CycloneDX 1.5) at repo root._', \
+'', f'Generated: {datetime.date.today()}', '', \
+'## Runtime', ''] + [f'- \`{d}\`' for d in sorted(deps)] + \
+['', '## Dev / CI', ''] + [f'- \`{d}\`' for d in sorted(dev)]; \
+pathlib.Path('docs/DEPENDENCIES.md').write_text('\n'.join(lines) + '\n'); \
+print('✓ docs/DEPENDENCIES.md written')"
