@@ -67,7 +67,7 @@ Each bullet below is an explicit do-not, not a hedge. If a use case matches one 
 
 - **Do not use SIFTGuard for live incident response where the evidentiary chain must hold in court.** Append-only discipline is enforced at the Python `SnapshotWriter` layer, not at the SQLite storage layer. THREAT_MODEL §3.4 documents that direct SQL against the DB file would succeed and that a row-chain hash is not yet implemented. For court-defensibility, that gap matters.
 - **Do not use SIFTGuard for multi-analyst case collaboration.** There is no concurrent-write coordination, no role-based access, and no per-analyst attribution beyond a single `experiment_run.agent_id` field. Two analysts cannot meaningfully share a case.
-- **Do not use SIFTGuard for cloud memory acquisition without a paired disk image, or for cases where evidence is not already acquired and at rest on the analyst workstation.** The cross-paradigm F1 result is published only against paired disk + memory evidence shapes already present under `/cases/{case_id}/`. The generalization claim does not extend to cloud-only or live-acquired inputs.
+- **Do not use SIFTGuard for cloud memory acquisition without a paired disk image, or for cases where evidence is not already acquired and at rest on the analyst workstation.** The cross-paradigm F1 result is published only against paired disk + memory evidence shapes already present under `/cases/{case_id}/`. The generalization claim does not extend to cloud-only or to live-acquired inputs.
 - **Do not use SIFTGuard as a real-time SOC alerting engine.** Wall-clock latency for a single case ranges from roughly 100 s (Native Loop, TEST-001) to roughly 260 s (Claude Code, TEST-002). The system is an offline-batch analyser, not a streaming-telemetry scorer.
 - **Do not use SIFTGuard as the sole authority on a verdict.** The model can produce an IOC that incidentally matches ground truth (THREAT_MODEL §3.5). Treat its output as analyst-assistive, not analyst-replacing, until field-level provenance and a storage-layer audit moat are in place.
 
@@ -79,7 +79,7 @@ These limitations are not permanent; each has a sequenced resolution. The list b
 
 - **Row-chain SHA-256 hash + SQLite triggers** rejecting UPDATE and DELETE on `iteration_snapshot`, `hypothesis_event`, and `blocked_mutation` (THREAT_MODEL §3.4, ADR-007 §6). Moves append-only enforcement from the Python interface down to the storage layer and closes the audit-tampering gap that today is mitigated only at the application boundary.
 - **Field-level IOC provenance** linking every literal in a finding to a specific byte range of a specific tool output (THREAT_MODEL §3.5, ADR-007 §6). Distinguishes "found correctly" from "guessed correctly" and is the precondition for a court-defensibility story.
-- **LangGraph and Claude Code disk-image tool preambles** to close the TEST-002 F1 = 0.000 gap documented in ADR-006 §generalization-gap. Mechanical work, tracked separately from architectural hardening.
+- **LangGraph and Claude Code disk-image tool preambles** to close the TEST-002 F1 = 0.000 gap documented in ADR-006 §generalization-gap. Mechanical work, tracked separately from architectural hardening, and the smallest item on this list.
 - **Multi-tenant audit-DB layout and RBAC** (THREAT_MODEL §5, ADR-007 §6) as the prerequisite to any shared-infrastructure deployment narrative.
 - **Multi-evaluator scoring and larger n with multi-seed repeats** (ADR-008) to convert descriptive F1 deltas into statistically defensible ones.
 
