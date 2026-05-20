@@ -29,6 +29,9 @@ jobs:
       - name: Ruff format check
         run: ruff format --check src/ tests/
 
+      - name: Generate tool catalog
+        run: python scripts/generate_tool_catalog.py
+
       - name: Run tests (no integration)
         run: |
           pytest tests/ \
