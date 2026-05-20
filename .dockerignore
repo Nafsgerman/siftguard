@@ -1,50 +1,20 @@
-# VCS
-.git
-.gitignore
-.github
-
-# Python
-.venv
-venv
-env
-__pycache__
-*.pyc
-*.pyo
-*.egg-info
-.pytest_cache
-.ruff_cache
-.mypy_cache
-.coverage
-htmlcov
-
-# Evidence — mounted at runtime, never baked into image
 cases/
+.venv
 *.img
 *.E01
-*.dmp
-*.mem
-
-# SIFTGuard runtime state — must never contaminate image
-siftguard_cache/
+*.vmem
 agent_audit.db
-*.db-journal
-*.log
-nohup.out
-tmp/
-.tmp/
-
-# Tests — runtime image stays lean, CI runs tests on host
+siftguard_cache/
+.git
 tests/
-
-# IDE / OS
-.vscode
-.idea
-*.swp
-.DS_Store
-Thumbs.db
-
-# Docs not needed at runtime
-docs/
-ADR/
-*.md
-!README.md
+__pycache__/
+*.pyc
+*.pyo
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+*.egg-info/
+dist/
+build/
+.env
+.env.*
