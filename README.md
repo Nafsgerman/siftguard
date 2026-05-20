@@ -55,15 +55,17 @@ Outage risk (Anthropic 2025-05; OpenAI 2025-06; Google 2025-09), regulatory dive
 Full architectural rationale and rejected alternatives: [`ADR-001`](docs/adr/ADR-001-empirical-evaluation-framework.md) (evaluation framework), [`ADR-006`](docs/adr/ADR-006-multi-orchestrator-vendor-lockin.md) (multi-orchestrator + vendor lock-in), [`ADR-007`](docs/adr/ADR-007-spoliation-moat.md) (spoliation moat). Full ADR index: [`docs/adr/`](docs/adr/).
 
 ---
+
 ## Architecture
 
-```
+![SIFTGuard architecture — Custom MCP Server + Direct Agent Extension, with prompt-based and architectural guardrails distinguished](docs/architecture/architecture-v3.png)
+
 ┌─────────────────────────────────────────────────┐
 │                  SIFTGuard Agent                 │
 │                                                  │
 │  Case Briefing → Hypothesis → Tool Loop → Report │
 └──────────────────┬──────────────────────────────┘
-                   │ MCP Protocol
+│ MCP Protocol
 ┌──────────────────▼──────────────────────────────┐
 │              SIFTGuard MCP Server                │
 │                                                  │
@@ -71,14 +73,13 @@ Full architectural rationale and rejected alternatives: [`ADR-001`](docs/adr/ADR
 │  analyze_mft │ run_regripper │ create_timeline   │
 │  list_files │ extract_file │ sort_timeline       │
 └──────────────────┬──────────────────────────────┘
-                   │
+│
 ┌──────────────────▼──────────────────────────────┐
 │           SANS SIFT Workstation (x86_64)         │
 │                                                  │
 │  Volatility 3 │ log2timeline │ analyzeMFT        │
 │  RegRipper │ The Sleuth Kit (fls/icat)           │
 └─────────────────────────────────────────────────┘
-```
 
 **Architectural Pattern:** Custom MCP Server + Direct Agent Extension (Claude Code compatible)
 
@@ -211,8 +212,6 @@ All tools are **READ-ONLY by architecture**. Destructive commands do not exist i
 ---
 
 ## Agent Loop
-
-```
 Receive case briefing + evidence paths
 → Form initial hypothesis
 → Call forensic tools via MCP
@@ -220,7 +219,6 @@ Receive case briefing + evidence paths
 → Update hypothesis based on findings
 → Repeat until confident or max iterations (15)
 → Output structured incident report
-```
 
 Report sections: Executive Summary · Timeline of Events · Indicators of Compromise · Persistence Mechanisms · Recommendations · Evidence References
 
@@ -279,14 +277,12 @@ Report sections: Executive Summary · Timeline of Events · Indicators of Compro
 
 **Proof:** Spoliation test suite (`tests/spoliation/test_spoliation.py`) — 12 attack scenarios, 12 blocked, 0 failures.
 
-```
 tests/spoliation/test_spoliation.py::test_rm_binary_blocked PASSED
 tests/spoliation/test_spoliation.py::test_dd_wipe_blocked PASSED
 tests/spoliation/test_spoliation.py::test_mkfs_blocked PASSED
 tests/spoliation/test_spoliation.py::test_path_traversal_blocked PASSED
 tests/spoliation/test_spoliation.py::test_redirect_overwrite_blocked PASSED
 ... 12/12 passed in 0.02s
-```
 
 **Secondary (prompt):** SYSTEM_PROMPT instructs read-only operation. If the model ignores this, the architectural boundary still holds. Prompt-based restriction is defense-in-depth, not the primary control.
 
@@ -320,7 +316,6 @@ Live dashboard streams execution events via SSE (`/api/stream/{session_id}`) wit
 
 ## Project Structure
 
-```
 src/siftguard/
 ├── agent/loop.py          # Main agent loop (Claude + tool dispatch)
 ├── mcp_server/
@@ -341,7 +336,6 @@ tests/
 ├── benchmark/             # Ground truth, scorer, runner, reports
 ├── spoliation/            # 12-test suite proving evidence destruction blocked
 └── unit/
-```
 
 ---
 
