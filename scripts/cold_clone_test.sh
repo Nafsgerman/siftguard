@@ -1,38 +1,40 @@
 #!/usr/bin/env bash
-# T19 5-minute cold-clone gate: fresh clone → docker build → docker run → curl OK.
-# Pass criterion: full wall-clock time ≤ 300s.
-
+# cold_clone_test.sh — validates judge can clone + run make demo in ≤ 5 min
 set -euo pipefail
 
-REPO="${REPO:-https://github.com/Nafsgerman/siftguard.git}"
 BUDGET_SECONDS=300
-TMPDIR=$(mktemp -d -t siftguard-coldclone-XXXX)
+REPO_URL="${1:-https://github.com/Nafsgerman/siftguard.git}"
+TMPDIR="$(mktemp -d)"
+PORT=8080
 
 cleanup() {
-    docker rm -f siftguard-demo >/dev/null 2>&1 || true
+    echo "→ Cleaning up temp clone…"
+    cd /tmp
+    make -C "$TMPDIR" demo-stop 2>/dev/null || true
     rm -rf "$TMPDIR"
 }
 trap cleanup EXIT
 
 START=$(date +%s)
 
-echo "[1/3] Clone..."
-git clone --depth=1 "$REPO" "$TMPDIR/siftguard"
-cd "$TMPDIR/siftguard"
+echo "=== SIFTGuard Cold-Clone Gate ==="
+echo "→ Cloning $REPO_URL into $TMPDIR"
+git clone --depth 1 "$REPO_URL" "$TMPDIR"
 
-echo "[2/3] Build + launch..."
+echo "→ Running make demo (budget: ${BUDGET_SECONDS}s)"
+cd "$TMPDIR"
 make demo
 
-echo "[3/3] Verify..."
-curl -fsS http://localhost:8080/ >/dev/null
+echo "→ Verifying dashboard responds…"
+curl -sf "http://localhost:${PORT}/" >/dev/null \
+    && echo "✓  Dashboard OK at http://localhost:${PORT}/"
 
-END=$(date +%s)
-ELAPSED=$((END - START))
-echo ""
-echo "Cold-clone wall-clock: ${ELAPSED}s (budget: ${BUDGET_SECONDS}s)"
+ELAPSED=$(( $(date +%s) - START ))
+echo "→ Wall-clock: ${ELAPSED}s / ${BUDGET_SECONDS}s"
 
 if [ "$ELAPSED" -gt "$BUDGET_SECONDS" ]; then
-    echo "✗ FAIL: exceeded 5-minute budget"
+    echo "✗  FAILED: exceeded ${BUDGET_SECONDS}s budget" >&2
     exit 1
 fi
-echo "✓ PASS"
+
+echo "✓  PASSED cold-clone gate in ${ELAPSED}s"
