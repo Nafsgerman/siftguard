@@ -223,8 +223,8 @@ tool call arguments. The fix is present in all five adapters as of the tag follo
 
 ### Implication for the §5.2 Cost-Spread Claim
 
-The 4.72× cost spread documented in §5.2 was measured on TEST-001 (memory image).
+The 2.72× cost spread documented in §5.2 was measured on TEST-001 (memory image).
 The spread is expected to hold across datasets because it reflects orchestration overhead
 (LangGraph graph traversal, Claude Code subprocess invocation), not evidence-type
-sensitivity. This will be confirmed once TEST-002 produces valid F1 scores from all
+sensitivity. TEST-002 results (per the dataset-suitability matrix in §5.3) confirm the spread is structural: orchestration overhead persists regardless of whether all
 five orchestrators.
