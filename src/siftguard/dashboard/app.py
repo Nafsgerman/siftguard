@@ -91,8 +91,17 @@ async def start_investigation(request: Request):
     memory_image = body.get("memory_image", "")
     training_mode = body.get("training_mode", False)
     orchestrator = body.get("orchestrator", "native")
+    self_correction = body.get("self_correction", True)
     asyncio.create_task(
-        _run_investigation(session_id, case_id, briefing, memory_image, training_mode, orchestrator)
+        _run_investigation(
+            session_id,
+            case_id,
+            briefing,
+            memory_image,
+            training_mode,
+            orchestrator,
+            self_correction,
+        )
     )
     return {"session_id": session_id, "case_id": case_id}
 
@@ -104,6 +113,7 @@ async def _run_investigation(
     memory_image: str,
     training_mode: bool = False,
     orchestrator: str = "native",
+    self_correction: bool = True,
 ):
     if orchestrator == "openai-fc":
         from siftguard.orchestrators.openai_fc_adapter import run_case_openai_fc as run_case
@@ -162,7 +172,7 @@ async def _run_investigation(
             )
 
     try:
-        report = await run_case(
+        run_kwargs: dict = dict(
             case_id=case_id,
             evidence_files=evidence,
             briefing=briefing,
@@ -170,6 +180,11 @@ async def _run_investigation(
             training_mode=training_mode,
             on_event=on_event,
         )
+        # config_override is accepted by the typed v2 adapters only.
+        # Native/haiku route to v1 loop; claudecode is a subprocess wrapper.
+        if orchestrator in ("openai-fc", "langgraph", "gemini"):
+            run_kwargs["config_override"] = {"self_correction": self_correction}
+        report = await run_case(**run_kwargs)
         if report:
             # Universal IOC extraction — works for every orchestrator that returns a report dict
             report_dict = report if isinstance(report, dict) else None
