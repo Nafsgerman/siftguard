@@ -914,10 +914,13 @@ function initIOCStatic() {
   'TEST-002': '/cases/TEST-002/SCHARDT.img',
 };
 function onCaseSelect(caseId) {
-  if (!caseId) return;
+  if (!caseId) {
+    document.getElementById('f-case').value = '';
+    document.getElementById('f-img').value = '';
+    return;
+  }
   document.getElementById('f-case').value = caseId;
-  const img = CASE_IMAGE_MAP[caseId];
-  if (img) document.getElementById('f-img').value = img;
+  document.getElementById('f-img').value = CASE_IMAGE_MAP[caseId] || '';
 }
 // Cases are hardcoded for reliability; /api/cases enriches labels if available
 async function loadCases() {
