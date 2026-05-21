@@ -294,6 +294,11 @@ body.mode-results .nav-item[data-panel="p0"]{display:none !important}
       New Investigation
     </div>
     <div class="form">
+      <div class="form-row"><label>Case</label>
+        <select id="f-case-select" onchange="onCaseSelect(this.value)" style="font-family:var(--mono);font-size:11px">
+          <option value="">Loading cases…</option>
+        </select>
+      </div>
       <div class="form-row"><label>Case ID</label><input class="mono" id="f-case" value="TEST-001" /></div>
       <div class="form-row"><label>Memory Image Path</label><input class="mono" id="f-img" value="/cases/TEST-001/base-hunt-memory.img" /></div>
       <div class="form-row"><label>Briefing</label><textarea id="f-brief">Windows 10 x64 memory image. APT hunt scenario. Suspected compromise. Find evil.</textarea></div>
@@ -807,6 +812,32 @@ function initIOC() {
   node.append('circle').attr('r',d=>d.type==='mitre'?22:16).attr('fill',d=>cmap[d.type]+'22').attr('stroke',d=>cmap[d.type]).attr('stroke-width',d=>d.type==='mitre'?2:1.5);
   node.append('text').attr('text-anchor','middle').attr('dy','0.35em').attr('font-size',d=>d.type==='mitre'?9:10).attr('font-family','Roboto Mono,monospace').attr('fill',d=>cmap[d.type]).attr('font-weight','500')
     .text(d=>d.type==='mitre'?d.id:(d.id.length>12?d.id.slice(0,11)+'…':d.id));
+  const CASE_IMAGE_MAP = {
+  'TEST-001': '/cases/TEST-001/base-hunt-memory.img',
+  'TEST-002': '/cases/TEST-002/SCHARDT.img',
+};
+function onCaseSelect(caseId) {
+  if (!caseId) return;
+  document.getElementById('f-case').value = caseId;
+  const img = CASE_IMAGE_MAP[caseId];
+  if (img) document.getElementById('f-img').value = img;
+}
+async function loadCases() {
+  try {
+    const r = await fetch('/api/cases');
+    const { cases } = await r.json();
+    const sel = document.getElementById('f-case-select');
+    sel.innerHTML = cases.map(c =>
+      `<option value="${c.case_id}">${c.case_id} — ${c.case_name}</option>`
+    ).join('');
+    if (cases.length) onCaseSelect(cases[0].case_id);
+  } catch(e) {
+    document.getElementById('f-case-select').innerHTML = '<option value="TEST-001">TEST-001</option><option value="TEST-002">TEST-002</option>';
+    onCaseSelect('TEST-001');
+  }
+}
+loadCases();
+
   sim.on('tick',()=>{
     link.attr('x1',d=>d.source.x).attr('y1',d=>d.source.y).attr('x2',d=>d.target.x).attr('y2',d=>d.target.y);
     node.attr('transform',d=>`translate(${Math.max(24,Math.min(W-24,d.x))},${Math.max(24,Math.min(H-24,d.y))})`);
