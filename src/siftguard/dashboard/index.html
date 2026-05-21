@@ -938,6 +938,16 @@ async function loadCases() {
   } catch(e) { /* keep hardcoded options */ }
 }
 loadCases();
+// Trigger fill on page load for whatever option is already selected
+window.addEventListener('DOMContentLoaded', () => {
+  const sel = document.getElementById('f-case-select');
+  if (sel && sel.value) onCaseSelect(sel.value);
+});
+// Also fire immediately in case DOMContentLoaded already passed
+(function() {
+  const sel = document.getElementById('f-case-select');
+  if (sel && sel.value) onCaseSelect(sel.value);
+})();
 
   sim.on('tick',()=>{
     link.attr('x1',d=>d.source.x).attr('y1',d=>d.source.y).attr('x2',d=>d.target.x).attr('y2',d=>d.target.y);
