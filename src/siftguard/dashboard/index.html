@@ -755,7 +755,13 @@ async function launchInvestigation() {
           state.tax.path++; updateTax();
         }
       }
-      else if (ev.type === 'ioc') { state.ioc++; updateMetrics(); pushTrail('ioc', (ev.ioc_type || 'ioc') + ' · ' + (ev.value || '')); if (typeof addGraphNode === 'function') addGraphNode(ev.ioc_type || 'other', ev.value || '', 'ioc'); }
+      else if (ev.type === 'ioc') {
+        state.ioc++; updateMetrics();
+        const iocType = ev.ioc_type || ev.type_hint || 'other';
+        const iocVal = ev.value || '';
+        pushTrail('ioc', iocType + ' · ' + iocVal);
+        addGraphNode(iocType, iocVal, 'ioc');
+      }
       else if (ev.type === 'report') { state.viewReport = true; state.reportText = typeof ev.content === 'string' ? ev.content : JSON.stringify(ev.content, null, 2); pushTrail('info', 'Report generated'); const btn = document.getElementById('launch-btn'); btn.textContent = '📋 View Report'; btn.disabled = false; btn.onclick = showReport; }
       else if (ev.type === 'complete') { pushTrail('sys', '✓ Investigation complete · evidence sealed'); setStatus('done', 'Done'); es.close(); state.running = false; clearInterval(state.timerId); }
       else if (ev.type === 'error') { pushTrail('sys', '✗ Error: ' + (ev.message || '')); es.close(); setStatus('', 'Standby'); state.running = false; clearInterval(state.timerId); document.getElementById('launch-btn').disabled = false; document.getElementById('launch-btn').textContent = '▶ Launch Investigation'; }
@@ -910,18 +916,23 @@ function onCaseSelect(caseId) {
   const img = CASE_IMAGE_MAP[caseId];
   if (img) document.getElementById('f-img').value = img;
 }
-async function loadCases() {
+async function loadCases(attempt) {
+  attempt = attempt || 1;
   try {
     const r = await fetch('/api/cases');
+    if (!r.ok) throw new Error('status ' + r.status);
     const { cases } = await r.json();
     const sel = document.getElementById('f-case-select');
-    sel.innerHTML = cases.map(c =>
+    sel.innerHTML = '<option value="">— select case —</option>' + cases.map(c =>
       `<option value="${c.case_id}">${c.case_id} — ${c.case_name}</option>`
     ).join('');
-    if (cases.length) onCaseSelect(cases[0].case_id);
+    // Don't auto-select — user must choose explicitly
+    document.getElementById('f-case').value = '';
+    document.getElementById('f-img').value = '';
   } catch(e) {
-    document.getElementById('f-case-select').innerHTML = '<option value="TEST-001">TEST-001</option><option value="TEST-002">TEST-002</option>';
-    onCaseSelect('TEST-001');
+    if (attempt < 4) { setTimeout(() => loadCases(attempt + 1), 1000 * attempt); return; }
+    const sel = document.getElementById('f-case-select');
+    sel.innerHTML = '<option value="">— select case —</option><option value="TEST-001">TEST-001</option><option value="TEST-002">TEST-002</option>';
   }
 }
 loadCases();

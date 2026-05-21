@@ -185,6 +185,9 @@ async def _run_investigation(
         if orchestrator in ("openai-fc", "langgraph", "gemini"):
             run_kwargs["config_override"] = {"self_correction": self_correction}
         report = await run_case(**run_kwargs)
+        # v2 adapters return (report_str, run_id) — unwrap
+        if isinstance(report, tuple):
+            report = report[0]
         if report:
             # Universal IOC extraction — works for every orchestrator that returns a report dict
             report_dict = report if isinstance(report, dict) else None
