@@ -296,11 +296,13 @@ body.mode-results .nav-item[data-panel="p0"]{display:none !important}
     <div class="form">
       <div class="form-row"><label>Case</label>
         <select id="f-case-select" onchange="onCaseSelect(this.value)" style="font-family:var(--mono);font-size:11px">
-          <option value="">Loading cases…</option>
+          <option value="">— select case —</option>
+          <option value="TEST-001">TEST-001 — SRL-2018 APT Hunt</option>
+          <option value="TEST-002">TEST-002 — NIST CFReDS Hacking Case</option>
         </select>
       </div>
-      <div class="form-row"><label>Case ID</label><input class="mono" id="f-case" value="TEST-001" /></div>
-      <div class="form-row"><label>Memory Image Path</label><input class="mono" id="f-img" value="/cases/TEST-001/base-hunt-memory.img" /></div>
+      <input class="mono" id="f-case" type="hidden" value="" />
+      <div class="form-row"><label>Memory Image Path</label><input class="mono" id="f-img" value="" /></div>
       <div class="form-row"><label>Briefing</label><textarea id="f-brief">Windows 10 x64 memory image. APT hunt scenario. Suspected compromise. Find evil.</textarea></div>
       <div class="form-row"><label>Orchestrator</label>
         <select id="f-orch">
@@ -699,7 +701,8 @@ async function launchInvestigation() {
   const briefing = document.getElementById('f-brief').value.trim();
   const orch = document.getElementById('f-orch').value;
   const selfCorr = document.getElementById('f-selfcorr').checked;
-  if (!caseId || !imgPath) { alert('Case ID and Image Path required'); return; }
+  if (!caseId) { alert('Please select a case first'); document.getElementById('f-case-select').focus(); return; }
+  if (!imgPath) { alert('Memory Image Path required'); return; }
 
   state.running = true;
   state.iter = 0; state.tools = 0; state.find = 0; state.ioc = 0; state.toolTimes = [];
@@ -916,24 +919,20 @@ function onCaseSelect(caseId) {
   const img = CASE_IMAGE_MAP[caseId];
   if (img) document.getElementById('f-img').value = img;
 }
-async function loadCases(attempt) {
-  attempt = attempt || 1;
+// Cases are hardcoded for reliability; /api/cases enriches labels if available
+async function loadCases() {
   try {
     const r = await fetch('/api/cases');
-    if (!r.ok) throw new Error('status ' + r.status);
+    if (!r.ok) return;
     const { cases } = await r.json();
+    if (!cases || !cases.length) return;
     const sel = document.getElementById('f-case-select');
+    const current = sel.value;
     sel.innerHTML = '<option value="">— select case —</option>' + cases.map(c =>
       `<option value="${c.case_id}">${c.case_id} — ${c.case_name}</option>`
     ).join('');
-    // Don't auto-select — user must choose explicitly
-    document.getElementById('f-case').value = '';
-    document.getElementById('f-img').value = '';
-  } catch(e) {
-    if (attempt < 4) { setTimeout(() => loadCases(attempt + 1), 1000 * attempt); return; }
-    const sel = document.getElementById('f-case-select');
-    sel.innerHTML = '<option value="">— select case —</option><option value="TEST-001">TEST-001</option><option value="TEST-002">TEST-002</option>';
-  }
+    if (current) sel.value = current;
+  } catch(e) { /* keep hardcoded options */ }
 }
 loadCases();
 

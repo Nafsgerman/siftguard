@@ -103,6 +103,11 @@ async def start_investigation(request: Request):
             self_correction,
         )
     )
+    # Store orchestrator label for PDF export
+    await push_event(
+        session_id,
+        {"type": "meta", "orchestrator": orchestrator, "self_correction": self_correction},
+    )
     return {"session_id": session_id, "case_id": case_id}
 
 
@@ -166,9 +171,15 @@ async def _run_investigation(
 
     def on_event(event_type: str, data: dict):
         mapped = _EVENT_MAP.get(event_type, event_type)
+        # Rename 'type' key in data → 'ioc_type' to avoid overwriting the SSE event type
+        safe_data = {
+            ("ioc_type" if k == "type" and mapped == "ioc" else k): v for k, v in data.items()
+        }
         with contextlib.suppress(Exception):
             _main_loop.call_soon_threadsafe(
-                lambda: _main_loop.create_task(push_event(session_id, {"type": mapped, **data}))
+                lambda: _main_loop.create_task(
+                    push_event(session_id, {"type": mapped, **safe_data})
+                )
             )
 
     try:
@@ -301,6 +312,12 @@ async def export_pdf(session_id: str):
     story = []
     case_id = next((e["case_id"] for e in events if e.get("case_id")), session_id)
     briefing = next((e.get("briefing", "") for e in events if e.get("type") == "start"), "")
+    orchestrator_label = next(
+        (e.get("orchestrator", "") for e in events if e.get("type") == "meta"), ""
+    )
+    self_corr = next(
+        (e.get("self_correction", True) for e in events if e.get("type") == "meta"), True
+    )
     generated_at = datetime.now(UTC).strftime("%Y-%m-%d %H:%M UTC")
 
     story.append(Paragraph("SIFTGuard DFIR Report", h1))
@@ -309,6 +326,22 @@ async def export_pdf(session_id: str):
     story.append(Paragraph(f"Case ID: <b>{case_id}</b>", meta))
     story.append(Paragraph(f"Generated: {generated_at}", meta))
     story.append(Paragraph(f"Session: {session_id}", meta))
+    if orchestrator_label:
+        orch_map = {
+            "native": "Native Claude Loop",
+            "openai-fc": "OpenAI Function Calling",
+            "langgraph": "LangGraph",
+            "gemini": "Gemini 2.5 Pro",
+            "claudecode": "Claude Code (headless)",
+        }
+        story.append(
+            Paragraph(
+                f"Orchestrator: <b>{orch_map.get(orchestrator_label, orchestrator_label)}</b>", meta
+            )
+        )
+        story.append(
+            Paragraph(f"Self-correction: {'Enabled' if self_corr else 'Disabled (ablation)'}", meta)
+        )
     story.append(Spacer(1, 6 * mm))
 
     if briefing:
