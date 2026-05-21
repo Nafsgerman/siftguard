@@ -301,8 +301,8 @@ body.mode-results .nav-item[data-panel="p0"]{display:none !important}
           <option value="TEST-002">TEST-002 — NIST CFReDS Hacking Case</option>
         </select>
       </div>
-      <input class="mono" id="f-case" type="hidden" value="" />
-      <div class="form-row"><label>Memory Image Path</label><input class="mono" id="f-img" value="" /></div>
+      <input type="hidden" id="f-case" value="TEST-001" />
+      <div class="form-row"><label>Memory Image Path</label><input class="mono" id="f-img" value="/cases/TEST-001/base-hunt-memory.img" /></div>
       <div class="form-row"><label>Briefing</label><textarea id="f-brief">Windows 10 x64 memory image. APT hunt scenario. Suspected compromise. Find evil.</textarea></div>
       <div class="form-row"><label>Orchestrator</label>
         <select id="f-orch">
@@ -701,7 +701,7 @@ async function launchInvestigation() {
   const briefing = document.getElementById('f-brief').value.trim();
   const orch = document.getElementById('f-orch').value;
   const selfCorr = document.getElementById('f-selfcorr').checked;
-  if (!caseId) { alert('Please select a case first'); document.getElementById('f-case-select').focus(); return; }
+  if (!caseId) { alert('Please select a case first'); return; }
   if (!imgPath) { alert('Memory Image Path required'); return; }
 
   state.running = true;
@@ -783,6 +783,16 @@ async function finalizeInvestigation() {
   setNavLiveBadge('Done', 'nb-green');
   document.getElementById('launch-btn').disabled = false;
   pushTrail('sys', '✓ Investigation finalized · all evidence sealed in audit DB');
+}
+
+// ── Case selector ─────────────────────────────────────────────────────────────
+const CASE_IMAGE_MAP = {
+  'TEST-001': '/cases/TEST-001/base-hunt-memory.img',
+  'TEST-002': '/cases/TEST-002/SCHARDT.img',
+};
+function onCaseSelect(caseId) {
+  document.getElementById('f-case').value = caseId || '';
+  document.getElementById('f-img').value = caseId ? (CASE_IMAGE_MAP[caseId] || '') : '';
 }
 
 // ── IOC Graph — dynamic, live-populated ──────────────────────────────────────
@@ -909,21 +919,7 @@ function initIOCStatic() {
   node.append('circle').attr('r',d=>d.type==='mitre'?22:16).attr('fill',d=>cmap[d.type]+'22').attr('stroke',d=>cmap[d.type]).attr('stroke-width',d=>d.type==='mitre'?2:1.5);
   node.append('text').attr('text-anchor','middle').attr('dy','0.35em').attr('font-size',d=>d.type==='mitre'?9:10).attr('font-family','Roboto Mono,monospace').attr('fill',d=>cmap[d.type]).attr('font-weight','500')
     .text(d=>d.type==='mitre'?d.id:(d.id.length>12?d.id.slice(0,11)+'…':d.id));
-  const CASE_IMAGE_MAP = {
-  'TEST-001': '/cases/TEST-001/base-hunt-memory.img',
-  'TEST-002': '/cases/TEST-002/SCHARDT.img',
-};
-function onCaseSelect(caseId) {
-  if (!caseId) {
-    document.getElementById('f-case').value = '';
-    document.getElementById('f-img').value = '';
-    return;
-  }
-  document.getElementById('f-case').value = caseId;
-  document.getElementById('f-img').value = CASE_IMAGE_MAP[caseId] || '';
-}
-// Cases are hardcoded for reliability; /api/cases enriches labels if available
-async function loadCases() {
+  async function loadCases() {
   try {
     const r = await fetch('/api/cases');
     if (!r.ok) return;
