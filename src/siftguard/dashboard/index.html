@@ -741,7 +741,20 @@ async function launchInvestigation() {
       if (ev.type === 'start') { pushTrail('sys', 'Case ' + ev.case_id + ' started'); }
       else if (ev.type === 'iteration') { state.iter = ev.iteration; setM('iter', ev.iteration); setM('max', ev.max); updateMetrics(); }
       else if (ev.type === 'tool_call') { state.tools++; updateMetrics(); pushTrail('tool', ev.tool); }
-      else if (ev.type === 'tool_result') { state.find += ev.findings_count || 0; updateMetrics(); if (ev.duration_ms) state.toolTimes.push(ev.duration_ms); pushTrail('find', ev.tool + ': ' + (ev.summary || '')); }
+      else if (ev.type === 'tool_result') {
+        state.find += ev.findings_count || 0; updateMetrics();
+        if (ev.duration_ms) state.toolTimes.push(ev.duration_ms);
+        const summary = ev.summary || '';
+        pushTrail('find', ev.tool + ': ' + summary);
+        // Self-correction taxonomy
+        if (ev.outcome === 'fail' || summary.toLowerCase().includes('fail') || summary.toLowerCase().includes('error')) {
+          state.tax.retry++; updateTax();
+          pushTrail('sys', `↺ Self-correction: ${ev.tool} failed → agent will adapt strategy`);
+        }
+        if (summary.toLowerCase().includes('0 entries') || summary.toLowerCase().includes('0 records')) {
+          state.tax.path++; updateTax();
+        }
+      }
       else if (ev.type === 'ioc') { state.ioc++; updateMetrics(); pushTrail('ioc', (ev.ioc_type || 'ioc') + ' · ' + (ev.value || '')); if (typeof addGraphNode === 'function') addGraphNode(ev.ioc_type || 'other', ev.value || '', 'ioc'); }
       else if (ev.type === 'report') { state.viewReport = true; state.reportText = typeof ev.content === 'string' ? ev.content : JSON.stringify(ev.content, null, 2); pushTrail('info', 'Report generated'); const btn = document.getElementById('launch-btn'); btn.textContent = '📋 View Report'; btn.disabled = false; btn.onclick = showReport; }
       else if (ev.type === 'complete') { pushTrail('sys', '✓ Investigation complete · evidence sealed'); setStatus('done', 'Done'); es.close(); state.running = false; clearInterval(state.timerId); }
@@ -763,28 +776,103 @@ async function finalizeInvestigation() {
   pushTrail('sys', '✓ Investigation finalized · all evidence sealed in audit DB');
 }
 
+// ── IOC Graph — dynamic, live-populated ──────────────────────────────────────
 let iocInited = false;
+let iocNodes = [], iocLinks = [], iocSim = null, iocNodeSel = null, iocLinkSel = null, iocG = null;
+const iocCmap = {process:'#1a73e8',ip:'#d93025',mitre:'#f9ab00',tool:'#1e8e3e',file:'#9c27b0',other:'#80868b'};
+
 function initIOC() {
   if (iocInited) return;
   iocInited = true;
-  const nodes = [
-    {id:'lsass.exe',type:'process'},{id:'cmd.exe',type:'process'},{id:'powershell.exe',type:'process'},
-    {id:'rundll32.exe',type:'process'},{id:'svchost.exe',type:'process'},
-    {id:'185.234.219.11',type:'ip'},{id:'10.0.0.254',type:'ip'},{id:'45.33.32.156',type:'ip'},
-    {id:'T1055',type:'mitre'},{id:'T1059',type:'mitre'},{id:'T1071',type:'mitre'},{id:'T1003',type:'mitre'},
-    {id:'mimikatz',type:'tool'},{id:'nmap',type:'tool'},
-    {id:'beacon.dll',type:'file'},{id:'passwords.txt',type:'file'},
+  const svg = d3.select('#ioc-svg');
+  svg.selectAll('*').remove();
+  const el = document.getElementById('ioc-svg');
+  const W = el.clientWidth || 700, H = 400;
+  svg.attr('viewBox', `0 0 ${W} ${H}`);
+  svg.append('defs').append('marker').attr('id','arr').attr('viewBox','0 -4 8 8').attr('refX',18).attr('refY',0)
+    .attr('markerWidth',6).attr('markerHeight',6).attr('orient','auto')
+    .append('path').attr('d','M0,-4L8,0L0,4').attr('fill','#bdc1c6');
+  iocG = {link: svg.append('g'), node: svg.append('g')};
+  iocSim = d3.forceSimulation(iocNodes)
+    .force('link', d3.forceLink(iocLinks).id(d=>d.id).distance(85))
+    .force('charge', d3.forceManyBody().strength(-200))
+    .force('center', d3.forceCenter(W/2, H/2))
+    .force('collide', d3.forceCollide(26))
+    .on('tick', iocTick);
+  iocUpdate();
+  // Load from last investigation if available
+  if (state.ioc === 0 && iocNodes.length === 0) {
+    const placeholder = document.createElement('div');
+    placeholder.style = 'text-align:center;padding:40px;color:var(--gray-600);font-size:13px';
+    placeholder.textContent = 'IOC graph populates during live investigation';
+    document.getElementById('ioc-svg').parentElement.insertBefore(placeholder, document.getElementById('ioc-svg'));
+    document.getElementById('ioc-svg').style.display = 'none';
+    window._iocPlaceholder = placeholder;
+  }
+}
+
+function iocTick() {
+  const W = parseInt(d3.select('#ioc-svg').attr('viewBox')?.split(' ')[2] || 700);
+  const H = 400;
+  if (iocLinkSel) iocLinkSel.attr('x1',d=>d.source.x).attr('y1',d=>d.source.y).attr('x2',d=>d.target.x).attr('y2',d=>d.target.y);
+  if (iocNodeSel) iocNodeSel.attr('transform',d=>`translate(${Math.max(24,Math.min(W-24,d.x))},${Math.max(24,Math.min(H-24,d.y))})`);
+}
+
+function iocUpdate() {
+  if (!iocG) return;
+  const tt = document.getElementById('tooltip');
+  const drag = d3.drag()
+    .on('start',(e,d)=>{if(!e.active)iocSim.alphaTarget(.3).restart();d.fx=d.x;d.fy=d.y})
+    .on('drag',(e,d)=>{d.fx=e.x;d.fy=e.y})
+    .on('end',(e,d)=>{if(!e.active)iocSim.alphaTarget(0);d.fx=null;d.fy=null});
+  iocLinkSel = iocG.link.selectAll('line').data(iocLinks, d=>`${d.source.id||d.source}-${d.target.id||d.target}`)
+    .join('line').attr('stroke','#e8eaed').attr('stroke-width',1.5).attr('marker-end','url(#arr)');
+  iocNodeSel = iocG.node.selectAll('g').data(iocNodes, d=>d.id)
+    .join(enter => {
+      const g = enter.append('g').call(drag)
+        .on('mouseover',(e,d)=>{tt.style.opacity='1';tt.textContent=d.type.toUpperCase()+': '+d.id})
+        .on('mousemove',e=>{tt.style.left=(e.clientX+12)+'px';tt.style.top=(e.clientY-28)+'px'})
+        .on('mouseout',()=>{tt.style.opacity='0'});
+      g.append('circle').attr('r',d=>d.type==='mitre'?22:16).attr('fill',d=>(iocCmap[d.type]||'#80868b')+'22').attr('stroke',d=>iocCmap[d.type]||'#80868b').attr('stroke-width',d=>d.type==='mitre'?2:1.5);
+      g.append('text').attr('text-anchor','middle').attr('dy','0.35em').attr('font-size',d=>d.type==='mitre'?9:10).attr('font-family','Roboto Mono,monospace').attr('fill',d=>iocCmap[d.type]||'#80868b').attr('font-weight','500')
+        .text(d=>d.type==='mitre'?d.id:(d.id.length>12?d.id.slice(0,11)+'…':d.id));
+      return g;
+    });
+  iocSim.nodes(iocNodes);
+  iocSim.force('link').links(iocLinks);
+  iocSim.alpha(0.3).restart();
+}
+
+function addGraphNode(type, value, _src) {
+  if (!value) return;
+  // Show SVG, hide placeholder
+  if (window._iocPlaceholder) { window._iocPlaceholder.remove(); window._iocPlaceholder = null; document.getElementById('ioc-svg').style.display = 'block'; }
+  if (!iocInited) { showPanel('p9', document.querySelector('.nav-item[data-panel="p9"]') || {classList:{add:()=>{},remove:()=>{}}}); initIOC(); }
+  const id = value.slice(0, 40);
+  if (iocNodes.find(n=>n.id===id)) return;
+  const newNode = {id, type: type||'other', x: 350, y: 200};
+  // Auto-link to most recent node of different type
+  if (iocNodes.length > 0) {
+    const last = iocNodes[iocNodes.length-1];
+    if (last.type !== newNode.type) iocLinks.push({source: last.id, target: id});
+  }
+  iocNodes.push(newNode);
+  iocUpdate();
+}
+
+// ── LEGACY static graph (kept for Results mode reference) ───────────────────
+function initIOCStatic() {
+  const nodes = iocNodes.length > 0 ? iocNodes : [
+    {id:'usbclient.exe',type:'process'},{id:'license_ctrl.exe',type:'process'},{id:'ftusbsrvc.exe',type:'process'},
+    {id:'172.16.4.10',type:'ip'},{id:'172.16.4.4',type:'ip'},
+    {id:'T1204',type:'mitre'},{id:'T1071',type:'mitre'},{id:'T1571',type:'mitre'},{id:'T1036',type:'mitre'},{id:'T1021',type:'mitre'},
   ];
-  const links = [
-    {source:'powershell.exe',target:'T1059'},{source:'powershell.exe',target:'cmd.exe'},
-    {source:'powershell.exe',target:'185.234.219.11'},{source:'powershell.exe',target:'beacon.dll'},
-    {source:'cmd.exe',target:'rundll32.exe'},{source:'rundll32.exe',target:'T1055'},
-    {source:'rundll32.exe',target:'beacon.dll'},{source:'lsass.exe',target:'T1003'},
-    {source:'lsass.exe',target:'mimikatz'},{source:'lsass.exe',target:'passwords.txt'},
-    {source:'mimikatz',target:'passwords.txt'},{source:'svchost.exe',target:'10.0.0.254'},
-    {source:'svchost.exe',target:'T1071'},{source:'10.0.0.254',target:'T1071'},
-    {source:'nmap',target:'45.33.32.156'},{source:'nmap',target:'10.0.0.254'},
-    {source:'45.33.32.156',target:'185.234.219.11'},
+  const links = iocLinks.length > 0 ? iocLinks : [
+    {source:'usbclient.exe',target:'172.16.4.10'},{source:'usbclient.exe',target:'T1204'},
+    {source:'usbclient.exe',target:'T1036'},{source:'license_ctrl.exe',target:'T1571'},
+    {source:'license_ctrl.exe',target:'T1036'},{source:'ftusbsrvc.exe',target:'T1571'},
+    {source:'172.16.4.10',target:'T1071'},{source:'172.16.4.4',target:'T1021'},
+    {source:'usbclient.exe',target:'172.16.4.4'},
   ];
   const cmap = {process:'#1a73e8',ip:'#d93025',mitre:'#f9ab00',tool:'#1e8e3e',file:'#9c27b0'};
   const svg = d3.select('#ioc-svg');
