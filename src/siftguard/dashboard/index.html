@@ -297,7 +297,7 @@ body.mode-results .nav-item[data-panel="p0"]{display:none !important}
       <div class="form-row"><label>Case</label>
         <select id="f-case-select" onchange="onCaseSelect(this.value)" style="font-family:var(--mono);font-size:11px">
           <option value="">— select case —</option>
-          <option value="TEST-001">TEST-001 — SRL-2018 APT Hunt</option>
+          <option value="TEST-001" selected>TEST-001 — SRL-2018 APT Hunt</option>
           <option value="TEST-002">TEST-002 — NIST CFReDS Hacking Case</option>
         </select>
       </div>
@@ -938,16 +938,7 @@ async function loadCases() {
   } catch(e) { /* keep hardcoded options */ }
 }
 loadCases();
-// Trigger fill on page load for whatever option is already selected
-window.addEventListener('DOMContentLoaded', () => {
-  const sel = document.getElementById('f-case-select');
-  if (sel && sel.value) onCaseSelect(sel.value);
-});
-// Also fire immediately in case DOMContentLoaded already passed
-(function() {
-  const sel = document.getElementById('f-case-select');
-  if (sel && sel.value) onCaseSelect(sel.value);
-})();
+onCaseSelect('TEST-001');
 
   sim.on('tick',()=>{
     link.attr('x1',d=>d.source.x).attr('y1',d=>d.source.y).attr('x2',d=>d.target.x).attr('y2',d=>d.target.y);
