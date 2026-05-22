@@ -74,3 +74,13 @@ The G2 ablation runs logged above (OFF: 2:41, ON: 5:08) were executed on Mac.
 The agent never executed a tool. Reports were aborted error strings.
 Behavioral diff ("MFT failure → substitution") was not observed — it could not have been.
 Real G2 ablation must be re-run on VM. This entry is invalid.
+
+## G2 — VM Re-run (Post-B1 Fix, 2026-05-22)
+
+Real run on VM dashboard after `v1.21.1-B1-cache-path-fix`. Replaces retracted Mac entry.
+
+| Run | Orchestrator | self_correction | Iterations | Tokens In | Tokens Out | Cost | Reason |
+|-----|-------------|-----------------|------------|-----------|------------|------|--------|
+| ON  | LangGraph   | True            | 6          | 62,565    | 5,608      | $0.2718 | verdict_reached |
+
+Tag: `v1.21.2-G2-verified-on-vm`.
