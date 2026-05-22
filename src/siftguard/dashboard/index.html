@@ -742,7 +742,7 @@ async function launchInvestigation() {
     es.onmessage = function(e) {
       const ev = JSON.parse(e.data);
       if (ev.type === 'start') { pushTrail('sys', 'Case ' + ev.case_id + ' started'); }
-      else if (ev.type === 'iteration') { state.iter = ev.iteration; setM('iter', ev.iteration); setM('max', ev.max); updateMetrics(); }
+      else if (ev.type === 'iteration') { state.iter = ev.iteration; updateMetrics(); }
       else if (ev.type === 'tool_call') { state.tools++; updateMetrics(); pushTrail('tool', ev.tool); }
       else if (ev.type === 'tool_result') {
         state.find += ev.findings_count || 0; updateMetrics();
