@@ -245,7 +245,15 @@ async def _run_investigation(
                     )
             await push_event(session_id, {"type": "report", "content": report})
     except Exception as e:
-        await push_event(session_id, {"type": "error", "message": str(e)})
+        import traceback as _tb
+
+        tb_str = _tb.format_exc()
+        print(
+            f"[INVESTIGATION ERROR session={session_id} orch={orchestrator}]\n{tb_str}", flush=True
+        )
+        await push_event(
+            session_id, {"type": "error", "message": f"{type(e).__name__}: {str(e)[:300]}"}
+        )
 
     await push_event(session_id, {"type": "complete"})
 
