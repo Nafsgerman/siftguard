@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import contextlib
 import json
+import os
 from pathlib import Path
 
 from siftguard.mcp_server.safe_exec import SafeExecError, safe_exec
@@ -12,13 +13,19 @@ VOL3 = "/opt/volatility3/bin/vol"
 
 
 def _cache_dir(memory_image: str) -> Path:
-    """Case-scoped cache: derives from the image path, not hardcoded."""
-    image_path = Path(memory_image)
-    # /cases/TEST-001/memory.mem  → /cases/TEST-001/siftguard_cache
-    # /tmp/anything.mem           → /tmp/siftguard_cache_anything
-    parent = image_path.parent
-    cache = parent / "siftguard_cache"
-    cache.mkdir(parents=True, exist_ok=True)
+    """Case-scoped cache: env var override → image-relative → fail loud."""
+    override = os.environ.get("SIFTGUARD_CACHE_DIR")
+    if override:
+        cache = Path(override)
+    else:
+        cache = Path(memory_image).parent / "siftguard_cache"
+    try:
+        cache.mkdir(parents=True, exist_ok=True)
+    except OSError as exc:
+        raise RuntimeError(
+            f"SIFTGuard cache dir not writable: {cache}. "
+            f"Run on SIFT VM or set SIFTGUARD_CACHE_DIR. Original: {exc}"
+        ) from exc
     return cache
 
 

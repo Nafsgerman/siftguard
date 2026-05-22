@@ -66,3 +66,11 @@ Gate string: `SELF-CORRECTION DISABLED` prefix in `src/siftguard/agent/system_pr
 **Ablation diff confirmed:** OFF run proceeds to verdict on MFT failure without substitution.
 ON run attempts `create_supertimeline` substitution after MFT failure (+2:27, +1 retry).
 Gate string: `SELF-CORRECTION DISABLED` prefix in `src/siftguard/agent/system_prompt_gate.py`.
+
+## G2 — RETRACTION NOTE (2026-05-22)
+
+The G2 ablation runs logged above (OFF: 2:41, ON: 5:08) were executed on Mac.
+`vol_pslist` crashed on first tool call: `OSError: Read-only file system: '/cases'`.
+The agent never executed a tool. Reports were aborted error strings.
+Behavioral diff ("MFT failure → substitution") was not observed — it could not have been.
+Real G2 ablation must be re-run on VM. This entry is invalid.
