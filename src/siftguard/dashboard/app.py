@@ -599,6 +599,26 @@ async def orchestrator_comparison(db_id: str, case: str = "all"):
         finally:
             conn.close()
 
+    # Self-correction counts from auditentry JOIN experiment_run
+    corrections_by_agent: dict[str, int] = {}
+    if db_path.exists():
+        _conn2 = sqlite3.connect(str(db_path))
+        try:
+            for _r in _conn2.execute(
+                """
+                SELECT er.agent_id, COUNT(*) AS cnt
+                FROM auditentry a
+                JOIN experiment_run er ON a.run_id = er.run_id
+                WHERE a.correction_event IS NOT NULL
+                GROUP BY er.agent_id
+                """
+            ).fetchall():
+                corrections_by_agent[_r[0]] = _r[1]
+        except Exception:
+            pass
+        finally:
+            _conn2.close()
+
     coverage_hits = 0
     coverage_total = len(ORCH_IDS) * len(target_cases)
     rows = {}
@@ -615,6 +635,7 @@ async def orchestrator_comparison(db_id: str, case: str = "all"):
             "cost_usd": db.get("cost_usd"),
             "iterations": db.get("iterations"),
             "wall_ms": db.get("wall_ms"),
+            "self_corrections": corrections_by_agent.get(aid, 0),
         }
 
     return {

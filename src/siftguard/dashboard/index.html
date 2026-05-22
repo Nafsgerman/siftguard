@@ -471,13 +471,13 @@ body.mode-results .nav-item[data-panel="p0"]{display:none !important}
           <div class="mean-runner"><div style="font-size:10px;color:var(--gray-600);font-weight:500;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Runner-up</div><div style="font-family:var(--display);font-size:28px;font-weight:700;color:var(--gray-900);letter-spacing:-1px;line-height:1">0.800</div><div style="font-size:12px;color:var(--gray-600);margin-top:3px;font-weight:500">Native Claude</div></div>
         </div>
         <table class="rank-table">
-          <thead><tr><th>#</th><th>Orchestrator</th><th>TEST-001</th><th>TEST-002</th><th>Bar</th><th style="text-align:right">Mean</th></tr></thead>
+          <thead><tr><th>#</th><th>Orchestrator</th><th>TEST-001</th><th>TEST-002</th><th>Bar</th><th style="text-align:right">Mean</th><th style="text-align:right;color:var(--blue)">↺ Corrections</th></tr></thead>
           <tbody>
-            <tr><td style="font-family:var(--mono);font-size:10px;color:var(--gray-400)">1</td><td style="font-weight:500">OpenAI FC</td><td><span style="color:var(--green);font-family:var(--mono);font-size:12px;font-weight:500">1.000</span></td><td><span style="color:var(--blue);font-family:var(--mono);font-size:12px;font-weight:500">0.800</span></td><td><div class="rbar-bg"><div class="rbar-fill" style="width:90%"></div></div></td><td class="rscore" style="color:var(--blue)">0.900</td></tr>
-            <tr><td style="font-family:var(--mono);font-size:10px;color:var(--gray-400)">2</td><td style="font-weight:500">Native Claude</td><td><span style="color:var(--green);font-family:var(--mono);font-size:12px;font-weight:500">1.000</span></td><td><span style="color:#b06000;font-family:var(--mono);font-size:12px;font-weight:500">0.600</span></td><td><div class="rbar-bg"><div class="rbar-fill" style="width:80%"></div></div></td><td class="rscore">0.800</td></tr>
-            <tr><td style="font-family:var(--mono);font-size:10px;color:var(--gray-400)">3</td><td style="font-weight:500">ClaudeCode</td><td><span style="color:var(--green);font-family:var(--mono);font-size:12px;font-weight:500">1.000</span></td><td><span style="color:var(--gray-400);font-family:var(--mono);font-size:12px;font-weight:500">0.000</span></td><td><div class="rbar-bg"><div class="rbar-fill" style="width:50%"></div></div></td><td class="rscore">0.500</td></tr>
-            <tr><td style="font-family:var(--mono);font-size:10px;color:var(--gray-400)">4</td><td style="font-weight:500">LangGraph</td><td><span style="color:#b06000;font-family:var(--mono);font-size:12px;font-weight:500">0.750</span></td><td><span style="color:var(--gray-400);font-family:var(--mono);font-size:12px;font-weight:500">0.000</span></td><td><div class="rbar-bg"><div class="rbar-fill" style="width:37.5%"></div></div></td><td class="rscore">0.375</td></tr>
-            <tr><td style="font-family:var(--mono);font-size:10px;color:var(--gray-400)">5</td><td style="font-weight:500">Gemini</td><td><span style="color:var(--red);font-family:var(--mono);font-size:12px;font-weight:500">0.250</span></td><td><span style="color:var(--red);font-family:var(--mono);font-size:12px;font-weight:500">0.400</span></td><td><div class="rbar-bg"><div class="rbar-fill" style="width:32.5%"></div></div></td><td class="rscore" style="color:var(--red)">0.325</td></tr>
+            <tr id="p7r-siftguard-openai-fc"><td style="font-family:var(--mono);font-size:10px;color:var(--gray-400)">1</td><td style="font-weight:500">OpenAI FC</td><td><span style="color:var(--green);font-family:var(--mono);font-size:12px;font-weight:500">1.000</span></td><td><span style="color:var(--blue);font-family:var(--mono);font-size:12px;font-weight:500">0.800</span></td><td><div class="rbar-bg"><div class="rbar-fill" style="width:90%"></div></div></td><td class="rscore" style="color:var(--blue)">0.900</td><td class="rscore" id="p7c-siftguard-openai-fc" style="color:var(--gray-400)">—</td></tr>
+            <tr id="p7r-siftguard-v2"><td style="font-family:var(--mono);font-size:10px;color:var(--gray-400)">2</td><td style="font-weight:500">Native Claude</td><td><span style="color:var(--green);font-family:var(--mono);font-size:12px;font-weight:500">1.000</span></td><td><span style="color:#b06000;font-family:var(--mono);font-size:12px;font-weight:500">0.600</span></td><td><div class="rbar-bg"><div class="rbar-fill" style="width:80%"></div></div></td><td class="rscore">0.800</td><td class="rscore" id="p7c-siftguard-v2" style="color:var(--gray-400)">—</td></tr>
+            <tr id="p7r-siftguard-claudecode"><td style="font-family:var(--mono);font-size:10px;color:var(--gray-400)">3</td><td style="font-weight:500">ClaudeCode</td><td><span style="color:var(--green);font-family:var(--mono);font-size:12px;font-weight:500">1.000</span></td><td><span style="color:var(--gray-400);font-family:var(--mono);font-size:12px;font-weight:500">0.000</span></td><td><div class="rbar-bg"><div class="rbar-fill" style="width:50%"></div></div></td><td class="rscore">0.500</td><td class="rscore" id="p7c-siftguard-claudecode" style="color:var(--gray-400)">—</td></tr>
+            <tr id="p7r-siftguard-langgraph"><td style="font-family:var(--mono);font-size:10px;color:var(--gray-400)">4</td><td style="font-weight:500">LangGraph</td><td><span style="color:#b06000;font-family:var(--mono);font-size:12px;font-weight:500">0.750</span></td><td><span style="color:var(--gray-400);font-family:var(--mono);font-size:12px;font-weight:500">0.000</span></td><td><div class="rbar-bg"><div class="rbar-fill" style="width:37.5%"></div></div></td><td class="rscore">0.375</td><td class="rscore" id="p7c-siftguard-langgraph" style="color:var(--gray-400)">—</td></tr>
+            <tr id="p7r-siftguard-gemini"><td style="font-family:var(--mono);font-size:10px;color:var(--gray-400)">5</td><td style="font-weight:500">Gemini</td><td><span style="color:var(--red);font-family:var(--mono);font-size:12px;font-weight:500">0.250</span></td><td><span style="color:var(--red);font-family:var(--mono);font-size:12px;font-weight:500">0.400</span></td><td><div class="rbar-bg"><div class="rbar-fill" style="width:32.5%"></div></div></td><td class="rscore" style="color:var(--red)">0.325</td><td class="rscore" id="p7c-siftguard-gemini" style="color:var(--gray-400)">—</td></tr>
           </tbody>
         </table>
         <div class="note-warn">ClaudeCode + LangGraph 0.000 on TEST-002 = tool access failure on raw disk image, not reasoning failure. ADR-006 §generalization.</div>
@@ -956,6 +956,30 @@ async function loadCases() {
 }
 loadCases();
 //onCaseSelect('TEST-001');
+
+// ── Panel 7 corrections loader ────────────────────────────────────────────────
+async function loadP7Corrections() {
+  try {
+    const r = await fetch('/api/orchestrator-comparison/CASE-001?case=all');
+    if (!r.ok) return;
+    const { rows } = await r.json();
+    for (const [aid, row] of Object.entries(rows)) {
+      const cell = document.getElementById('p7c-' + aid);
+      if (!cell) continue;
+      const n = row.self_corrections ?? 0;
+      cell.textContent = n > 0 ? n : '0';
+      cell.style.color = n > 0 ? 'var(--blue)' : 'var(--gray-400)';
+    }
+  } catch(e) { /* silent — column stays at — */ }
+}
+
+// Patch showPanel to trigger corrections load when P7 is shown
+const _origShowPanel = showPanel;
+function showPanel(id, el) {
+  _origShowPanel(id, el);
+  if (id === 'p7') loadP7Corrections();
+}
+loadP7Corrections(); // eager load on page init
 </script>
 </body>
 </html>
