@@ -129,14 +129,30 @@ async def _dispatch(
 
 
 def _write_raw_result(agent_id: str, case_id: str, payload: Any, ts: str) -> Path:
+    from siftguard.agent.output_validator import parse_agent_output
+
     out_dir = RESULTS_DIR / agent_id.replace("siftguard-", "baseline_") / case_id
     out_dir.mkdir(parents=True, exist_ok=True)
     out_file = out_dir / f"result_{ts}.json"
-    body = (
+
+    raw_text = (
         payload
-        if isinstance(payload, dict | list | str | int | float)
-        else (payload.report if hasattr(payload, "report") else {"raw": str(payload)})
+        if isinstance(payload, str)
+        else (payload.report if hasattr(payload, "report") else None)
     )
+
+    if isinstance(raw_text, str):
+        parsed, _err = parse_agent_output(raw_text)
+        if parsed is not None:
+            body: Any = {
+                "report_text": raw_text,
+                "parsed": parsed.model_dump(mode="json"),
+            }
+        else:
+            body = raw_text
+    else:
+        body = payload if isinstance(payload, dict | list | int | float) else {"raw": str(payload)}
+
     out_file.write_text(json.dumps(body, indent=2, default=str))
     return out_file
 

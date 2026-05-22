@@ -293,6 +293,7 @@ async def run_case_v2(
     )
 
     state = V2RunState(run_id=run_id, case_id=case_id, model=model)
+    prev_iter_had_failures: bool = False
 
     evidence_summary = "\n".join(f"- {label}: {path}" for label, path in evidence_files.items())
     initial_message = (
@@ -325,10 +326,11 @@ async def run_case_v2(
         )
 
     final_report = ""
-    iter_wall_start = time.time()
 
     for iteration in range(_max_iter):
         state.completed_iterations = iteration + 1
+        iter_wall_start = time.time()
+        iter_had_failures: bool = False
         console.print(f"\n[dim]── Iteration {iteration + 1}/{_max_iter} ──[/dim]")
 
         # Edit 1: line 233 (in main client.messages.create call)
@@ -582,6 +584,9 @@ async def run_case_v2(
 
                 result = await _dispatch_tool(tool_call.name, tool_call.input)
 
+                if result.outcome.value == "fail":
+                    iter_had_failures = True
+
                 # Audit row with all new columns populated
                 audit.record(
                     case_id=case_id,
@@ -596,7 +601,11 @@ async def run_case_v2(
                     tokens_in=tokens_in,  # NEW
                     tokens_out=tokens_out,  # NEW
                     cost_usd=cost,  # NEW
-                    correction_event=(agent_out.correction_event if agent_out else None),  # NEW
+                    correction_event=(
+                        agent_out.correction_event
+                        if (agent_out and agent_out.correction_event)
+                        else ("tool_failure_recovery" if prev_iter_had_failures else None)
+                    ),  # NEW
                 )
 
                 if on_event:
@@ -622,6 +631,9 @@ async def run_case_v2(
                 )
 
             messages.append({"role": "user", "content": tool_results})
+
+        # Propagate per-iteration failure state into next iteration's recovery tag.
+        prev_iter_had_failures = iter_had_failures
 
         # ── Verdict check ────────────────────────────────────────────────────
         if agent_out and agent_out.next_action.decision == "verdict":
