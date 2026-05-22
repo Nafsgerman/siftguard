@@ -204,28 +204,49 @@ async def _run_investigation(
             flush=True,
         )
         if report:
-            # Universal IOC extraction — works for every orchestrator that returns a report dict
+            # Universal IOC extraction — works for every orchestrator
             report_dict = report if isinstance(report, dict) else None
             if not report_dict and isinstance(report, str):
                 import re as _re_ioc
 
-                m = _re_ioc.search(
-                    r"```(?:siftguard-report|json)?\s*\n(\{.*?\})\n```", report, _re_ioc.DOTALL
-                )
+                # Greedy match — JSON block is the last code fence in the report
+                m = _re_ioc.search(r"```json\s*(\{.*\})\s*```", report, _re_ioc.DOTALL)
                 if m:
                     try:
                         report_dict = json.loads(m.group(1))
-                    except Exception:
+                        print(
+                            f"[IOC EXTRACT] Parsed {len(report_dict.get('findings', []))} findings from report",
+                            flush=True,
+                        )
+                    except Exception as _e:
+                        print(f"[IOC EXTRACT] JSON parse failed: {_e}", flush=True)
                         report_dict = None
             if report_dict:
                 _IOC_TYPE_MAP = {
                     "process": "process",
                     "network": "ip",
                     "ip": "ip",
+                    "port": "ip",
                     "file": "file",
                     "registry": "registry",
                     "hash": "hash",
+                    "technique": "mitre",
                 }
+                # Extract from v2 structured findings (the agent's actual output format)
+                for finding in report_dict.get("findings") or []:
+                    ftype = (finding.get("type") or "").lower()
+                    if ftype in _IOC_TYPE_MAP:
+                        on_event(
+                            "ioc_detected",
+                            {
+                                "ioc_type": _IOC_TYPE_MAP[ftype],
+                                "value": finding.get("value", ""),
+                                "evidence": finding.get("evidence_excerpt", ""),
+                                "confidence": finding.get("confidence"),
+                                "mitre_technique": finding.get("mitre_technique"),
+                            },
+                        )
+                # Legacy fallback for older report formats
                 for ioc in (report_dict.get("confirmed_iocs") or []) + (
                     report_dict.get("suspicious_indicators") or []
                 ):
@@ -238,11 +259,14 @@ async def _run_investigation(
                             "confirmed": ioc in (report_dict.get("confirmed_iocs") or []),
                         },
                     )
-                for tech in (
+                # MITRE techniques from verdict block or top-level
+                mitre_list = (
                     report_dict.get("mitre_techniques")
+                    or (report_dict.get("verdict") or {}).get("mitre_techniques")
                     or report_dict.get("sections", {}).get("mitre_techniques")
                     or []
-                ):
+                )
+                for tech in mitre_list:
                     on_event(
                         "ioc_detected",
                         {"ioc_type": "mitre", "value": tech, "evidence": [], "confirmed": True},
