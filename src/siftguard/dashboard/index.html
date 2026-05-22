@@ -919,28 +919,29 @@ function initIOCStatic() {
   node.append('circle').attr('r',d=>d.type==='mitre'?22:16).attr('fill',d=>cmap[d.type]+'22').attr('stroke',d=>cmap[d.type]).attr('stroke-width',d=>d.type==='mitre'?2:1.5);
   node.append('text').attr('text-anchor','middle').attr('dy','0.35em').attr('font-size',d=>d.type==='mitre'?9:10).attr('font-family','Roboto Mono,monospace').attr('fill',d=>cmap[d.type]).attr('font-weight','500')
     .text(d=>d.type==='mitre'?d.id:(d.id.length>12?d.id.slice(0,11)+'…':d.id));
-  async function loadCases() {
-  try {
-    const r = await fetch('/api/cases');
-    if (!r.ok) return;
-    const { cases } = await r.json();
-    if (!cases || !cases.length) return;
-    const sel = document.getElementById('f-case-select');
-    const current = sel.value;
-    sel.innerHTML = '<option value="">— select case —</option>' + cases.map(c =>
-      `<option value="${c.case_id}">${c.case_id} — ${c.case_name}</option>`
-    ).join('');
-    if (current) sel.value = current;
-  } catch(e) { /* keep hardcoded options */ }
-}
-loadCases();
-onCaseSelect('TEST-001');
 
   sim.on('tick',()=>{
     link.attr('x1',d=>d.source.x).attr('y1',d=>d.source.y).attr('x2',d=>d.target.x).attr('y2',d=>d.target.y);
     node.attr('transform',d=>`translate(${Math.max(24,Math.min(W-24,d.x))},${Math.max(24,Math.min(H-24,d.y))})`);
   });
 }
+// ── Case init — runs at page load, outside all functions ─────────────────────
+async function loadCases() {
+  try {
+    const r = await fetch('/api/cases');
+    if (!r.ok) return;
+    const { cases } = await r.json();
+    if (!cases || !cases.length) return;
+    const sel = document.getElementById('f-case-select');
+    sel.innerHTML = '<option value="">— select case —</option>' + cases.map(c =>
+      `<option value="${c.case_id}">${c.case_id} — ${c.case_name}</option>`
+    ).join('');
+    sel.value = 'TEST-001';
+    onCaseSelect('TEST-001');
+  } catch(e) { /* hardcoded options already in HTML */ }
+}
+loadCases();
+onCaseSelect('TEST-001');
 </script>
 </body>
 </html>
