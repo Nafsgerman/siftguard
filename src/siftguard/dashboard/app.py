@@ -199,6 +199,10 @@ async def _run_investigation(
         # v2 adapters return (report_str, run_id) — unwrap
         if isinstance(report, tuple):
             report = report[0]
+        print(
+            f"[POST-RUN] orch={orchestrator} report_type={type(report).__name__} report_len={len(report) if report else 0}",
+            flush=True,
+        )
         if report:
             # Universal IOC extraction — works for every orchestrator that returns a report dict
             report_dict = report if isinstance(report, dict) else None
