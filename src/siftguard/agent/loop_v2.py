@@ -384,6 +384,47 @@ async def run_case_v2(
 
         # ── Early exit: substantial report written, even if response truncated ──
         if final_report and "## Executive Summary" in final_report and len(final_report) > 1500:
+            # Parse JSON block from final report to extract findings + emit IOC events
+            import re as _re_json
+
+            _json_match = _re_json.search(
+                r"```json\s*\n(\{.*?\})\n```", final_report, _re_json.DOTALL
+            )
+            if _json_match:
+                try:
+                    _parsed = json.loads(_json_match.group(1))
+                    _findings = _parsed.get("findings", [])
+                    for _f in _findings:
+                        _ftype = (_f.get("type") or "").lower()
+                        _fval = _f.get("value", "")
+                        if _ftype and _fval:
+                            state.all_findings.append(_f)
+                            if _ftype in IOC_TYPES and on_event:
+                                on_event(
+                                    "ioc_detected",
+                                    {
+                                        "type": _ftype,
+                                        "value": _fval,
+                                        "confidence": _f.get("confidence"),
+                                        "mitre_technique": _f.get("mitre_technique"),
+                                        "iteration": iteration,
+                                    },
+                                )
+                    # Also emit MITRE techniques from verdict
+                    _verdict = _parsed.get("verdict") or {}
+                    for _tech in _verdict.get("mitre_techniques") or []:
+                        if on_event:
+                            on_event(
+                                "ioc_detected",
+                                {
+                                    "type": "technique",
+                                    "value": _tech,
+                                    "confidence": 0.9,
+                                    "iteration": iteration,
+                                },
+                            )
+                except Exception as _e:
+                    logger.warning("Failed to parse report JSON block: %s", _e)
             if on_event:
                 on_event(
                     "verdict_reached",
