@@ -296,14 +296,14 @@ body.mode-results .nav-item[data-panel="p0"]{display:none !important}
     <div class="form">
       <div class="form-row"><label>Case</label>
         <select id="f-case-select" onchange="onCaseSelect(this.value)" style="font-family:var(--mono);font-size:11px">
-          <option value="">— select case —</option>
-          <option value="TEST-001" selected>TEST-001 — SRL-2018 APT Hunt</option>
+          <option value="" selected>— select case —</option>
+          <option value="TEST-001">TEST-001 — SRL-2018 APT Hunt</option>
           <option value="TEST-002">TEST-002 — NIST CFReDS Hacking Case</option>
         </select>
       </div>
-      <input type="hidden" id="f-case" value="TEST-001" />
-      <div class="form-row"><label>Memory Image Path</label><input class="mono" id="f-img" value="/cases/TEST-001/base-hunt-memory.img" /></div>
-      <div class="form-row"><label>Briefing</label><textarea id="f-brief">Windows 10 x64 memory image. APT hunt scenario. Suspected compromise. Find evil.</textarea></div>
+      <input type="hidden" id="f-case" value="" />
+      <div class="form-row"><label>Memory Image Path</label><input class="mono" id="f-img" value="" placeholder="auto-fills from case" /></div>
+      <div class="form-row"><label>Briefing</label><textarea id="f-brief" placeholder="Describe the case…">Windows 10 x64 memory image. APT hunt scenario. Suspected compromise. Find evil.</textarea></div>
       <div class="form-row"><label>Orchestrator</label>
         <select id="f-orch">
           <option value="native">Native Claude Loop</option>
@@ -941,7 +941,7 @@ async function loadCases() {
   } catch(e) { /* hardcoded options already in HTML */ }
 }
 loadCases();
-onCaseSelect('TEST-001');
+//onCaseSelect('TEST-001');
 </script>
 </body>
 </html>
