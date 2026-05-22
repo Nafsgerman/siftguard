@@ -610,6 +610,7 @@ function showPanel(id, el) {
   document.getElementById(id).classList.add('active');
   el.classList.add('active');
   if (id === 'p9') initIOC();
+  if (id === 'p7') loadP7Corrections();
 }
 
 function switchCase(id, btn) {
@@ -954,6 +955,7 @@ async function loadCases() {
     onCaseSelect('TEST-001');
   } catch(e) { /* hardcoded options already in HTML */ }
 }
+
 loadCases();
 //onCaseSelect('TEST-001');
 
@@ -972,14 +974,8 @@ async function loadP7Corrections() {
     }
   } catch(e) { /* silent — column stays at — */ }
 }
+loadP7Corrections();
 
-// Patch showPanel to trigger corrections load when P7 is shown
-const _origShowPanel = showPanel;
-function showPanel(id, el) {
-  _origShowPanel(id, el);
-  if (id === 'p7') loadP7Corrections();
-}
-loadP7Corrections(); // eager load on page init
 </script>
 </body>
 </html>
