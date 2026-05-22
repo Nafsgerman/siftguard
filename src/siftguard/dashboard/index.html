@@ -814,10 +814,12 @@ function initIOC() {
     .append('path').attr('d','M0,-4L8,0L0,4').attr('fill','#bdc1c6');
   iocG = {link: svg.append('g'), node: svg.append('g')};
   iocSim = d3.forceSimulation(iocNodes)
-    .force('link', d3.forceLink(iocLinks).id(d=>d.id).distance(85))
-    .force('charge', d3.forceManyBody().strength(-200))
+    .force('link', d3.forceLink(iocLinks).id(d=>d.id).distance(110).strength(0.8))
+    .force('charge', d3.forceManyBody().strength(-450))
     .force('center', d3.forceCenter(W/2, H/2))
-    .force('collide', d3.forceCollide(26))
+    .force('collide', d3.forceCollide(d => d.type === 'mitre' ? 38 : 32))
+    .force('x', d3.forceX(W/2).strength(0.05))
+    .force('y', d3.forceY(H/2).strength(0.05))
     .on('tick', iocTick);
   iocUpdate();
   // Load from last investigation if available
@@ -865,16 +867,27 @@ function iocUpdate() {
 
 function addGraphNode(type, value, _src) {
   if (!value) return;
-  // Show SVG, hide placeholder
   if (window._iocPlaceholder) { window._iocPlaceholder.remove(); window._iocPlaceholder = null; document.getElementById('ioc-svg').style.display = 'block'; }
   if (!iocInited) { showPanel('p9', document.querySelector('.nav-item[data-panel="p9"]') || {classList:{add:()=>{},remove:()=>{}}}); initIOC(); }
-  const id = value.slice(0, 40);
+  const id = value.slice(0, 50);
   if (iocNodes.find(n=>n.id===id)) return;
-  const newNode = {id, type: type||'other', x: 350, y: 200};
-  // Auto-link to most recent node of different type
-  if (iocNodes.length > 0) {
-    const last = iocNodes[iocNodes.length-1];
-    if (last.type !== newNode.type) iocLinks.push({source: last.id, target: id});
+  const newNode = {id, type: type||'other'};
+  // Smart linking by domain:
+  // - Process → MITRE (techniques attributed to it)
+  // - Process → IP (network communication)
+  // - IP → MITRE (technique applied via this IP)
+  if (type === 'mitre') {
+    // Link MITRE to most recent process or ip
+    const anchor = [...iocNodes].reverse().find(n => n.type === 'process' || n.type === 'ip');
+    if (anchor) iocLinks.push({source: anchor.id, target: id});
+  } else if (type === 'ip') {
+    // Link IP to most recent process
+    const anchor = [...iocNodes].reverse().find(n => n.type === 'process');
+    if (anchor) iocLinks.push({source: anchor.id, target: id});
+  } else if (type === 'process' && iocNodes.filter(n => n.type === 'process').length > 0) {
+    // Link sibling processes loosely (lateral movement chains)
+    const firstProcess = iocNodes.find(n => n.type === 'process');
+    if (firstProcess && firstProcess.id !== id) iocLinks.push({source: firstProcess.id, target: id});
   }
   iocNodes.push(newNode);
   iocUpdate();
