@@ -233,32 +233,31 @@ async def _run_investigation(
                     "technique": "mitre",
                 }
                 # Extract from v2 structured findings (the agent's actual output format)
+                ioc_events_emitted = 0
                 for finding in report_dict.get("findings") or []:
                     ftype = (finding.get("type") or "").lower()
                     if ftype in _IOC_TYPE_MAP:
-                        on_event(
-                            "ioc_detected",
-                            {
-                                "ioc_type": _IOC_TYPE_MAP[ftype],
-                                "value": finding.get("value", ""),
-                                "evidence": finding.get("evidence_excerpt", ""),
-                                "confidence": finding.get("confidence"),
-                                "mitre_technique": finding.get("mitre_technique"),
-                            },
-                        )
+                        await push_event(session_id, {
+                            "type": "ioc",
+                            "ioc_type": _IOC_TYPE_MAP[ftype],
+                            "value": finding.get("value", ""),
+                            "evidence": finding.get("evidence_excerpt", ""),
+                            "confidence": finding.get("confidence"),
+                            "mitre_technique": finding.get("mitre_technique"),
+                        })
+                        ioc_events_emitted += 1
                 # Legacy fallback for older report formats
                 for ioc in (report_dict.get("confirmed_iocs") or []) + (
                     report_dict.get("suspicious_indicators") or []
                 ):
-                    on_event(
-                        "ioc_detected",
-                        {
-                            "ioc_type": _IOC_TYPE_MAP.get(ioc.get("type", "").lower(), "other"),
-                            "value": ioc.get("value", ""),
-                            "evidence": ioc.get("evidence", []),
-                            "confirmed": ioc in (report_dict.get("confirmed_iocs") or []),
-                        },
-                    )
+                    await push_event(session_id, {
+                        "type": "ioc",
+                        "ioc_type": _IOC_TYPE_MAP.get(ioc.get("type", "").lower(), "other"),
+                        "value": ioc.get("value", ""),
+                        "evidence": ioc.get("evidence", []),
+                        "confirmed": ioc in (report_dict.get("confirmed_iocs") or []),
+                    })
+                    ioc_events_emitted += 1
                 # MITRE techniques from verdict block or top-level
                 mitre_list = (
                     report_dict.get("mitre_techniques")
@@ -267,10 +266,15 @@ async def _run_investigation(
                     or []
                 )
                 for tech in mitre_list:
-                    on_event(
-                        "ioc_detected",
-                        {"ioc_type": "mitre", "value": tech, "evidence": [], "confirmed": True},
-                    )
+                    await push_event(session_id, {
+                        "type": "ioc",
+                        "ioc_type": "mitre",
+                        "value": tech,
+                        "evidence": [],
+                        "confirmed": True,
+                    })
+                    ioc_events_emitted += 1
+                print(f"[IOC EMIT] Pushed {ioc_events_emitted} ioc events to session {session_id}", flush=True)
             await push_event(session_id, {"type": "report", "content": report})
     except Exception as e:
         import traceback as _tb
