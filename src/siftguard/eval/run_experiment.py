@@ -62,11 +62,14 @@ async def _dispatch(
     briefing: str,
     audit_db: str,
     manifest: Any = None,
-) -> tuple[Any, str | None]:
+    self_correction: bool = True,
+) -> tuple[Any, Optional[str]]:
+    from siftguard.agent.system_prompt_gate import build_system_prompt_prefix
     from siftguard.cases.tool_injection import build_tools_preamble, manifest_from_case_loader
     from siftguard.eval.scorer import get_last_run_id
 
     preamble = build_tools_preamble(manifest_from_case_loader(manifest)) if manifest else ""
+    system_prefix = build_system_prompt_prefix(self_correction, preamble)
 
     result = None
     if agent_id == "siftguard-langgraph":
@@ -78,7 +81,7 @@ async def _dispatch(
             briefing=briefing,
             audit_db=audit_db,
             on_event=None,
-            system_prompt_prefix=preamble,
+            system_prompt_prefix=system_prefix,
         )
     elif agent_id == "siftguard-openai-fc":
         from siftguard.orchestrators.openai_fc_adapter import run_case_openai_fc
@@ -89,7 +92,7 @@ async def _dispatch(
             briefing=briefing,
             audit_db=audit_db,
             on_event=None,
-            system_prompt_prefix=preamble,
+            system_prompt_prefix=system_prefix,
         )
     elif agent_id == "siftguard-gemini":
         from siftguard.orchestrators.gemini_adapter import run_case_gemini
@@ -100,26 +103,25 @@ async def _dispatch(
             briefing=briefing,
             audit_db=audit_db,
             on_event=None,
-            system_prompt_prefix=preamble,
+            system_prompt_prefix=system_prefix,
         )
     elif agent_id == "siftguard-claudecode":
         from siftguard.eval.orchestrators.claude_code_adapter import ClaudeCodeAdapter
 
         adapter = ClaudeCodeAdapter()
         result = await asyncio.get_running_loop().run_in_executor(
-            None,
-            lambda: adapter.run(case_id, preamble + briefing),  # type: ignore[arg-type, return-value]
+            None, lambda: adapter.run(case_id, system_prefix + briefing)
         )
     elif agent_id == "siftguard-v2":
         from siftguard.agent.loop import run_case
 
-        result = await run_case(  # type: ignore[assignment]
+        result = await run_case(
             case_id=case_id,
             evidence_files=evidence,
             briefing=briefing,
             audit_db=audit_db,
             on_event=None,
-            system_prompt_prefix=preamble,
+            system_prompt_prefix=system_prefix,
         )
     else:
         raise SystemExit(f"Unhandled agent_id: {agent_id}")

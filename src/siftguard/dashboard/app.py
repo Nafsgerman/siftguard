@@ -193,8 +193,13 @@ async def _run_investigation(
         )
         # config_override is accepted by the typed v2 adapters only.
         # Native/haiku route to v1 loop; claudecode is a subprocess wrapper.
+        from siftguard.agent.system_prompt_gate import build_system_prompt_prefix
+
         if orchestrator in ("openai-fc", "langgraph", "gemini"):
             run_kwargs["config_override"] = {"self_correction": self_correction}
+            run_kwargs["system_prompt_prefix"] = build_system_prompt_prefix(self_correction)
+        elif orchestrator == "native":
+            run_kwargs["system_prompt_prefix"] = build_system_prompt_prefix(self_correction)
         report = await run_case(**run_kwargs)
         # v2 adapters return (report_str, run_id) — unwrap
         if isinstance(report, tuple):
