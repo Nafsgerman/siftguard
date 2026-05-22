@@ -55,3 +55,14 @@ first if existing audit DB rows / result files can validate the change."*
 **Ablation diff confirmed:** OFF run proceeds to verdict on MFT failure without substitution.
 ON run attempts `create_supertimeline` substitution after MFT failure (+2:27, +1 retry).
 Gate string: `SELF-CORRECTION DISABLED` prefix in `src/siftguard/agent/system_prompt_gate.py`.
+
+## G2 — Self-Correction Ablation Verification Runs (2026-05-22)
+
+| Run | Orchestrator | self_correction | Elapsed | Iterations | Tool Calls | Retries | Path Fixes | Cost (est.) |
+|-----|-------------|-----------------|---------|------------|------------|---------|------------|-------------|
+| OFF | LangGraph   | False           | 2:41    | 5          | 10         | 4       | 4          | ~$0.20      |
+| ON  | LangGraph   | True            | 5:08    | 5          | 10         | 5       | 3          | ~$0.25      |
+
+**Ablation diff confirmed:** OFF run proceeds to verdict on MFT failure without substitution.
+ON run attempts `create_supertimeline` substitution after MFT failure (+2:27, +1 retry).
+Gate string: `SELF-CORRECTION DISABLED` prefix in `src/siftguard/agent/system_prompt_gate.py`.
