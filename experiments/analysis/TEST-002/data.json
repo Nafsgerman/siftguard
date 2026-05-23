@@ -4,25 +4,25 @@
       "siftguard-v2": {
         "runs": [
           {
-            "f1": 0.6,
-            "timestamp": "20260515",
+            "f1": 0.5,
+            "timestamp": "20260515_043646",
             "gt_version": "1.1.0",
-            "applicable_count": 5
+            "applicable_count": 8
           }
         ],
-        "mean": 0.6,
+        "mean": 0.5,
         "n": 1,
         "case_scores": {
-          "TEST-002": 0.6
+          "TEST-002": 0.5
         }
       },
       "siftguard-langgraph": {
         "runs": [
           {
             "f1": 0.0,
-            "timestamp": "20260515",
+            "timestamp": "20260515_062331",
             "gt_version": "1.1.0",
-            "applicable_count": 5
+            "applicable_count": 8
           }
         ],
         "mean": 0.0,
@@ -34,40 +34,40 @@
       "siftguard-openai-fc": {
         "runs": [
           {
-            "f1": 0.8,
-            "timestamp": "20260515",
+            "f1": 0.75,
+            "timestamp": "20260515_062555",
             "gt_version": "1.1.0",
-            "applicable_count": 5
+            "applicable_count": 8
           }
         ],
-        "mean": 0.8,
+        "mean": 0.75,
         "n": 1,
         "case_scores": {
-          "TEST-002": 0.8
+          "TEST-002": 0.75
         }
       },
       "siftguard-gemini": {
         "runs": [
           {
-            "f1": 0.4,
-            "timestamp": "20260515",
+            "f1": 0.5,
+            "timestamp": "20260515_062750",
             "gt_version": "1.1.0",
-            "applicable_count": 5
+            "applicable_count": 8
           }
         ],
-        "mean": 0.4,
+        "mean": 0.5,
         "n": 1,
         "case_scores": {
-          "TEST-002": 0.4
+          "TEST-002": 0.5
         }
       },
       "siftguard-claudecode": {
         "runs": [
           {
             "f1": 0.0,
-            "timestamp": "20260515",
+            "timestamp": "20260515_063814",
             "gt_version": "1.1.0",
-            "applicable_count": 5
+            "applicable_count": 8
           }
         ],
         "mean": 0.0,
@@ -76,6 +76,108 @@
           "TEST-002": 0.0
         }
       }
-    }
+    },
+    "gt_version": "1.1.0",
+    "applicable_count": 8,
+    "detail": [
+      {
+        "agent_id": "siftguard-v2",
+        "f1": 0.5,
+        "tp": 4,
+        "fn": 4,
+        "hits": [
+          "file-001",
+          "file-002",
+          "user-001",
+          "user-002"
+        ],
+        "misses": [
+          "file-003",
+          "file-004",
+          "file-005",
+          "file-006"
+        ],
+        "text_len": 10280,
+        "source_file": "experiments/results/baseline/TEST-002/result_20260515_043646.json"
+      },
+      {
+        "agent_id": "siftguard-langgraph",
+        "f1": 0.0,
+        "tp": 0,
+        "fn": 8,
+        "hits": [],
+        "misses": [
+          "file-001",
+          "file-002",
+          "file-003",
+          "file-004",
+          "file-005",
+          "file-006",
+          "user-001",
+          "user-002"
+        ],
+        "text_len": 62,
+        "source_file": "experiments/results/baseline_langgraph/TEST-002/result_20260515_062331.json"
+      },
+      {
+        "agent_id": "siftguard-openai-fc",
+        "f1": 0.75,
+        "tp": 6,
+        "fn": 2,
+        "hits": [
+          "file-001",
+          "file-002",
+          "file-003",
+          "file-004",
+          "file-006",
+          "user-001"
+        ],
+        "misses": [
+          "file-005",
+          "user-002"
+        ],
+        "text_len": 7824,
+        "source_file": "experiments/results/baseline_openai-fc/TEST-002/result_20260515_062555.json"
+      },
+      {
+        "agent_id": "siftguard-gemini",
+        "f1": 0.5,
+        "tp": 4,
+        "fn": 4,
+        "hits": [
+          "file-001",
+          "file-002",
+          "file-003",
+          "user-002"
+        ],
+        "misses": [
+          "file-004",
+          "file-005",
+          "file-006",
+          "user-001"
+        ],
+        "text_len": 9088,
+        "source_file": "experiments/results/baseline_gemini/TEST-002/result_20260515_062750.json"
+      },
+      {
+        "agent_id": "siftguard-claudecode",
+        "f1": 0.0,
+        "tp": 0,
+        "fn": 8,
+        "hits": [],
+        "misses": [
+          "file-001",
+          "file-002",
+          "file-003",
+          "file-004",
+          "file-005",
+          "file-006",
+          "user-001",
+          "user-002"
+        ],
+        "text_len": 0,
+        "source_file": "experiments/results/baseline_claudecode/TEST-002/result_20260515_063814.json"
+      }
+    ]
   }
 }
