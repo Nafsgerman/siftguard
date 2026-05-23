@@ -54,15 +54,15 @@ The schema is the contract. An orchestrator cannot smuggle in a shell call by fo
 
 The catalog is auto-generated and version-pinned. Schema reference: [`docs/TOOL_CATALOG.md`](../TOOL_CATALOG.md). Tool catalog generation is automated under T22 and produces a manifest that the typed MCP server validates against at startup; mismatch is a fatal error, not a warning.
 
-### 3.2 Control 2 — Append-Only Audit DB
+### 3.2 Control 2 — Audit DB with Application-Layer Append Discipline
 
-The audit database (`audit/<case_id>.db`, SQLite) is the system of record for every tool call, every finding, every IOC, every verdict, and every hypothesis revision. Three properties enforce its append-only character at the storage layer:
+The audit database (`audit/<case_id>.db`, SQLite) is the system of record for every tool call, every finding, every IOC, every verdict, and every hypothesis revision. Three properties enforce its integrity at the application layer:
 
-1. **Insert-only triggers.** Every audited table carries `BEFORE UPDATE` and `BEFORE DELETE` triggers that `RAISE(ABORT, 'append-only')`. The trigger fires regardless of caller — application code, ORM, a misconfigured migration, or a malicious `INSERT OR REPLACE` attempt all fail at COMMIT time. The SQL constraint sits in the same file as the schema; it cannot be reasoned about separately from the data model.
-2. **Versioned migrations.** Schema migrations are themselves append-only. Migration N+1 references the SHA-256 of migration N's applied state. A schema rollback is not a representable operation; a forward migration with explicit data transformation is. Migration drift between deployments is detected at startup.
-3. **Recorded blocks.** Every failed mutation attempt — whether from agent code, orchestrator harness, or operator error — emits a `spoliation_attempt` row containing the attempted action, the reason for rejection, the actor identity, and a timestamp. The receipts are themselves append-only. An attacker silencing the receipt log is the same operation as an attacker silencing the audit log, and is caught by the same trigger.
+1. **Single-writer discipline.** All audit writes flow through `SnapshotWriter` (ADR-003). The writer exposes only `begin_iteration`, `emit_hypothesis_event`, `end_iteration`, `record_blocked_mutation`, and `finalize` — no UPDATE or DELETE surface. Application code outside this module has no write path to audit tables.
+2. **Versioned migrations.** Schema migrations are append-only in structure. Migration N+1 references the SHA-256 of migration N's applied state. A schema rollback is not a representable operation; a forward migration with explicit data transformation is. Migration drift between deployments is detected at startup.
+3. **Recorded blocks.** Every failed mutation attempt — whether from agent code, orchestrator harness, or operator error — emits a `blocked_mutation` row containing the attempted action, the reason for rejection, the actor identity, and a timestamp.
 
-The agent's only write path into the audit DB is through `SnapshotWriter` (ADR-003) and the typed write-only MCP tools (`report_finding`, `emit_ioc`, `set_verdict`). All three funnel through INSERT-only code paths. The writer does not expose UPDATE or DELETE methods at any level of the API.
+**Hardening backlog (post-hackathon).** Storage-layer `BEFORE UPDATE` / `BEFORE DELETE` triggers raising `ABORT` and a row-chain SHA-256 hash are documented in `LIMITATIONS.md` and `THREAT_MODEL.md §3.4`. Until those land, a direct `sqlite3` connection can mutate rows outside the `SnapshotWriter` API. The current boundary is application-layer convention, not a cryptographic or storage-layer guarantee.
 
 ### 3.3 Control 3 — Content-Addressed Methodology
 
