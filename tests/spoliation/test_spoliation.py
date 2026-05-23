@@ -144,3 +144,27 @@ async def test_legitimate_vol3_passes_validation():
         assert "path escapes" not in str(e)
     except FileNotFoundError:
         pass
+
+
+# ── Attack 13-15: Relative traversal (P0-A, added post-T22) ──────────────────
+
+
+@pytest.mark.asyncio
+async def test_relative_traversal_dotdot_blocked():
+    """../../ prefix must be caught even though it does not start with / or ./"""
+    with pytest.raises(SafeExecError, match="path escapes evidence root"):
+        await safe_exec("fls", ["../../etc/passwd"])
+
+
+@pytest.mark.asyncio
+async def test_relative_traversal_in_middle_blocked():
+    """Traversal embedded after a valid-looking prefix is blocked."""
+    with pytest.raises(SafeExecError, match="path escapes evidence root"):
+        await safe_exec("fls", ["cases/../../../etc/shadow"])
+
+
+@pytest.mark.asyncio
+async def test_relative_traversal_after_flag_blocked():
+    """Traversal as a positional arg after a flag is blocked."""
+    with pytest.raises(SafeExecError, match="path escapes evidence root"):
+        await safe_exec("fls", ["-r", "../../etc/passwd"])

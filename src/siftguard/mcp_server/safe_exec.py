@@ -77,11 +77,15 @@ async def safe_exec(
             raise SafeExecError(f"denied pattern in command: {pat!r}")
 
     evidence_root = Path(os.environ.get("SIFTGUARD_EVIDENCE_ROOT", "/cases")).resolve()
+    safe_prefixes = ("/usr/", "/opt/", "/home/sansforensics/", "/tmp/", "/cases/")
     for a in args:
-        if a.startswith("/") or a.startswith("./"):
+        if a.startswith("-"):
+            continue
+        if "/" in a or a.startswith(".."):
             try:
-                resolved = Path(a).resolve()
-                safe_prefixes = ("/usr/", "/opt/", "/home/sansforensics/", "/tmp/", "/cases/")
+                resolved = (
+                    Path(a).resolve() if Path(a).is_absolute() else (evidence_root / a).resolve()
+                )
                 if (
                     evidence_root not in resolved.parents
                     and resolved != evidence_root
