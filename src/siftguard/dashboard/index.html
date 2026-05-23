@@ -38,6 +38,7 @@ body.mode-results .metrics,
 body.mode-results .form,
 body.mode-results .form-sec,
 body.mode-results .nav-item[data-panel="p0"]{display:none !important}
+body.mode-live .accordion-wrap{display:none !important}
 
 /* Header */
 .hdr{height:var(--header-h);background:var(--white);border-bottom:1px solid var(--gray-200);display:flex;align-items:center;padding:0 20px;gap:14px;flex-shrink:0;box-shadow:0 1px 3px rgba(60,64,67,.12);z-index:10}
@@ -252,7 +253,7 @@ body.mode-results .nav-item[data-panel="p0"]{display:none !important}
 .ds-block p{font-size:12px;color:var(--gray-600);line-height:1.6}
 </style>
 </head>
-<body class="mode-results">
+<body class="mode-live">
 
 <!-- Header -->
 <header class="hdr">
@@ -267,8 +268,8 @@ body.mode-results .nav-item[data-panel="p0"]{display:none !important}
   <span class="hdr-timer" id="hdr-timer">00:00</span>
   <span class="hdr-status standby" id="hdr-status"><span class="dot"></span><span id="hdr-status-txt">Standby</span></span>
   <div class="mode-toggle">
-    <button class="mode-btn active" data-mode="results" onclick="setMode('results')">Results</button>
-    <button class="mode-btn" data-mode="live" onclick="setMode('live')">Run Live</button>
+    <button class="mode-btn" data-mode="results" onclick="setMode('results')">Results</button>
+    <button class="mode-btn active" data-mode="live" onclick="setMode('live')">Run Live</button>
   </div>
   <span class="hdr-tag">v1.17.3-task14</span>
 </header>
