@@ -25,5 +25,5 @@
     {"tool": "mft_parse", "reason": "no_disk_image"},
     {"tool": "registry_hive_parse", "reason": "no_disk_image"}
   ],
-  "ground_truth_path": "tests/benchmark/ground_truth/TEST-001.json"
+  "ground_truth_path": "experiments/ground_truth/TEST-001-v1.1.0.json"
 }
