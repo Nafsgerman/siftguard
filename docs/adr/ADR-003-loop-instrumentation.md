@@ -67,7 +67,7 @@ CREATE TABLE iteration_snapshot (
 );
 ```
 
-The append-only triggers from ADR-007 (`BEFORE UPDATE`, `BEFORE DELETE` → `RAISE(ABORT, 'append-only')`) apply.
+The single-writer discipline from ADR-007 §3.2 applies: all writes to these tables route through `SnapshotWriter`; no UPDATE or DELETE surface is exposed at the application layer. Storage-layer trigger hardening is deferred post-hackathon (see `LIMITATIONS.md`).
 
 ### 3.2 Row type 2 — `hypothesis_event`
 
@@ -97,7 +97,7 @@ Every orchestrator adapter (ADR-006) must, for every loop iteration:
 3. Call `SnapshotWriter.end_iteration(...)` with token, cost, latency, and final hypothesis state.
 4. On loop termination, call `SnapshotWriter.finalize(termination_reason)` with `termination_reason ∈ {verdict_reached, error}`.
 
-The writer is the single choke point. Raw INSERTs against `iteration_snapshot` or `hypothesis_event` are blocked at the application layer (the writer is the only module with INSERT access) and at the data layer (the append-only triggers would catch raw writes anyway). An adapter that bypasses the writer is not a SIFTGuard adapter; the experiment runner refuses to score a run whose iteration count in the orchestrator's emitted `Trace` does not equal the row count in `iteration_snapshot` for that `run_id`.
+The writer is the single choke point. Raw writes against `iteration_snapshot` or `hypothesis_event` that bypass `SnapshotWriter` are blocked at the application layer — the writer is the only module with an INSERT path into these tables. Storage-layer trigger enforcement (BEFORE UPDATE / BEFORE DELETE → ABORT) is documented hardening work. An adapter that bypasses the writer is not a SIFTGuard adapter; the experiment runner refuses to score a run whose iteration count in the orchestrator's emitted `Trace` does not equal the row count in `iteration_snapshot` for that `run_id`.
 
 ---
 

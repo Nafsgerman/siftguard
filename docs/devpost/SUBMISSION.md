@@ -38,7 +38,7 @@ The gap is real: adversaries move at machine speed. Defenders don't. SIFTGuard c
 
 ## What it does
 
-SIFTGuard is an autonomous DFIR agent that runs **five orchestration paradigms** — Anthropic native loop, LangGraph, OpenAI function-calling, Gemini 3 Pro, and Claude Code headless CLI — against a **single typed MCP server** of forensic tools. The same model weights and the same Pydantic-validated tools are held fixed across all five adapters; orchestration is the only variable. We measure what that variable buys across **two public forensics datasets** and publish the F1 numbers.
+SIFTGuard is an autonomous DFIR agent that runs **five orchestration paradigms** — Anthropic native loop, LangGraph, OpenAI function-calling, Gemini 3 Pro, and Claude Code headless CLI — against a **single typed MCP server** of forensic tools. The same cases, ground-truth labels, prompts, and intended MCP tool catalog are held fixed while the model-provider and orchestration stack vary. We measure what each stack delivers across **two public forensics datasets** and publish the F1 numbers.
 
 ### Headline — 5 orchestrators × 2 datasets
 
@@ -56,7 +56,7 @@ Scorer: applicability-aware F1. TEST-001 = SRL-2018 APT memory image, 4 applicab
 
 ## How we built it
 
-**Why orchestration is the only variable** (verbatim, ADR-006 §1):
+**Why the orchestration/provider stack is the measured variable** (verbatim, ADR-006 §1):
 
 > A Digital Forensics and Incident Response (DFIR) agent that ships behind a Security Operations Center (SOC) perimeter cannot be coupled to a single LLM vendor or a single orchestration framework. The coupling is not an aesthetic concern; it is an operational and regulatory liability.
 
@@ -70,14 +70,14 @@ Outage risk (Anthropic 2025-05; OpenAI 2025-06; Google 2025-09), regulatory dive
 
 1. **Typed MCP boundary.** Every forensic tool is a Pydantic-validated function with a frozen schema. The agent never sees raw shell; it sees structured findings with provenance.
 2. **Instrumented agent loop.** Every iteration writes a structured snapshot — tokens, cost, confidence vector, hypothesis state, self-correction events — immutable once written.
-3. **Append-only audit DB.** SQLite with insert-only access enforced at the data layer. Migrations versioned and verified at startup.
+3. **Audit DB.** SQLite records every tool call, iteration snapshot, hypothesis revision, and blocked-mutation receipt through a single application-layer writer (`SnapshotWriter`). Storage-layer SQLite triggers and row-chain SHA-256 are documented post-hackathon hardening. Migrations versioned and verified at startup.
 4. **Versioned methodology.** Every report stamped with the methodology version and SHA-256 of `EVAL_FRAMEWORK.md`. Change the scoring rules and the version bumps; prior results stay attributable to the methodology that produced them.
 
 Architectural rationale and rejected alternatives: `ADR-001` (evaluation framework), `ADR-006` (multi-orchestrator + vendor lock-in). Full ADR index at `docs/adr/`.
 
 ## Challenges we ran into
 
-**Single-variable isolation across five paradigms.** LangGraph state graphs, OpenAI's function-calling loop, Gemini's tool-use surface, Anthropic's native Messages API, and Claude Code's headless CLI each carry different assumptions about state, retries, parallelism, and trace shape. Getting all five to consume the same Pydantic MCP server with the same model weights and the same prompts — so that orchestration becomes the only variable — was the bulk of Phase B engineering.
+**Single-variable isolation across five paradigms.** LangGraph state graphs, OpenAI's function-calling loop, Gemini's tool-use surface, Anthropic's native Messages API, and Claude Code's headless CLI each carry different assumptions about state, retries, parallelism, and trace shape. Getting all five to consume the same Pydantic MCP server with the same cases, prompts, and intended tool catalog — so that the orchestration/provider stack becomes the measured variable — was the bulk of Phase B engineering.
 
 **Tool-applicability failure on disk evidence.** LangGraph and Claude Code over-iterate when the MCP surface (memory-focused Volatility 3 plugins) does not match the evidence type. The failure mode is iteration-budget exhaustion, not hallucination — both agents continued reasoning correctly about a tool surface that could not return findings. Documented in `docs/LIMITATIONS.md`; graceful disk-tool degradation is flagged Phase D scope.
 
@@ -89,7 +89,7 @@ Architectural rationale and rejected alternatives: `ADR-001` (evaluation framewo
 
 - **Five orchestrators live** on the same typed MCP server with F1 measured per dataset
 - **Three of five score F1 = 1.000 on TEST-001**; OpenAI FC clears F1 ≥ 0.80 on both TEST-001 and TEST-002
-- **Spoliation test suite: 12/12 attacks blocked architecturally** at the MCP layer — not by prompt
+- **Spoliation test suite: 15/15 named attack scenarios blocked** at the MCP execution layer — not by prompt. Covers binary allowlist, deny patterns, absolute path escape, and relative traversal (`../../`). Storage-layer SQLite triggers are documented hardening work.
 - **Applicability-aware F1 scorer** with versioned methodology and SHA-256 stamping
 - **Append-only audit DB** — every finding in every report traces to a tool-execution row
 - **Live FastAPI/SSE dashboard** streams tool calls, IOC detection, and hypothesis state across all five orchestrators in real time
@@ -235,9 +235,9 @@ Key results:
 - 1 orchestrator (OpenAI FC) clears F1 ≥ 0.80 on both datasets
 - Cost spread on identical evidence: 2.72× (OpenAI FC $0.1949 → Claude Code $0.5293)
 - Baseline reproducibility: σ = 0.000 across n = 6 seeds on native-loop / TEST-001 (ADR-001 §4 D5)
-- Hallucinated claims: none across all measured runs. Every finding traces to a tool-execution row in the append-only audit DB.
+- Hallucinated claims: none across all measured runs. Every finding traces to a tool-execution row in the audit DB.
 
-Evidence integrity: spoliation test suite — 12/12 attacks blocked architecturally at the MCP layer.
+Evidence integrity: spoliation test suite — 15/15 named attack scenarios blocked at the MCP execution layer.
 Proof: python -m pytest tests/spoliation/test_spoliation.py -v → 12 passed.
 ```
 
