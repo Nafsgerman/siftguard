@@ -210,10 +210,17 @@ async def _run_investigation(
                     or report_dict.get("sections", {}).get("mitre_techniques")
                     or []
                 ):
-                    on_event(
-                        "ioc_detected",
-                        {"ioc_type": "mitre", "value": tech, "evidence": [], "confirmed": True},
-                    )
+                    if isinstance(tech, str):
+                        tech_value = tech
+                    elif isinstance(tech, dict):
+                        tech_value = tech.get("id") or tech.get("technique_id") or tech.get("value") or ""
+                    else:
+                        tech_value = str(tech)
+                    if tech_value:
+                        on_event(
+                            "ioc_detected",
+                            {"ioc_type": "mitre", "value": tech_value, "evidence": [], "confirmed": True},
+                        )
             await push_event(session_id, {"type": "report", "content": report})
     except Exception as e:
         await push_event(session_id, {"type": "error", "message": str(e)})

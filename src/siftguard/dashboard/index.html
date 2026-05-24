@@ -727,59 +727,114 @@ async function finalizeInvestigation() {
   pushTrail('sys', '✓ Investigation finalized · all evidence sealed in audit DB');
 }
 
+// ── IOC Graph — dynamic, populated live from SSE ─────────────────────────────
 let iocInited = false;
+let iocNodes = [], iocLinks = [];
+let iocSim = null, iocLinkSel = null, iocNodeSel = null;
+let iocG = null, iocW = 700, iocH = 400;
+const iocCmap = {process:'#1a73e8',ip:'#d93025',mitre:'#f9ab00',tool:'#1e8e3e',file:'#9c27b0',registry:'#9c27b0',hash:'#9c27b0',other:'#80868b'};
+
+function iocTick() {
+  if (iocLinkSel) iocLinkSel
+    .attr('x1', d=>d.source.x).attr('y1', d=>d.source.y)
+    .attr('x2', d=>d.target.x).attr('y2', d=>d.target.y);
+  if (iocNodeSel) iocNodeSel
+    .attr('transform', d => `translate(${Math.max(30,Math.min(iocW-30,d.x))},${Math.max(30,Math.min(iocH-30,d.y))})`);
+}
+
+function iocUpdate() {
+  if (!iocG) return;
+  const drag = d3.drag()
+    .on('start',(e,d)=>{if(!e.active)iocSim.alphaTarget(.3).restart();d.fx=d.x;d.fy=d.y})
+    .on('drag',(e,d)=>{d.fx=e.x;d.fy=e.y})
+    .on('end',(e,d)=>{if(!e.active)iocSim.alphaTarget(0);d.fx=null;d.fy=null});
+  const tt = document.getElementById('tooltip');
+
+  iocLinkSel = iocG.link.selectAll('line')
+    .data(iocLinks, d => `${d.source.id||d.source}-${d.target.id||d.target}`)
+    .join(enter => enter.append('line').attr('stroke','#e8eaed').attr('stroke-width',1.5).attr('marker-end','url(#arr)'));
+
+  iocNodeSel = iocG.node.selectAll('g')
+    .data(iocNodes, d => d.id)
+    .join(enter => {
+      const g = enter.append('g').call(drag)
+        .on('mouseover',(e,d)=>{tt.style.opacity='1';tt.textContent=d.type.toUpperCase()+': '+d.id})
+        .on('mousemove',e=>{tt.style.left=(e.clientX+12)+'px';tt.style.top=(e.clientY-28)+'px'})
+        .on('mouseout',()=>{tt.style.opacity='0'});
+      g.append('circle').attr('r', d => d.type==='mitre'?24:18)
+        .attr('fill', d => (iocCmap[d.type]||iocCmap.other)+'22')
+        .attr('stroke', d => iocCmap[d.type]||iocCmap.other)
+        .attr('stroke-width', d => d.type==='mitre'?2:1.5);
+      g.append('text').attr('text-anchor','middle').attr('dy','0.35em')
+        .attr('font-size', d => d.type==='mitre'?9:10)
+        .attr('font-family','Roboto Mono,monospace')
+        .attr('fill', d => iocCmap[d.type]||iocCmap.other)
+        .attr('font-weight','500')
+        .text(d => d.type==='mitre'?d.id:(d.id.length>14?d.id.slice(0,13)+'…':d.id));
+      return g;
+    });
+
+  iocSim.nodes(iocNodes);
+  iocSim.force('link').links(iocLinks);
+  iocSim.alpha(0.5).restart();
+}
+
 function initIOC() {
   if (iocInited) return;
   iocInited = true;
-  const nodes = [
-    {id:'lsass.exe',type:'process'},{id:'cmd.exe',type:'process'},{id:'powershell.exe',type:'process'},
-    {id:'rundll32.exe',type:'process'},{id:'svchost.exe',type:'process'},
-    {id:'185.234.219.11',type:'ip'},{id:'10.0.0.254',type:'ip'},{id:'45.33.32.156',type:'ip'},
-    {id:'T1055',type:'mitre'},{id:'T1059',type:'mitre'},{id:'T1071',type:'mitre'},{id:'T1003',type:'mitre'},
-    {id:'mimikatz',type:'tool'},{id:'nmap',type:'tool'},
-    {id:'beacon.dll',type:'file'},{id:'passwords.txt',type:'file'},
-  ];
-  const links = [
-    {source:'powershell.exe',target:'T1059'},{source:'powershell.exe',target:'cmd.exe'},
-    {source:'powershell.exe',target:'185.234.219.11'},{source:'powershell.exe',target:'beacon.dll'},
-    {source:'cmd.exe',target:'rundll32.exe'},{source:'rundll32.exe',target:'T1055'},
-    {source:'rundll32.exe',target:'beacon.dll'},{source:'lsass.exe',target:'T1003'},
-    {source:'lsass.exe',target:'mimikatz'},{source:'lsass.exe',target:'passwords.txt'},
-    {source:'mimikatz',target:'passwords.txt'},{source:'svchost.exe',target:'10.0.0.254'},
-    {source:'svchost.exe',target:'T1071'},{source:'10.0.0.254',target:'T1071'},
-    {source:'nmap',target:'45.33.32.156'},{source:'nmap',target:'10.0.0.254'},
-    {source:'45.33.32.156',target:'185.234.219.11'},
-  ];
-  const cmap = {process:'#1a73e8',ip:'#d93025',mitre:'#f9ab00',tool:'#1e8e3e',file:'#9c27b0'};
   const svg = d3.select('#ioc-svg');
+  svg.selectAll('*').remove();
   const el = document.getElementById('ioc-svg');
-  const W = el.clientWidth || 700, H = 400;
-  svg.attr('viewBox', `0 0 ${W} ${H}`);
-  const sim = d3.forceSimulation(nodes)
-    .force('link', d3.forceLink(links).id(d=>d.id).distance(85))
-    .force('charge', d3.forceManyBody().strength(-200))
-    .force('center', d3.forceCenter(W/2, H/2))
-    .force('collide', d3.forceCollide(26));
-  svg.append('defs').append('marker').attr('id','arr').attr('viewBox','0 -4 8 8').attr('refX',18).attr('refY',0)
+  iocW = el.clientWidth || 700;
+  iocH = 400;
+  svg.attr('viewBox', `0 0 ${iocW} ${iocH}`);
+  svg.append('defs').append('marker').attr('id','arr').attr('viewBox','0 -4 8 8').attr('refX',22).attr('refY',0)
     .attr('markerWidth',6).attr('markerHeight',6).attr('orient','auto')
     .append('path').attr('d','M0,-4L8,0L0,4').attr('fill','#bdc1c6');
-  const link = svg.append('g').selectAll('line').data(links).join('line').attr('stroke','#e8eaed').attr('stroke-width',1.5).attr('marker-end','url(#arr)');
-  const drag = d3.drag()
-    .on('start',(e,d)=>{if(!e.active)sim.alphaTarget(.3).restart();d.fx=d.x;d.fy=d.y})
-    .on('drag',(e,d)=>{d.fx=e.x;d.fy=e.y})
-    .on('end',(e,d)=>{if(!e.active)sim.alphaTarget(0);d.fx=null;d.fy=null});
-  const tt = document.getElementById('tooltip');
-  const node = svg.append('g').selectAll('g').data(nodes).join('g').call(drag)
-    .on('mouseover',(e,d)=>{tt.style.opacity='1';tt.textContent=d.type.toUpperCase()+': '+d.id})
-    .on('mousemove',e=>{tt.style.left=(e.clientX+12)+'px';tt.style.top=(e.clientY-28)+'px'})
-    .on('mouseout',()=>{tt.style.opacity='0'});
-  node.append('circle').attr('r',d=>d.type==='mitre'?22:16).attr('fill',d=>cmap[d.type]+'22').attr('stroke',d=>cmap[d.type]).attr('stroke-width',d=>d.type==='mitre'?2:1.5);
-  node.append('text').attr('text-anchor','middle').attr('dy','0.35em').attr('font-size',d=>d.type==='mitre'?9:10).attr('font-family','Roboto Mono,monospace').attr('fill',d=>cmap[d.type]).attr('font-weight','500')
-    .text(d=>d.type==='mitre'?d.id:(d.id.length>12?d.id.slice(0,11)+'…':d.id));
-  sim.on('tick',()=>{
-    link.attr('x1',d=>d.source.x).attr('y1',d=>d.source.y).attr('x2',d=>d.target.x).attr('y2',d=>d.target.y);
-    node.attr('transform',d=>`translate(${Math.max(24,Math.min(W-24,d.x))},${Math.max(24,Math.min(H-24,d.y))})`);
-  });
+  svg.append('text').attr('id','ioc-empty').attr('x', iocW/2).attr('y', iocH/2)
+    .attr('text-anchor','middle').attr('font-size',12).attr('fill','#80868b')
+    .attr('font-family','Google Sans,sans-serif')
+    .text('IOC graph populates during live investigation');
+  iocG = { link: svg.append('g'), node: svg.append('g') };
+  iocSim = d3.forceSimulation(iocNodes)
+    .force('link', d3.forceLink(iocLinks).id(d=>d.id).distance(130).strength(0.6))
+    .force('charge', d3.forceManyBody().strength(-520))
+    .force('center', d3.forceCenter(iocW/2, iocH/2))
+    .force('collide', d3.forceCollide(d => d.type==='mitre'?40:34))
+    .force('x', d3.forceX(iocW/2).strength(0.04))
+    .force('y', d3.forceY(iocH/2).strength(0.04))
+    .on('tick', iocTick);
+  iocUpdate();
+}
+
+function addGraphNode(type, value, source) {
+  if (!value) return;
+  let strValue;
+  if (typeof value === 'string') strValue = value;
+  else if (value && typeof value === 'object') strValue = value.id || value.value || value.name || '';
+  else strValue = String(value);
+  if (!strValue) return;
+  if (!iocInited) initIOC();
+  const ph = document.getElementById('ioc-empty');
+  if (ph) ph.remove();
+  const id = strValue.slice(0, 60);
+  const t = (type || 'other').toLowerCase();
+  if (iocNodes.find(n => n.id === id)) return;
+  if (t === 'mitre') {
+    const anchor = [...iocNodes].reverse().find(n => n.type==='process' || n.type==='ip');
+    if (anchor) iocLinks.push({source: anchor.id, target: id});
+  } else if (t === 'ip') {
+    const anchor = [...iocNodes].reverse().find(n => n.type==='process');
+    if (anchor) iocLinks.push({source: anchor.id, target: id});
+  } else if (t === 'process') {
+    const first = iocNodes.find(n => n.type==='process');
+    if (first && first.id !== id) iocLinks.push({source: first.id, target: id});
+  } else if (t === 'file' || t === 'registry' || t === 'hash') {
+    const anchor = [...iocNodes].reverse().find(n => n.type==='process');
+    if (anchor) iocLinks.push({source: anchor.id, target: id});
+  }
+  iocNodes.push({id, type: t});
+  iocUpdate();
 }
 </script>
 </body>

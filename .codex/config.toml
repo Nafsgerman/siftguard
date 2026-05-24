@@ -1,0 +1,11 @@
+[mcp_servers.siftguard]
+args = [
+    "-m",
+    "siftguard.mcp_server.server",
+]
+command = "python3"
+
+[mcp_servers.siftguard.env]
+SIFTGUARD_AUDIT_DB = "/cases/TEST-001/siftguard/audit/CASE-001.db"
+SIFTGUARD_CACHE_DIR = "/cases/TEST-001/siftguard_cache"
+SIFTGUARD_CASE_ID = "TEST-001"
