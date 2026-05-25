@@ -171,19 +171,37 @@ async def _run_investigation(
             on_event=on_event,
         )
         if report:
-            # Universal IOC extraction — works for every orchestrator that returns a report dict
-            report_dict = report if isinstance(report, dict) else None
-            if not report_dict and isinstance(report, str):
+            # Normalize report shape (some orchestrators return tuple/list)
+            if isinstance(report, tuple | list) and report:
+                report = report[0]
+
+            report_dict = None
+            if isinstance(report, dict):
+                report_dict = report
+            elif isinstance(report, str):
                 import re as _re_ioc
 
-                m = _re_ioc.search(
-                    r"```(?:siftguard-report|json)?\s*\n(\{.*?\})\n```", report, _re_ioc.DOTALL
-                )
-                if m:
-                    try:
-                        report_dict = json.loads(m.group(1))
-                    except Exception:
-                        report_dict = None
+                # Strategy 1: whole string is JSON
+                try:
+                    _cand = json.loads(report)
+                    if isinstance(_cand, dict):
+                        report_dict = _cand
+                except Exception:
+                    pass
+                # Strategy 2: fenced JSON block
+                if not report_dict:
+                    for _pat in (
+                        r"```(?:siftguard-report|json)\s*\n(\{[\s\S]*?\})\s*\n```",
+                        r"```\s*\n(\{[\s\S]*?\})\s*\n```",
+                    ):
+                        _m = _re_ioc.search(_pat, report)
+                        if _m:
+                            try:
+                                report_dict = json.loads(_m.group(1))
+                                if isinstance(report_dict, dict):
+                                    break
+                            except Exception:
+                                report_dict = None
             if report_dict:
                 _IOC_TYPE_MAP = {
                     "process": "process",
@@ -196,10 +214,11 @@ async def _run_investigation(
                 for ioc in (report_dict.get("confirmed_iocs") or []) + (
                     report_dict.get("suspicious_indicators") or []
                 ):
-                    on_event(
-                        "ioc_detected",
+                    await push_event(
+                        session_id,
                         {
-                            "ioc_type": _IOC_TYPE_MAP.get(ioc.get("type", "").lower(), "other"),
+                            "type": "ioc",
+                            "ioc_type": _IOC_TYPE_MAP.get((ioc.get("type") or "").lower(), "other"),
                             "value": ioc.get("value", ""),
                             "evidence": ioc.get("evidence", []),
                             "confirmed": ioc in (report_dict.get("confirmed_iocs") or []),
@@ -219,15 +238,77 @@ async def _run_investigation(
                     else:
                         tech_value = str(tech)
                     if tech_value:
-                        on_event(
-                            "ioc_detected",
+                        await push_event(
+                            session_id,
                             {
+                                "type": "ioc",
                                 "ioc_type": "mitre",
                                 "value": tech_value,
                                 "evidence": [],
                                 "confirmed": True,
                             },
                         )
+            elif isinstance(report, str):
+                # Fallback: regex-extract IOCs from markdown text
+                import re as _re_md
+
+                _SKIP = {
+                    "explorer.exe",
+                    "svchost.exe",
+                    "services.exe",
+                    "csrss.exe",
+                    "smss.exe",
+                    "winlogon.exe",
+                    "wininit.exe",
+                    "system.exe",
+                    "registry.exe",
+                    "fontdrvhost.exe",
+                    "dwm.exe",
+                    "lsm.exe",
+                }
+                _ips = list(set(_re_md.findall(r"\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b", report)))
+                _mitres = list(set(_re_md.findall(r"\bT[0-9]{4}(?:\.[0-9]{3})?\b", report)))
+                _procs = [
+                    p
+                    for p in set(
+                        _re_md.findall(r"\b[\w\-]+\.(?:exe|dll|sys)\b", report, _re_md.IGNORECASE)
+                    )
+                    if p.lower() not in _SKIP
+                ]
+                for _ip in _ips[:15]:
+                    await push_event(
+                        session_id,
+                        {
+                            "type": "ioc",
+                            "ioc_type": "ip",
+                            "value": _ip,
+                            "evidence": [],
+                            "confirmed": True,
+                        },
+                    )
+                for _tech in _mitres[:15]:
+                    await push_event(
+                        session_id,
+                        {
+                            "type": "ioc",
+                            "ioc_type": "mitre",
+                            "value": _tech,
+                            "evidence": [],
+                            "confirmed": True,
+                        },
+                    )
+                for _proc in _procs[:15]:
+                    await push_event(
+                        session_id,
+                        {
+                            "type": "ioc",
+                            "ioc_type": "process",
+                            "value": _proc,
+                            "evidence": [],
+                            "confirmed": True,
+                        },
+                    )
+
             await push_event(session_id, {"type": "report", "content": report})
     except Exception as e:
         await push_event(session_id, {"type": "error", "message": str(e)})
@@ -400,6 +481,71 @@ async def export_pdf(session_id: str):
     return Response(
         content=buf.read(),
         media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+@app.get("/api/export/md/{session_id}")
+async def export_md(session_id: str):
+    events = _sessions.get(session_id, [])
+    if not events:
+        return Response(status_code=404)
+    case_id = next((e.get("case_id", session_id) for e in events if e.get("case_id")), session_id)
+    report_blocks = [e["content"] for e in events if e.get("type") == "report"]
+    md = "# SIFTGuard DFIR Report\n\n"
+    md += f"**Case:** {case_id}  \n**Session:** {session_id}  \n"
+    md += f"**Generated:** {datetime.now(UTC).strftime('%Y-%m-%d %H:%M UTC')}\n\n---\n\n"
+    for block in report_blocks:
+        if isinstance(block, dict):
+            block = "```json\n" + json.dumps(block, indent=2) + "\n```"
+        elif isinstance(block, tuple | list):
+            block = str(block[0]) if block else ""
+        elif not isinstance(block, str):
+            block = str(block)
+        md += block + "\n\n"
+    tool_events = [e for e in events if e.get("type") == "tool_result"]
+    if tool_events:
+        md += "\n---\n\n## Tool Execution Log\n\n| Tool | Outcome | Findings | Duration | Summary |\n|------|---------|----------|----------|---------|\n"
+        for e in tool_events:
+            summary = (e.get("summary", "") or "").replace("|", "\\|").replace("\n", " ")[:80]
+            md += f"| {e.get('tool', '')} | {e.get('outcome', '').upper()} | {e.get('findings_count', 0)} | {e.get('duration_ms', 0)}ms | {summary} |\n"
+    filename = f"siftguard-{case_id}-{session_id}.md"
+    return Response(
+        content=md,
+        media_type="text/markdown",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+@app.get("/api/export/txt/{session_id}")
+async def export_txt(session_id: str):
+    import re as _re_txt
+
+    events = _sessions.get(session_id, [])
+    if not events:
+        return Response(status_code=404)
+    case_id = next((e.get("case_id", session_id) for e in events if e.get("case_id")), session_id)
+    report_blocks = [e["content"] for e in events if e.get("type") == "report"]
+    txt = "SIFTGuard DFIR Report\n" + "=" * 50 + "\n\n"
+    txt += f"Case:      {case_id}\nSession:   {session_id}\n"
+    txt += f"Generated: {datetime.now(UTC).strftime('%Y-%m-%d %H:%M UTC')}\n\n" + "-" * 50 + "\n\n"
+    for block in report_blocks:
+        if isinstance(block, dict):
+            block = json.dumps(block, indent=2)
+        elif isinstance(block, tuple | list):
+            block = str(block[0]) if block else ""
+        elif not isinstance(block, str):
+            block = str(block)
+        block = _re_txt.sub(r"\*\*([^*]+)\*\*", r"\1", block)
+        block = _re_txt.sub(r"\*([^*]+)\*", r"\1", block)
+        block = _re_txt.sub(r"^#{1,6}\s+", "", block, flags=_re_txt.MULTILINE)
+        block = _re_txt.sub(r"```[a-z]*\n", "", block)
+        block = block.replace("```", "")
+        txt += block + "\n\n"
+    filename = f"siftguard-{case_id}-{session_id}.txt"
+    return Response(
+        content=txt,
+        media_type="text/plain",
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
 
