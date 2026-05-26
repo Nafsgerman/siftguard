@@ -25,7 +25,7 @@
     {
       "ioc_id": "ioc-user-email-office365",
       "ioc_type": "registry_key",
-      "value": "stark-research-labs",
+      "value": "rocba",
       "expected": {"path_pattern": "frocba@stark-research-labs.com", "artifact_type": "outlook_ost_or_registry_mail_profile"},
       "confidence_threshold": 0.80,
       "evidence_location": ["run_regripper", "registry_hive_parse"],
@@ -61,7 +61,7 @@
     {
       "ioc_id": "ioc-lnk-files-breakin-window",
       "ioc_type": "file",
-      "value": "november 2020",
+      "value": "nov",
       "expected": {"path_pattern": "Users/frocba/AppData/Roaming/Microsoft/Windows/Recent", "artifact_type": "lnk_shell_link"},
       "confidence_threshold": 0.85,
       "evidence_location": ["list_files", "lnk_file_parse"],
@@ -79,7 +79,7 @@
     {
       "ioc_id": "ioc-shellbags-folder-access",
       "ioc_type": "registry_key",
-      "value": "shellbag",
+      "value": "recycle",
       "expected": {"path_pattern": "NTUSER.DAT\\Software\\Microsoft\\Windows\\Shell\\BagMRU", "artifact_type": "shellbag"},
       "confidence_threshold": 0.80,
       "evidence_location": ["run_regripper", "shellbag_parse"],
@@ -88,7 +88,7 @@
     {
       "ioc_id": "ioc-mru-recently-accessed-files",
       "ioc_type": "registry_key",
-      "value": "recent",
+      "value": "workingfiles",
       "expected": {"path_pattern": "NTUSER.DAT\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\RecentDocs", "artifact_type": "mru_list"},
       "confidence_threshold": 0.85,
       "evidence_location": ["run_regripper", "registry_hive_parse"],
@@ -106,7 +106,7 @@
     {
       "ioc_id": "ioc-vacation-photos-synced",
       "ioc_type": "file",
-      "value": "vacation",
+      "value": "icloud",
       "expected": {"path_pattern": "Users/frocba/Pictures", "artifact_type": "synced_photos"},
       "confidence_threshold": 0.70,
       "evidence_location": ["list_files", "filesystem_walk"],
@@ -115,7 +115,7 @@
     {
       "ioc_id": "ioc-activity-timestamp-2020-11-13",
       "ioc_type": "file",
-      "value": "2020-11-13",
+      "value": "t1070",
       "expected": {"artifact_type": "mft_or_usn_timestamps"},
       "confidence_threshold": 0.90,
       "evidence_location": ["mft_parse", "usn_journal_parse"],
