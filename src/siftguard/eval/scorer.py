@@ -194,6 +194,16 @@ def _extract_dlllist(rows: list[dict]) -> set[str]:
     return found
 
 
+def _extract_generic_text(rows: list[dict]) -> set[str]:
+    """Generic extractor for disk tools."""
+    found: set[str] = set()
+    for r in rows:
+        for v in r.values():
+            if isinstance(v, str) and v.strip():
+                found.add(v.lower().strip()[:256])
+    return found
+
+
 EXTRACTORS: dict[str, Callable[[list[dict]], set[str]]] = {
     "vol_pslist": _extract_psscan,
     "vol_psscan": _extract_psscan,
