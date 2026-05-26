@@ -1,5 +1,6 @@
 {
   "schema_version": "1.1.0",
+  "version": "1.1.0",
   "case_id": "TEST-003",
   "case_name": "ROCBA — Fred Rocba IP Theft (SANS FOR500 Showcase, May 2026)",
   "source": "SANS Rob T. Lee, released 2026-05-26 via Egnyte",
@@ -15,6 +16,7 @@
     {
       "ioc_id": "ioc-user-frocba-profile",
       "ioc_type": "file",
+      "value": "fredr",
       "expected": {
         "path_pattern": "Users/frocba",
         "artifact_type": "user_profile_directory",
@@ -27,10 +29,11 @@
     {
       "ioc_id": "ioc-user-email-office365",
       "ioc_type": "registry_key",
+      "value": "frocba@stark-research-labs.com",
       "expected": {
         "path_pattern": "frocba@stark-research-labs.com",
         "artifact_type": "outlook_ost_or_registry_mail_profile",
-        "significance": "Office 365 Exchange account linked to SRL — confirms SRL access"
+        "significance": "Office 365 Exchange account linked to SRL"
       },
       "confidence_threshold": 0.80,
       "evidence_location": "disk_only",
@@ -39,43 +42,47 @@
     {
       "ioc_id": "ioc-srl-ip-documents",
       "ioc_type": "file",
+      "value": "stark research labs",
       "expected": {
         "path_pattern": "Users/frocba/Documents",
         "artifact_type": "srl_project_files",
         "keywords": ["alloy", "HEA", "high-entropy", "bulletproof", "copper", "SRL", "stark"],
-        "significance": "SRL IP files on local disk — establishes what was accessible"
+        "significance": "SRL IP files on local disk"
       },
       "confidence_threshold": 0.75,
       "evidence_location": "disk_only",
-      "rationale": "Case question 1: what projects did Rocba have access to — answered by local SRL docs"
+      "rationale": "Case question 1: what projects did Rocba have access to"
     },
     {
       "ioc_id": "ioc-usb-device-connected",
       "ioc_type": "registry_key",
+      "value": "usbstor",
       "expected": {
         "path_pattern": "SYSTEM\\CurrentControlSet\\Enum\\USBSTOR",
         "artifact_type": "usb_storage_device",
-        "significance": "External storage connected during break-in window (2020-11-13)"
+        "significance": "External storage connected during break-in window"
       },
       "confidence_threshold": 0.85,
       "evidence_location": "disk_only",
-      "rationale": "Case question 4: how was it stolen — USB exfiltration is primary hypothesis for physical break-in"
+      "rationale": "Case question 4: how was it stolen"
     },
     {
       "ioc_id": "ioc-usb-drive-letter-mountpoint",
       "ioc_type": "registry_key",
+      "value": "mounteddevices",
       "expected": {
         "path_pattern": "SYSTEM\\MountedDevices",
         "artifact_type": "usb_drive_letter_assignment",
-        "significance": "Drive letter assigned to USB device — corroborates USBSTOR entry"
+        "significance": "Drive letter assigned to USB device"
       },
       "confidence_threshold": 0.80,
       "evidence_location": "disk_only",
-      "rationale": "Case question 3: where transferred — drive letter assignment narrows exfil destination"
+      "rationale": "Case question 3: where transferred"
     },
     {
       "ioc_id": "ioc-lnk-files-breakin-window",
       "ioc_type": "file",
+      "value": "2020-11-13",
       "expected": {
         "path_pattern": "Users/frocba/AppData/Roaming/Microsoft/Windows/Recent",
         "artifact_type": "lnk_shell_link",
@@ -84,11 +91,12 @@
       },
       "confidence_threshold": 0.85,
       "evidence_location": "disk_only",
-      "rationale": "Case questions 2+5: what was stolen and when — LNK timestamps pin activity to 2020-11-13"
+      "rationale": "Case questions 2+5: what was stolen and when"
     },
     {
       "ioc_id": "ioc-prefetch-suspicious-exec",
       "ioc_type": "file",
+      "value": "sdelete",
       "expected": {
         "path_pattern": "Windows/Prefetch",
         "artifact_type": "prefetch_file",
@@ -97,15 +105,16 @@
       },
       "confidence_threshold": 0.75,
       "evidence_location": "disk_only",
-      "rationale": "Case question 4: how stolen — prefetch shows what tools intruder ran on the system"
+      "rationale": "Case question 4: how stolen — prefetch shows what tools intruder ran"
     },
     {
       "ioc_id": "ioc-shellbags-folder-access",
       "ioc_type": "registry_key",
+      "value": "bagmru",
       "expected": {
         "path_pattern": "NTUSER.DAT\\Software\\Microsoft\\Windows\\Shell\\BagMRU",
         "artifact_type": "shellbag",
-        "significance": "Folders browsed during break-in — identifies which SRL directories were accessed"
+        "significance": "Folders browsed during break-in"
       },
       "confidence_threshold": 0.80,
       "evidence_location": "disk_only",
@@ -114,51 +123,55 @@
     {
       "ioc_id": "ioc-mru-recently-accessed-files",
       "ioc_type": "registry_key",
+      "value": "recentdocs",
       "expected": {
         "path_pattern": "NTUSER.DAT\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\RecentDocs",
         "artifact_type": "mru_list",
-        "significance": "Recently accessed files — direct list of what intruder opened"
+        "significance": "Recently accessed files"
       },
       "confidence_threshold": 0.85,
       "evidence_location": "disk_only",
-      "rationale": "Case question 2: what was stolen — MRU is the most direct answer for file access"
+      "rationale": "Case question 2: what was stolen — MRU is the most direct answer"
     },
     {
       "ioc_id": "ioc-onedrive-sync-activity",
       "ioc_type": "file",
+      "value": "onedrive",
       "expected": {
         "path_pattern": "Users/frocba/OneDrive",
         "artifact_type": "onedrive_sync_log_or_folder",
-        "significance": "OneDrive personal and business configured per slide 5 — potential cloud exfil path"
+        "significance": "OneDrive potential cloud exfil path"
       },
       "confidence_threshold": 0.70,
       "evidence_location": "disk_only",
-      "rationale": "Case question 3: where transferred — cloud sync as alternative to USB exfil"
+      "rationale": "Case question 3: where transferred — cloud sync alternative to USB"
     },
     {
       "ioc_id": "ioc-vacation-photos-synced",
       "ioc_type": "file",
+      "value": "disney",
       "expected": {
         "path_pattern": "Users/frocba/Pictures",
         "artifact_type": "synced_photos",
         "keywords": ["disney", "vacation", "2020-11"],
-        "significance": "Slide 6 confirms vacation photos synced to home system — corroborates Fred was absent"
+        "significance": "Vacation photos confirm Fred was absent"
       },
       "confidence_threshold": 0.70,
       "evidence_location": "disk_only",
-      "rationale": "Establishes Fred was genuinely away — rules out Fred as suspect for 2020-11-13 activity"
+      "rationale": "Establishes Fred was genuinely away — rules out Fred as suspect"
     },
     {
       "ioc_id": "ioc-activity-timestamp-2020-11-13",
       "ioc_type": "file",
+      "value": "2020-11-13",
       "expected": {
         "artifact_type": "mft_or_usn_timestamps",
         "timestamp_window": {"start": "2020-11-13T00:00:00", "end": "2020-11-13T23:59:59"},
-        "significance": "MFT / USN journal entries anchoring all activity to break-in date"
+        "significance": "MFT/USN entries anchoring activity to break-in date"
       },
       "confidence_threshold": 0.90,
       "evidence_location": "disk_only",
-      "rationale": "Case question 5: when — 2020-11-13 is the known break-in date per slide 3"
+      "rationale": "Case question 5: when — 2020-11-13 is the known break-in date"
     }
   ]
 }
