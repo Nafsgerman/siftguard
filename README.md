@@ -1,5 +1,24 @@
 # SIFTGuard
 
+## ✅ SANS Hackathon Submission Compliance
+
+Every artifact required by SANS FIND EVIL! 2026, mapped to its location in this repo. Full doc: [`docs/COMPLIANCE.md`](docs/COMPLIANCE.md).
+
+| # | Requirement | Where to find it |
+|---|---|---|
+| 1 | Public repo URL | `https://github.com/Nafsgerman/siftguard` |
+| 2 | MIT / Apache 2.0 license | [`LICENSE`](LICENSE) |
+| 3 | README + setup | [§ Quick Start](#quick-start) below |
+| 4 | Deployment / step-by-step | [`Dockerfile`](Dockerfile), [`Makefile`](Makefile), `make demo` |
+| 5 | Features & functionality | [`docs/devpost/SUBMISSION.md`](docs/devpost/SUBMISSION.md) |
+| 6 | Demo video | Loom URL in this header at submission · script: [`docs/devpost/loom_script.md`](docs/devpost/loom_script.md) |
+| 7 | Architecture diagram | [`docs/architecture/architecture-v3.svg`](docs/architecture/architecture-v3.svg) |
+| 8 | Evidence dataset docs | [§ Datasets](#datasets) · [`tests/benchmark/ground_truth/`](tests/benchmark/ground_truth/) |
+| 9 | Accuracy report | [`docs/devpost/SUBMISSION.md#accuracy`](docs/devpost/SUBMISSION.md#accuracy) · [`docs/adr/ADR-007-spoliation-moat.md`](docs/adr/ADR-007-spoliation-moat.md) · [`tests/spoliation/`](tests/spoliation/) |
+| 10 | Agent execution logs | SQLite `auditentry` (19-col) · sample: [`docs/audit_logs/sample_run.json`](docs/audit_logs/sample_run.json) |
+
+---
+
 **Court-defensible autonomous DFIR. Five orchestrators on one typed MCP server. Real F1 measured across two public forensics datasets.**
 
 [![Methodology v1.0.0](https://img.shields.io/badge/methodology-v1.0.0-1a73e8)](docs/EVAL_FRAMEWORK.md)
