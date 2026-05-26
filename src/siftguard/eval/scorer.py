@@ -208,6 +208,19 @@ EXTRACTORS: dict[str, Callable[[list[dict]], set[str]]] = {
     "windows_filescan": _extract_filescan,
     "windows_cmdline": _extract_cmdline,
     "windows_dlllist": _extract_dlllist,
+    "run_regripper": _extract_generic_text,
+    "list_files": _extract_generic_text,
+    "extract_file": _extract_generic_text,
+    "filesystem_walk": _extract_generic_text,
+    "mft_parse": _extract_generic_text,
+    "registry_hive_parse": _extract_generic_text,
+    "timeline_build": _extract_generic_text,
+    "prefetch_parse": _extract_generic_text,
+    "browser_history_parse": _extract_generic_text,
+    "usn_journal_parse": _extract_generic_text,
+    "lnk_file_parse": _extract_generic_text,
+    "shellbag_parse": _extract_generic_text,
+    "recycle_bin_parse": _extract_generic_text,
 }
 
 
