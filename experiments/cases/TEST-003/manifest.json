@@ -14,7 +14,7 @@
       "mount_point": "/mnt/cases/ROCBA",
       "mount_notes": "ewfmount -> ntfs-3g ro,force; backup boot sector missing; volume 7 sectors larger than actual",
       "md5": "9059412a9c74e1d0f0b3079f1bdc5433"
-    }
+    },
     {
       "path": "/mnt/cases/ROCBA",
       "type": "disk_filesystem_mounted",
