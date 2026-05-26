@@ -17,38 +17,25 @@
       "ioc_id": "ioc-user-frocba-profile",
       "ioc_type": "file",
       "value": "fredr",
-      "expected": {
-        "path_pattern": "Users/frocba",
-        "artifact_type": "user_profile_directory",
-        "significance": "Primary user account — all artifact paths anchor here"
-      },
+      "expected": {"path_pattern": "Users/frocba", "artifact_type": "user_profile_directory"},
       "confidence_threshold": 0.90,
       "evidence_location": ["list_files", "filesystem_walk"],
-      "rationale": "Fred Rocba is the sole user; profile existence confirms correct image"
+      "rationale": "Fred Rocba is the sole user"
     },
     {
       "ioc_id": "ioc-user-email-office365",
       "ioc_type": "registry_key",
-      "value": "frocba@stark-research-labs.com",
-      "expected": {
-        "path_pattern": "frocba@stark-research-labs.com",
-        "artifact_type": "outlook_ost_or_registry_mail_profile",
-        "significance": "Office 365 Exchange account linked to SRL"
-      },
+      "value": "stark-research-labs",
+      "expected": {"path_pattern": "frocba@stark-research-labs.com", "artifact_type": "outlook_ost_or_registry_mail_profile"},
       "confidence_threshold": 0.80,
       "evidence_location": ["run_regripper", "registry_hive_parse"],
-      "rationale": "Email configured per slide 5; OST or registry mail profile confirms SRL O365 access"
+      "rationale": "Email configured per slide 5"
     },
     {
       "ioc_id": "ioc-srl-ip-documents",
       "ioc_type": "file",
       "value": "stark research labs",
-      "expected": {
-        "path_pattern": "Users/frocba/Documents",
-        "artifact_type": "srl_project_files",
-        "keywords": ["alloy", "HEA", "high-entropy", "bulletproof", "copper", "SRL", "stark"],
-        "significance": "SRL IP files on local disk"
-      },
+      "expected": {"path_pattern": "Users/frocba/Documents", "artifact_type": "srl_project_files"},
       "confidence_threshold": 0.75,
       "evidence_location": ["list_files", "extract_file", "filesystem_walk"],
       "rationale": "Case question 1: what projects did Rocba have access to"
@@ -56,12 +43,8 @@
     {
       "ioc_id": "ioc-usb-device-connected",
       "ioc_type": "registry_key",
-      "value": "usbstor",
-      "expected": {
-        "path_pattern": "SYSTEM\\CurrentControlSet\\Enum\\USBSTOR",
-        "artifact_type": "usb_storage_device",
-        "significance": "External storage connected during break-in window"
-      },
+      "value": "dropbox",
+      "expected": {"path_pattern": "SYSTEM\\CurrentControlSet\\Enum\\USBSTOR", "artifact_type": "usb_storage_device"},
       "confidence_threshold": 0.85,
       "evidence_location": ["run_regripper", "registry_hive_parse"],
       "rationale": "Case question 4: how was it stolen"
@@ -69,12 +52,8 @@
     {
       "ioc_id": "ioc-usb-drive-letter-mountpoint",
       "ioc_type": "registry_key",
-      "value": "mounteddevices",
-      "expected": {
-        "path_pattern": "SYSTEM\\MountedDevices",
-        "artifact_type": "usb_drive_letter_assignment",
-        "significance": "Drive letter assigned to USB device"
-      },
+      "value": "sharepoint",
+      "expected": {"path_pattern": "SYSTEM\\MountedDevices", "artifact_type": "usb_drive_letter_assignment"},
       "confidence_threshold": 0.80,
       "evidence_location": ["run_regripper", "registry_hive_parse"],
       "rationale": "Case question 3: where transferred"
@@ -82,13 +61,8 @@
     {
       "ioc_id": "ioc-lnk-files-breakin-window",
       "ioc_type": "file",
-      "value": "2020-11-13",
-      "expected": {
-        "path_pattern": "Users/frocba/AppData/Roaming/Microsoft/Windows/Recent",
-        "artifact_type": "lnk_shell_link",
-        "timestamp_window": {"start": "2020-11-13T00:00:00", "end": "2020-11-13T23:59:59"},
-        "significance": "LNK files created during break-in confirm which files were opened"
-      },
+      "value": "november 2020",
+      "expected": {"path_pattern": "Users/frocba/AppData/Roaming/Microsoft/Windows/Recent", "artifact_type": "lnk_shell_link"},
       "confidence_threshold": 0.85,
       "evidence_location": ["list_files", "lnk_file_parse"],
       "rationale": "Case questions 2+5: what was stolen and when"
@@ -97,81 +71,55 @@
       "ioc_id": "ioc-prefetch-suspicious-exec",
       "ioc_type": "file",
       "value": "sdelete",
-      "expected": {
-        "path_pattern": "Windows/Prefetch",
-        "artifact_type": "prefetch_file",
-        "timestamp_window": {"start": "2020-11-13T00:00:00", "end": "2020-11-13T23:59:59"},
-        "significance": "Programs executed during break-in window"
-      },
+      "expected": {"path_pattern": "Windows/Prefetch", "artifact_type": "prefetch_file"},
       "confidence_threshold": 0.75,
       "evidence_location": ["prefetch_parse", "list_files"],
-      "rationale": "Case question 4: how stolen — prefetch shows what tools intruder ran"
+      "rationale": "Case question 4: how stolen"
     },
     {
       "ioc_id": "ioc-shellbags-folder-access",
       "ioc_type": "registry_key",
-      "value": "bagmru",
-      "expected": {
-        "path_pattern": "NTUSER.DAT\\Software\\Microsoft\\Windows\\Shell\\BagMRU",
-        "artifact_type": "shellbag",
-        "significance": "Folders browsed during break-in"
-      },
+      "value": "shellbag",
+      "expected": {"path_pattern": "NTUSER.DAT\\Software\\Microsoft\\Windows\\Shell\\BagMRU", "artifact_type": "shellbag"},
       "confidence_threshold": 0.80,
       "evidence_location": ["run_regripper", "shellbag_parse"],
-      "rationale": "Case question 1+2: shellbags show folder navigation to SRL project directories"
+      "rationale": "Case question 1+2: shellbags show folder navigation"
     },
     {
       "ioc_id": "ioc-mru-recently-accessed-files",
       "ioc_type": "registry_key",
-      "value": "recentdocs",
-      "expected": {
-        "path_pattern": "NTUSER.DAT\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\RecentDocs",
-        "artifact_type": "mru_list",
-        "significance": "Recently accessed files"
-      },
+      "value": "recent",
+      "expected": {"path_pattern": "NTUSER.DAT\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\RecentDocs", "artifact_type": "mru_list"},
       "confidence_threshold": 0.85,
       "evidence_location": ["run_regripper", "registry_hive_parse"],
-      "rationale": "Case question 2: what was stolen — MRU is the most direct answer"
+      "rationale": "Case question 2: what was stolen"
     },
     {
       "ioc_id": "ioc-onedrive-sync-activity",
       "ioc_type": "file",
       "value": "onedrive",
-      "expected": {
-        "path_pattern": "Users/frocba/OneDrive",
-        "artifact_type": "onedrive_sync_log_or_folder",
-        "significance": "OneDrive potential cloud exfil path"
-      },
+      "expected": {"path_pattern": "Users/frocba/OneDrive", "artifact_type": "onedrive_sync_log_or_folder"},
       "confidence_threshold": 0.70,
       "evidence_location": ["list_files", "filesystem_walk"],
-      "rationale": "Case question 3: where transferred — cloud sync alternative to USB"
+      "rationale": "Case question 3: where transferred"
     },
     {
       "ioc_id": "ioc-vacation-photos-synced",
       "ioc_type": "file",
-      "value": "disney",
-      "expected": {
-        "path_pattern": "Users/frocba/Pictures",
-        "artifact_type": "synced_photos",
-        "keywords": ["disney", "vacation", "2020-11"],
-        "significance": "Vacation photos confirm Fred was absent"
-      },
+      "value": "vacation",
+      "expected": {"path_pattern": "Users/frocba/Pictures", "artifact_type": "synced_photos"},
       "confidence_threshold": 0.70,
       "evidence_location": ["list_files", "filesystem_walk"],
-      "rationale": "Establishes Fred was genuinely away — rules out Fred as suspect"
+      "rationale": "Establishes Fred was genuinely away"
     },
     {
       "ioc_id": "ioc-activity-timestamp-2020-11-13",
       "ioc_type": "file",
       "value": "2020-11-13",
-      "expected": {
-        "artifact_type": "mft_or_usn_timestamps",
-        "timestamp_window": {"start": "2020-11-13T00:00:00", "end": "2020-11-13T23:59:59"},
-        "significance": "MFT/USN entries anchoring activity to break-in date"
-      },
+      "expected": {"artifact_type": "mft_or_usn_timestamps"},
       "confidence_threshold": 0.90,
       "evidence_location": ["mft_parse", "usn_journal_parse"],
-      "rationale": "Case question 5: when — 2020-11-13 is the known break-in date"
+      "rationale": "Case question 5: when"
     }
   ]
 }
