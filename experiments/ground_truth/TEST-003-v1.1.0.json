@@ -23,7 +23,7 @@
         "significance": "Primary user account — all artifact paths anchor here"
       },
       "confidence_threshold": 0.90,
-      "evidence_location": "disk_only",
+      "evidence_location": ["list_files", "filesystem_walk"],
       "rationale": "Fred Rocba is the sole user; profile existence confirms correct image"
     },
     {
@@ -36,7 +36,7 @@
         "significance": "Office 365 Exchange account linked to SRL"
       },
       "confidence_threshold": 0.80,
-      "evidence_location": "disk_only",
+      "evidence_location": ["run_regripper", "registry_hive_parse"],
       "rationale": "Email configured per slide 5; OST or registry mail profile confirms SRL O365 access"
     },
     {
@@ -50,7 +50,7 @@
         "significance": "SRL IP files on local disk"
       },
       "confidence_threshold": 0.75,
-      "evidence_location": "disk_only",
+      "evidence_location": ["list_files", "extract_file", "filesystem_walk"],
       "rationale": "Case question 1: what projects did Rocba have access to"
     },
     {
@@ -63,7 +63,7 @@
         "significance": "External storage connected during break-in window"
       },
       "confidence_threshold": 0.85,
-      "evidence_location": "disk_only",
+      "evidence_location": ["run_regripper", "registry_hive_parse"],
       "rationale": "Case question 4: how was it stolen"
     },
     {
@@ -76,7 +76,7 @@
         "significance": "Drive letter assigned to USB device"
       },
       "confidence_threshold": 0.80,
-      "evidence_location": "disk_only",
+      "evidence_location": ["run_regripper", "registry_hive_parse"],
       "rationale": "Case question 3: where transferred"
     },
     {
@@ -90,7 +90,7 @@
         "significance": "LNK files created during break-in confirm which files were opened"
       },
       "confidence_threshold": 0.85,
-      "evidence_location": "disk_only",
+      "evidence_location": ["list_files", "lnk_file_parse"],
       "rationale": "Case questions 2+5: what was stolen and when"
     },
     {
@@ -104,7 +104,7 @@
         "significance": "Programs executed during break-in window"
       },
       "confidence_threshold": 0.75,
-      "evidence_location": "disk_only",
+      "evidence_location": ["prefetch_parse", "list_files"],
       "rationale": "Case question 4: how stolen — prefetch shows what tools intruder ran"
     },
     {
@@ -117,7 +117,7 @@
         "significance": "Folders browsed during break-in"
       },
       "confidence_threshold": 0.80,
-      "evidence_location": "disk_only",
+      "evidence_location": ["run_regripper", "shellbag_parse"],
       "rationale": "Case question 1+2: shellbags show folder navigation to SRL project directories"
     },
     {
@@ -130,7 +130,7 @@
         "significance": "Recently accessed files"
       },
       "confidence_threshold": 0.85,
-      "evidence_location": "disk_only",
+      "evidence_location": ["run_regripper", "registry_hive_parse"],
       "rationale": "Case question 2: what was stolen — MRU is the most direct answer"
     },
     {
@@ -143,7 +143,7 @@
         "significance": "OneDrive potential cloud exfil path"
       },
       "confidence_threshold": 0.70,
-      "evidence_location": "disk_only",
+      "evidence_location": ["list_files", "filesystem_walk"],
       "rationale": "Case question 3: where transferred — cloud sync alternative to USB"
     },
     {
@@ -157,7 +157,7 @@
         "significance": "Vacation photos confirm Fred was absent"
       },
       "confidence_threshold": 0.70,
-      "evidence_location": "disk_only",
+      "evidence_location": ["list_files", "filesystem_walk"],
       "rationale": "Establishes Fred was genuinely away — rules out Fred as suspect"
     },
     {
@@ -170,7 +170,7 @@
         "significance": "MFT/USN entries anchoring activity to break-in date"
       },
       "confidence_threshold": 0.90,
-      "evidence_location": "disk_only",
+      "evidence_location": ["mft_parse", "usn_journal_parse"],
       "rationale": "Case question 5: when — 2020-11-13 is the known break-in date"
     }
   ]

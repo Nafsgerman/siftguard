@@ -35,6 +35,20 @@ IOC_PRODUCING_TOOLS: frozenset[str] = frozenset(
         "windows_filescan",
         "windows_cmdline",
         "windows_dlllist",
+        # disk forensics tools (TEST-002, TEST-003)
+        "run_regripper",
+        "list_files",
+        "extract_file",
+        "filesystem_walk",
+        "mft_parse",
+        "registry_hive_parse",
+        "timeline_build",
+        "prefetch_parse",
+        "browser_history_parse",
+        "usn_journal_parse",
+        "lnk_file_parse",
+        "shellbag_parse",
+        "recycle_bin_parse",
     }
 )
 
