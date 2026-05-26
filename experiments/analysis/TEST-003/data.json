@@ -1,0 +1,58 @@
+{
+  "panel_7": {
+    "data": {
+      "siftguard-langgraph": {
+        "runs": [
+          {
+            "f1": 0.015037593984962407,
+            "timestamp": "20260526_180024",
+            "gt_version": "1.1.0",
+            "applicable_count": 12,
+            "not_applicable_count": 0
+          }
+        ],
+        "mean": 0.015037593984962407,
+        "n": 1
+      },
+      "siftguard-openai-fc": {
+        "runs": [
+          {
+            "f1": null,
+            "timestamp": "20260526_181743",
+            "gt_version": "1.1.0",
+            "applicable_count": 12,
+            "not_applicable_count": 0
+          }
+        ],
+        "mean": null,
+        "n": 0
+      },
+      "siftguard-gemini": {
+        "runs": [
+          {
+            "f1": null,
+            "timestamp": "20260526_182442",
+            "gt_version": "1.1.0",
+            "applicable_count": 12,
+            "not_applicable_count": 0
+          }
+        ],
+        "mean": null,
+        "n": 0
+      },
+      "siftguard-claudecode": {
+        "runs": [
+          {
+            "f1": null,
+            "timestamp": "20260526_182659",
+            "gt_version": "1.1.0",
+            "applicable_count": 12,
+            "not_applicable_count": 0
+          }
+        ],
+        "mean": null,
+        "n": 0
+      }
+    }
+  }
+}
