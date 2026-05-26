@@ -1,0 +1,40 @@
+{
+  "schema_version": "1.0.0",
+  "case_id": "TEST-003",
+  "case_name": "ROCBA — Fred Rocba IP Theft (SANS FOR500 Showcase, May 2026)",
+  "case_type": "ip_theft_break_in",
+  "incident_date": "2020-11-13",
+  "timezone": "EST5EDT",
+  "evidence_files": [
+    {
+      "path": "/cases/ROCBA/images/rocba-cdrive.e01",
+      "type": "disk_image",
+      "format": "ewf_mounted_ntfs_forced",
+      "filesystem": "ntfs",
+      "mount_point": "/mnt/cases/ROCBA",
+      "mount_notes": "ewfmount -> ntfs-3g ro,force; backup boot sector missing; volume 7 sectors larger than actual",
+      "md5": "9059412a9c74e1d0f0b3079f1bdc5433"
+    }
+  ],
+  "available_tools": [
+    "filesystem_walk",
+    "mft_parse",
+    "registry_hive_parse",
+    "timeline_build",
+    "file_content_read",
+    "hash_lookup",
+    "prefetch_parse",
+    "browser_history_parse",
+    "usn_journal_parse",
+    "lnk_file_parse",
+    "shellbag_parse",
+    "recycle_bin_parse"
+  ],
+  "unavailable_tools": [
+    {"tool": "volatility_pslist",   "reason": "no_memory_image"},
+    {"tool": "volatility_netscan",  "reason": "no_memory_image"},
+    {"tool": "volatility_malfind",  "reason": "no_memory_image"},
+    {"tool": "volatility_handles",  "reason": "no_memory_image"}
+  ],
+  "ground_truth_path": "experiments/ground_truth/TEST-003-v1.1.0.json"
+}
