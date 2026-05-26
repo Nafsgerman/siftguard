@@ -16,7 +16,9 @@
 
 SIFTGuard is an autonomous incident-response agent. It runs on the SANS SIFT
 Workstation, calls forensic tools through a typed MCP server, and produces
-court-defensible incident reports without human intervention.
+incident reports with a complete append-only audit trail and provenance
+chain. Court-admissibility is out of scope for this hackathon release; see
+LIMITATIONS.md §5 for the gap.
 
 A non-trivial share of the autonomous-agent literature, and a much larger share
 of vendor marketing, treats agent quality as a narrative property rather than a

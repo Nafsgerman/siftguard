@@ -100,7 +100,7 @@ center-frame for 4s, then fade.
 **VO:**
 > Two public datasets. Five orchestrators. One typed tool surface. Zero
 > hallucinated findings — every claim traces to an audit DB row.
-> SIFTGuard: court-defensible autonomous DFIR.
+> SIFTGuard: architecturally-bounded autonomous DFIR.
 
 **On-screen callout:** none. The wordmark closes.
 

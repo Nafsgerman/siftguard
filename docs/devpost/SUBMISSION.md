@@ -38,7 +38,7 @@ The gap is real: adversaries move at machine speed. Defenders don't. SIFTGuard c
 
 ## What it does
 
-SIFTGuard is an autonomous DFIR agent that runs **five orchestration paradigms** — Anthropic native loop, LangGraph, OpenAI function-calling, Gemini 3 Pro, and Claude Code headless CLI — against a **single typed MCP server** of forensic tools. The same model weights and the same Pydantic-validated tools are held fixed across all five adapters; orchestration is the only variable. We measure what that variable buys across **two public forensics datasets** and publish the F1 numbers.
+SIFTGuard is an autonomous DFIR agent that runs **five orchestration paradigms** — Anthropic native loop, LangGraph, OpenAI function-calling, Gemini 3 Pro, and Claude Code headless CLI — against a **single typed MCP server** of forensic tools. The same evidence, the same Pydantic-validated tools, and comparable model classes are held fixed across all five adapters; orchestration is the variable under test. We measure what that variable buys across **two public forensics datasets** and publish the F1 numbers.
 
 ### Headline — 5 orchestrators × 2 datasets
 
@@ -77,7 +77,7 @@ Architectural rationale and rejected alternatives: `ADR-001` (evaluation framewo
 
 ## Challenges we ran into
 
-**Single-variable isolation across five paradigms.** LangGraph state graphs, OpenAI's function-calling loop, Gemini's tool-use surface, Anthropic's native Messages API, and Claude Code's headless CLI each carry different assumptions about state, retries, parallelism, and trace shape. Getting all five to consume the same Pydantic MCP server with the same model weights and the same prompts — so that orchestration becomes the only variable — was the bulk of Phase B engineering.
+**Single-variable isolation across five paradigms.** LangGraph state graphs, OpenAI's function-calling loop, Gemini's tool-use surface, Anthropic's native Messages API, and Claude Code's headless CLI each carry different assumptions about state, retries, parallelism, and trace shape. Getting all five to consume the same Pydantic MCP server with comparable model classes and the same prompts — so that orchestration becomes the variable under test — was the bulk of Phase B engineering.
 
 **Tool-applicability failure on disk evidence.** LangGraph and Claude Code over-iterate when the MCP surface (memory-focused Volatility 3 plugins) does not match the evidence type. The failure mode is iteration-budget exhaustion, not hallucination — both agents continued reasoning correctly about a tool surface that could not return findings. Documented in `docs/LIMITATIONS.md`; graceful disk-tool degradation is flagged Phase D scope.
 
