@@ -41,7 +41,7 @@ are isolated as the single variable against identical MCP tools and model weight
 | [ADR-006](docs/adr/ADR-006-multi-orchestrator-vendor-lockin.md) | Multi-orchestrator design + vendor lock-in |
 | [ADR-007](docs/adr/ADR-007-spoliation-moat.md) | Append-only spoliation moat |
 
-Orchestrator cost spread: **4.72×** across five paradigms (ADR-006 §5.2). Volatility 3 runs
+Orchestrator cost spread: **2.72×** across five paradigms (ADR-006 §5.2). Volatility 3 runs
 against a 5 GB memory image with a file-based cache at `/cases/TEST-001/siftguard_cache/`
 to prevent timeout on emulated x86.
 
