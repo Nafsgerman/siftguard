@@ -17,7 +17,7 @@ SIFTGuard
 ## Field: Elevator pitch (tagline)
 
 ```
-Court-defensible autonomous DFIR. Five orchestrators on one typed MCP server. Real F1 across three forensics datasets — memory APT, NTFS disk, live IP-theft.
+Autonomous DFIR with architecturally-bounded evidence integrity. Five orchestrators on one typed MCP server. Real F1 across three forensics datasets — memory APT, NTFS disk, live IP-theft.
 ```
 (132 chars)
 
@@ -59,7 +59,7 @@ Scorer: applicability-aware F1. TEST-001 = SRL-2018 APT memory image, 4 applicab
 
 ## How we built it
 
-**Why orchestration is the only variable** (verbatim, ADR-006 §1):
+**Why orchestration is the variable under test** (ADR-006 §1):
 
 > A Digital Forensics and Incident Response (DFIR) agent that ships behind a Security Operations Center (SOC) perimeter cannot be coupled to a single LLM vendor or a single orchestration framework. The coupling is not an aesthetic concern; it is an operational and regulatory liability.
 
@@ -69,7 +69,7 @@ Outage risk (Anthropic 2025-05; OpenAI 2025-06; Google 2025-09), regulatory dive
 
 > Lowest-to-highest cost ratio on the same evidence file: **$0.1949 (OpenAI FC) → $0.5293 (Claude Code), a 2.72× spread**. This is not measurement noise. Median seeded variance for the canonical native-loop baseline is σ = 0.000 across n = 6 seeds (TEST-001, F1 = 0.909, recorded in ADR-001 §4 D5). A 2.72× delta with σ ≈ 0 on the baseline is structural and explainable: OpenAI FC's four iterations reflect aggressive parallel tool-call batching driving cost down; Claude Code's eighteen iterations reflect headless MCP-RPC round-trip overhead — the design tradeoff named in §3.4 — driving cost up. The three direct-API adapters in between ($0.2289–$0.2591) cluster tightly because they pay neither extreme. The framework would have been blind to all of this under any single-orchestrator design (A1) or single-framework design (A2).
 
-**The architectural claim.** A SIFTGuard agent cannot alter, delete, or fabricate evidence, and we prove it with automated tests rather than a policy document — 12/12 spoliation suite, run on every push to `main`. Four hard boundaries make that claim mechanical, not aspirational:
+**The architectural claim.** A SIFTGuard agent cannot alter, delete, or fabricate evidence, and we prove it with automated tests rather than a policy document — 15/15 spoliation suite, run on every push to `main`. Four hard boundaries make that claim mechanical, not aspirational:
 
 1. **Typed MCP boundary.** Every forensic tool is a Pydantic-validated function with a frozen schema. The agent never sees raw shell; it sees structured findings with provenance.
 2. **Instrumented agent loop.** Every iteration writes a structured snapshot — tokens, cost, confidence vector, hypothesis state, self-correction events — immutable once written.
@@ -86,17 +86,17 @@ Architectural rationale and rejected alternatives: `ADR-001` (evaluation framewo
 
 **Applicability-aware scoring.** The original text-match scorer punished correct verdicts on the wrong evidence type. We built an applicability layer into the ground truth (GT v1.1.0) so that an IOC counts as scoreable only when the tool surface could plausibly produce it. Specification: `docs/EVAL_FRAMEWORK.md`.
 
-**Safe execution without a sandbox.** SIFT runs real forensic tools against real evidence. The 12/12 spoliation suite actively attempts to destroy evidence and verifies all twelve attacks are blocked at the MCP layer — by architecture, not by prompt.
+**Safe execution without a sandbox.** SIFT runs real forensic tools against real evidence. The 15/15 spoliation suite actively attempts to destroy evidence and verifies all thirteen destructive attacks are blocked at the MCP layer — by architecture, not by prompt.
 
 ## Accomplishments that we're proud of
 
 - **Five orchestrators live** on the same typed MCP server with F1 measured per dataset
 - **Three of five score F1 = 1.000 on TEST-001**; OpenAI FC clears F1 ≥ 0.80 on both TEST-001 and TEST-002
-- **Spoliation test suite: 12/12 attacks blocked architecturally** at the MCP layer — not by prompt
+- **Spoliation test suite: 15/15 — 13 attacks blocked architecturally** at the MCP layer — not by prompt
 - **Applicability-aware F1 scorer** with versioned methodology and SHA-256 stamping
 - **Append-only audit DB** — every finding in every report traces to a tool-execution row
 - **Live FastAPI/SSE dashboard** streams tool calls, IOC detection, and hypothesis state across all five orchestrators in real time
-- **Court-defensible by design** — SBOM signed with Sigstore keyless; SLSA Level 3 build provenance
+- **Architecturally-bounded evidence integrity** — SBOM signed with Sigstore keyless; SLSA Level 3 build provenance
 
 ## What we learned
 
@@ -238,10 +238,10 @@ Key results:
 - 1 orchestrator (OpenAI FC) clears F1 ≥ 0.80 on both datasets
 - Cost spread on identical evidence: 2.72× (OpenAI FC $0.1949 → Claude Code $0.5293)
 - Baseline reproducibility: σ = 0.000 across n = 6 seeds on native-loop / TEST-001 (ADR-001 §4 D5)
-- Hallucinated claims: none across all measured runs. Every finding traces to a tool-execution row in the append-only audit DB.
+- Scored runs, costs, and traces recorded; provenance gaps disclosed in THREAT_MODEL.md. Every finding traces to a tool-execution row in the append-only audit DB.
 
-Evidence integrity: spoliation test suite — 12/12 attacks blocked architecturally at the MCP layer.
-Proof: python -m pytest tests/spoliation/test_spoliation.py -v → 12 passed.
+Evidence integrity: spoliation test suite — 15/15 (13 destructive attacks blocked architecturally, 2 legitimate-command pass-throughs verified).
+Proof: python -m pytest tests/spoliation/test_spoliation.py -v → 15 passed.
 ```
 
 ---

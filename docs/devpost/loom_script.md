@@ -67,10 +67,10 @@ Camera lingers on the 12 `PASSED` lines and the final summary
 > cannot call rm, dd, or mkfs — they are absent from the MCP allowlist.
 > Twelve spoliation scenarios, twelve blocked at the function boundary,
 > in twenty milliseconds. The system prompt is defense-in-depth. The
-> architecture is the wall.
+> 13 mutation paths blocked at the function boundary.
 
 **On-screen callout (overlay text, bottom):**
-> 12/12 architectural · not 12/12 prompt-instructed
+> 15/15 architectural · not 15/15 prompt-instructed
 
 ---
 

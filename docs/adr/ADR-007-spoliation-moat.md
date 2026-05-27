@@ -80,7 +80,7 @@ This control closes the loop on Controls 1 and 2: it would be possible, in princ
 
 ## 4. Verification
 
-The claim "spoliation is architecturally impossible" is mechanically verifiable. The 12-test spoliation suite (`tests/spoliation/`) exhaustively attempts every category of mutation a hostile agent or operator might attempt, and asserts the attempt is blocked at the data plane:
+The claim "spoliation is architecturally impossible" is mechanically verifiable. The 15-test spoliation suite (`tests/spoliation/`) exhaustively attempts every category of mutation a hostile agent or operator might attempt, and asserts the attempt is blocked at the data plane:
 
 | # | Attempt | Expected outcome |
 |---|---|---|
@@ -97,7 +97,7 @@ The claim "spoliation is architecturally impossible" is mechanically verifiable.
 | 11 | `DELETE FROM spoliation_attempts` | Trigger ABORT; recursive receipt written |
 | 12 | Agent prompt-injected to emit `DROP TABLE` as IOC value | IOC value type-validated; injection neutralized as data, not code |
 
-The suite runs on every push to `main` (T18 CI) and on every release-tag build (T21). Coverage is 12/12 at the time of writing. The suite is the operational definition of the moat: as long as it passes, the architectural claim holds.
+The suite runs on every push to `main` (T18 CI) and on every release-tag build (T21).  The suite is the operational definition of the moat: as long as it passes, the architectural claim holds. Coverage is 15/15 at the time of writing.
 
 ---
 
@@ -148,7 +148,7 @@ These commitments are surfaced as preflight checks at service start and document
 - ADR-003 — Loop instrumentation (the `SnapshotWriter` that emits audit rows)
 - ADR-006 — Multi-orchestrator architecture (single-variable comparison; depends on this moat)
 - ADR-009 — Scorer source (audit-DB-mode scorer interface; consumes the same store)
-- `tests/spoliation/` — 12-test suite that operationalizes the claim
+- `tests/spoliation/` — 15-test suite that operationalizes the claim
 - `docs/EVAL_FRAMEWORK.md` — Content-addressed methodology
 - `docs/TOOL_CATALOG.md` — Auto-generated MCP surface (T22)
 

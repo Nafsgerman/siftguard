@@ -19,16 +19,16 @@ Every artifact required by SANS FIND EVIL! 2026, mapped to its location in this 
 
 ---
 
-**Court-defensible autonomous DFIR. Five orchestrators on one typed MCP server. Real F1 measured across two public forensics datasets.**
+**Autonomous DFIR with architecturally-bounded evidence integrity. Five orchestrators on one typed MCP server. Real F1 measured across three forensics datasets.**
 
 [![Methodology v1.0.0](https://img.shields.io/badge/methodology-v1.0.0-1a73e8)](docs/EVAL_FRAMEWORK.md)
-[![Spoliation tests 12/12](https://img.shields.io/badge/spoliation-12%2F12-34a853)](tests/spoliation/)
+[![Spoliation tests 15/15](https://img.shields.io/badge/spoliation-15%2F15-34a853)](tests/spoliation/)
 [![Orchestrators 5/5](https://img.shields.io/badge/orchestrators-5%2F5-34a853)](docs/adr/ADR-006-multi-orchestrator-vendor-lockin.md)
 [![Tool catalog](https://img.shields.io/badge/tools-typed%20MCP-1a73e8)](docs/TOOL_CATALOG.md)
 
 **SANS FIND EVIL! Hackathon 2026** · [Devpost](https://devpost.com/software/siftguard) · Public June 10, 2026
 
-SIFTGuard is an autonomous DFIR agent that runs five orchestration paradigms — Anthropic native loop, LangGraph, OpenAI function-calling, Gemini 3 Pro, and Claude Code headless CLI — against a single typed MCP server of forensic tools. The same model weights and the same Pydantic-validated tools are held fixed across all five adapters; orchestration is the only variable. We measure what that variable buys across two public forensics datasets and publish the F1 numbers.
+SIFTGuard is an autonomous DFIR agent that runs five orchestration paradigms — Anthropic native loop, LangGraph, OpenAI function-calling, Gemini 3 Pro, and Claude Code headless CLI — against a single typed MCP server of forensic tools. Comparable model classes and the same Pydantic-validated tools are held fixed across all five adapters; orchestration is the variable under test. We measure what that variable buys across three forensics datasets and publish the F1 numbers.
 
 ## Headline — 5 orchestrators × 3 datasets
 
@@ -49,7 +49,7 @@ Scorer: applicability-aware F1 (`siftguard.eval.score`, GT v1.1.0). TEST-001 = S
 
 ![SIFTGuard evaluation dashboard — 7 panels, including Panel 7 orchestrator comparison](docs/figures/figure_full.png)
 
-## Why orchestration is the only variable
+## Why orchestration is the variable under test
 
 > A Digital Forensics and Incident Response (DFIR) agent that ships behind a Security Operations Center (SOC) perimeter cannot be coupled to a single LLM vendor or a single orchestration framework. The coupling is not an aesthetic concern; it is an operational and regulatory liability.
 >
@@ -65,7 +65,7 @@ Outage risk (Anthropic 2025-05; OpenAI 2025-06; Google 2025-09), regulatory dive
 
 ## The architectural claim
 
-**A SIFTGuard agent cannot alter, delete, or fabricate evidence, and we prove it with automated tests rather than a policy document** — 12/12 spoliation suite, run on every push to `main`. Four hard boundaries make that claim mechanical, not aspirational:
+**A SIFTGuard agent cannot alter, delete, or fabricate evidence, and we prove it with automated tests rather than a policy document** — 15/15 spoliation suite, run on every push to `main`. Four hard boundaries make that claim mechanical, not aspirational:
 
 1. **Typed MCP boundary.** Every forensic tool is a Pydantic-validated function with a frozen schema. The agent never sees raw shell; it sees structured findings with provenance. The full reference is auto-generated from the live server: [`docs/TOOL_CATALOG.md`](docs/TOOL_CATALOG.md).
 2. **Instrumented agent loop.** Every iteration writes a structured snapshot — tokens, cost, confidence vector, hypothesis state, self-correction events — immutable once written.
@@ -163,7 +163,7 @@ python -m tests.benchmark.runner --all --evidence-dir /cases
 python -m pytest tests/spoliation/test_spoliation.py -v
 ```
 
-Expected: **12/12 passed** — all destructive attacks blocked at MCP layer.
+Expected: **15/15 passed** — 13 destructive attacks blocked, 2 legitimate-command pass-throughs verified.
 
 ---
 
@@ -297,7 +297,7 @@ Report sections: Executive Summary · Timeline of Events · Indicators of Compro
 
 **Primary (architectural):** The MCP server exposes only read-only forensic functions. `rm`, `dd`, `mkfs`, `chmod +w`, shell redirects, and path traversal outside evidence root are blocked at the function boundary — not by prompt instruction. The agent physically cannot call these because the tools don't exist.
 
-**Proof:** Spoliation test suite (`tests/spoliation/test_spoliation.py`) — 12 attack scenarios, 12 blocked, 0 failures.
+**Proof:** Spoliation test suite (`tests/spoliation/test_spoliation.py`) — 13 destructive attacks blocked, 2 legitimate-command pass-throughs verified, 0 failures (15/15).
 
 ```
 tests/spoliation/test_spoliation.py::test_rm_binary_blocked PASSED
@@ -305,7 +305,7 @@ tests/spoliation/test_spoliation.py::test_dd_wipe_blocked PASSED
 tests/spoliation/test_spoliation.py::test_mkfs_blocked PASSED
 tests/spoliation/test_spoliation.py::test_path_traversal_blocked PASSED
 tests/spoliation/test_spoliation.py::test_redirect_overwrite_blocked PASSED
-... 12/12 passed in 0.02s
+... 15/15 passed in 0.02s
 ```
 
 **Secondary (prompt):** SYSTEM_PROMPT instructs read-only operation. If the model ignores this, the architectural boundary still holds. Prompt-based restriction is defense-in-depth, not the primary control.
@@ -359,7 +359,7 @@ src/siftguard/
 └── cli/main.py            # CLI entry point
 tests/
 ├── benchmark/             # Ground truth, scorer, runner, reports
-├── spoliation/            # 12-test suite proving evidence destruction blocked
+├── spoliation/            # 15-test suite proving evidence destruction blocked
 └── unit/
 ```
 
@@ -381,7 +381,7 @@ tests/
 - [x] Self-correcting agent loop with hypothesis tracker
 - [x] Append-only SQLite audit trail
 - [x] Benchmark suite with precision/recall/F1 scoring
-- [x] Spoliation test suite (12/12)
+- [x] Spoliation test suite (15/15)
 - [x] Live SSE dashboard with real-time IOC panel
 - [x] PDF/markdown/text report export
 - [ ] IOC visualization graph
