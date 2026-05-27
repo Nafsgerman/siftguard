@@ -17,7 +17,7 @@ def _cache_dir(memory_image: str) -> Path:
     # /cases/TEST-001/memory.mem  → /cases/TEST-001/siftguard_cache
     # /tmp/anything.mem           → /tmp/siftguard_cache_anything
     parent = image_path.parent
-    cache = parent / "siftguard_cache"
+    cache = Path(os.environ.get("SIFTGUARD_CACHE_DIR", str(parent / "siftguard_cache")))
     cache.mkdir(parents=True, exist_ok=True)
     return cache
 
