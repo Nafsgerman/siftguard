@@ -22,7 +22,7 @@ def test_submission_exists() -> None:
 def test_tagline_matches_readme_hero() -> None:
     tagline = (
         "Court-defensible autonomous DFIR. Five orchestrators on one "
-        "typed MCP server. Real F1 measured across two public forensics datasets."
+        "typed MCP server. Real F1 across three forensics datasets — memory APT, NTFS disk, live IP-theft."
     )
     assert tagline in _read(), "tagline must match README hero subtitle verbatim"
 
