@@ -421,7 +421,7 @@ body.mode-live .accordion-wrap{display:none !important}
               <button class="case-tab active" onclick="switchCase('001',this)">TEST-001</button>
               <button class="case-tab" onclick="switchCase('002',this)">TEST-002 (NIST CFReDS)</button>
               <button class="case-tab" onclick="switchCase('003',this)">TEST-003 (ROCBA)</button>
-            </div>
+           </div>
             <div id="case-001">
               <div class="f1-grid">
                 <div class="f1-card perfect"><div class="f1-orch">Native Claude</div><div class="f1-score perfect">1.000</div><div class="f1-bar"><div class="f1-bar-fill" style="width:100%;background:var(--green)"></div></div></div>
@@ -442,6 +442,16 @@ body.mode-live .accordion-wrap{display:none !important}
                 <div class="f1-card zero"><div class="f1-orch">ClaudeCode</div><div class="f1-score zero">0.000</div><div class="f1-bar"><div class="f1-bar-fill" style="width:0%"></div></div></div>
               </div>
             </div>
+            <div id="case-003" style="display:none">
+              <div class="f1-grid">
+                <div class="f1-card perfect"><div class="f1-orch">Native Claude</div><div class="f1-score perfect">1.000</div><div class="f1-bar"><div class="f1-bar-fill" style="width:100%;background:var(--green)"></div></div></div>
+                <div class="f1-card zero"><div class="f1-orch">LangGraph</div><div class="f1-score zero">0.015</div><div class="f1-bar"><div class="f1-bar-fill" style="width:1.5%;background:var(--gray-400)"></div></div></div>
+                <div class="f1-card zero"><div class="f1-orch">OpenAI FC</div><div class="f1-score zero">—</div><div class="f1-bar"><div class="f1-bar-fill" style="width:0%"></div></div></div>
+                <div class="f1-card zero"><div class="f1-orch">Gemini</div><div class="f1-score zero">—</div><div class="f1-bar"><div class="f1-bar-fill" style="width:0%"></div></div></div>
+                <div class="f1-card zero"><div class="f1-orch">ClaudeCode</div><div class="f1-score zero">—</div><div class="f1-bar"><div class="f1-bar-fill" style="width:0%"></div></div></div>
+              </div>
+              <div class="note-warn">Native Claude F1=1.000 on pure disk forensics (IP theft). Other orchestrators scored None — failed to surface disk artifacts in report text. Confirms memory-vs-disk specialization gap across all non-native orchestrators.</div>
+            </div>
           </div>
         </div>
       </div>
@@ -459,17 +469,17 @@ body.mode-live .accordion-wrap{display:none !important}
         <div class="acc-body" id="acc-p7">
           <div class="card">
             <div class="mean-row">
-              <div class="mean-hero-card"><div class="mean-hero-lbl">Cross-dataset leader</div><div class="mean-hero-val">0.875</div><div class="mean-hero-sub">OpenAI Function Calling</div></div>
-              <div class="mean-runner"><div style="font-size:10px;color:var(--gray-600);font-weight:500;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Runner-up</div><div style="font-family:var(--display);font-size:28px;font-weight:700;color:var(--gray-900);letter-spacing:-1px;line-height:1">0.750</div><div style="font-size:12px;color:var(--gray-600);margin-top:3px;font-weight:500">Native Claude</div></div>
+              <div class="mean-hero-card"><div class="mean-hero-lbl">Cross-dataset leader</div><div class="mean-hero-val">0.833</div><div class="mean-hero-sub">Native Claude</div></div>
+              <div class="mean-runner"><div style="font-size:10px;color:var(--gray-600);font-weight:500;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Runner-up</div><div style="font-family:var(--display);font-size:28px;font-weight:700;color:var(--gray-900);letter-spacing:-1px;line-height:1">0.875</div><div style="font-size:12px;color:var(--gray-600);margin-top:3px;font-weight:500">OpenAI FC (2-dataset)</div></div>
             </div>
             <table class="rank-table">
               <thead><tr><th>#</th><th>Orchestrator</th><th>TEST-001</th><th>TEST-002</th><th>TEST-003</th><th>Bar</th><th style="text-align:right">Mean</th></tr></thead>
               <tbody>
-                <tr><td style="font-family:var(--mono);font-size:10px;color:var(--gray-400)">1</td><td style="font-weight:500">OpenAI FC</td><td><span style="color:var(--green);font-family:var(--mono);font-size:12px;font-weight:500">1.000</span></td><td><span style="color:var(--blue);font-family:var(--mono);font-size:12px;font-weight:500">0.750</span></td><td><div class="rbar-bg"><div class="rbar-fill" style="width:87.5%"></div></div></td><td class="rscore" style="color:var(--blue)">0.875</td></tr>
-                <tr><td style="font-family:var(--mono);font-size:10px;color:var(--gray-400)">2</td><td style="font-weight:500">Native Claude</td><td><span style="color:var(--green);font-family:var(--mono);font-size:12px;font-weight:500">1.000</span></td><td><span style="color:#b06000;font-family:var(--mono);font-size:12px;font-weight:500">0.500</span></td><td><div class="rbar-bg"><div class="rbar-fill" style="width:75%"></div></div></td><td class="rscore">0.750</td></tr>
-                <tr><td style="font-family:var(--mono);font-size:10px;color:var(--gray-400)">3</td><td style="font-weight:500">ClaudeCode</td><td><span style="color:var(--green);font-family:var(--mono);font-size:12px;font-weight:500">1.000</span></td><td><span style="color:var(--gray-400);font-family:var(--mono);font-size:12px;font-weight:500">0.000</span></td><td><div class="rbar-bg"><div class="rbar-fill" style="width:50%"></div></div></td><td class="rscore">0.500</td></tr>
-                <tr><td style="font-family:var(--mono);font-size:10px;color:var(--gray-400)">4</td><td style="font-weight:500">LangGraph</td><td><span style="color:#b06000;font-family:var(--mono);font-size:12px;font-weight:500">0.750</span></td><td><span style="color:var(--gray-400);font-family:var(--mono);font-size:12px;font-weight:500">0.000</span></td><td><div class="rbar-bg"><div class="rbar-fill" style="width:37.5%"></div></div></td><td class="rscore">0.375</td></tr>
-                <tr><td style="font-family:var(--mono);font-size:10px;color:var(--gray-400)">5</td><td style="font-weight:500">Gemini</td><td><span style="color:var(--red);font-family:var(--mono);font-size:12px;font-weight:500">0.250</span></td><td><span style="color:#b06000;font-family:var(--mono);font-size:12px;font-weight:500">0.500</span></td><td><div class="rbar-bg"><div class="rbar-fill" style="width:37.5%"></div></div></td><td class="rscore" style="color:var(--gray-400)">0.375</td></tr>
+                <tr><td style="font-family:var(--mono);font-size:10px;color:var(--gray-400)">1</td><td style="font-weight:500">Native Claude</td><td><span style="color:var(--green);font-family:var(--mono);font-size:12px;font-weight:500">1.000</span></td><td><span style="color:#b06000;font-family:var(--mono);font-size:12px;font-weight:500">0.500</span></td><td><span style="color:var(--green);font-family:var(--mono);font-size:12px;font-weight:500">1.000</span></td><td><div class="rbar-bg"><div class="rbar-fill" style="width:83.3%"></div></div></td><td class="rscore" style="color:var(--blue)">0.833</td></tr>
+                <tr><td style="font-family:var(--mono);font-size:10px;color:var(--gray-400)">2</td><td style="font-weight:500">OpenAI FC</td><td><span style="color:var(--green);font-family:var(--mono);font-size:12px;font-weight:500">1.000</span></td><td><span style="color:var(--blue);font-family:var(--mono);font-size:12px;font-weight:500">0.750</span></td><td><span style="color:var(--gray-400);font-family:var(--mono);font-size:12px;font-weight:500">—</span></td><td><div class="rbar-bg"><div class="rbar-fill" style="width:87.5%"></div></div></td><td class="rscore">0.875</td></tr>
+                <tr><td style="font-family:var(--mono);font-size:10px;color:var(--gray-400)">3</td><td style="font-weight:500">ClaudeCode</td><td><span style="color:var(--green);font-family:var(--mono);font-size:12px;font-weight:500">1.000</span></td><td><span style="color:var(--gray-400);font-family:var(--mono);font-size:12px;font-weight:500">0.000</span></td><td><span style="color:var(--gray-400);font-family:var(--mono);font-size:12px;font-weight:500">—</span></td><td><div class="rbar-bg"><div class="rbar-fill" style="width:50%"></div></div></td><td class="rscore">0.500</td></tr>
+                <tr><td style="font-family:var(--mono);font-size:10px;color:var(--gray-400)">4</td><td style="font-weight:500">LangGraph</td><td><span style="color:#b06000;font-family:var(--mono);font-size:12px;font-weight:500">0.750</span></td><td><span style="color:var(--gray-400);font-family:var(--mono);font-size:12px;font-weight:500">0.000</span></td><td><span style="color:var(--gray-400);font-family:var(--mono);font-size:12px;font-weight:500">0.015</span></td><td><div class="rbar-bg"><div class="rbar-fill" style="width:25.5%"></div></div></td><td class="rscore">0.255</td></tr>
+                <tr><td style="font-family:var(--mono);font-size:10px;color:var(--gray-400)">5</td><td style="font-weight:500">Gemini</td><td><span style="color:var(--red);font-family:var(--mono);font-size:12px;font-weight:500">0.250</span></td><td><span style="color:#b06000;font-family:var(--mono);font-size:12px;font-weight:500">0.500</span></td><td><span style="color:var(--gray-400);font-family:var(--mono);font-size:12px;font-weight:500">—</span></td><td><div class="rbar-bg"><div class="rbar-fill" style="width:37.5%"></div></div></td><td class="rscore" style="color:var(--gray-400)">0.375</td></tr>
               </tbody>
             </table>
             <div class="note-warn">ClaudeCode + LangGraph 0.000 on TEST-002 = tool access failure on raw disk image. A single-dataset benchmark ranks them equal to OpenAI FC — they are not. ADR-006 §generalization.</div>
@@ -645,6 +655,8 @@ function showPanel(id, el) {
 function switchCase(id, btn) {
   document.getElementById('case-001').style.display = id === '001' ? 'block' : 'none';
   document.getElementById('case-002').style.display = id === '002' ? 'block' : 'none';
+  var c003 = document.getElementById('case-003');
+  if (c003) c003.style.display = id === '003' ? 'block' : 'none';
   document.querySelectorAll('.case-tab').forEach(t => t.classList.remove('active'));
   btn.classList.add('active');
 }
