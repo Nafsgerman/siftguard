@@ -1,6 +1,19 @@
 {
   "panel_7": {
     "data": {
+      "siftguard-v2": {
+        "runs": [
+          {
+            "f1": 1.0,
+            "timestamp": "20260526_165927",
+            "gt_version": "1.1.0",
+            "applicable_count": 12,
+            "not_applicable_count": 0
+          }
+        ],
+        "mean": 1.0,
+        "n": 1
+      },
       "siftguard-langgraph": {
         "runs": [
           {
