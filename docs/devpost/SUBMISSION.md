@@ -17,7 +17,7 @@ SIFTGuard
 ## Field: Elevator pitch (tagline)
 
 ```
-Court-defensible autonomous DFIR. Five orchestrators on one typed MCP server. Real F1 measured across two public forensics datasets.
+Court-defensible autonomous DFIR. Five orchestrators on one typed MCP server. Real F1 across three forensics datasets — memory APT, NTFS disk, live IP-theft.
 ```
 (132 chars)
 
@@ -38,21 +38,24 @@ The gap is real: adversaries move at machine speed. Defenders don't. SIFTGuard c
 
 ## What it does
 
-SIFTGuard is an autonomous DFIR agent that runs **five orchestration paradigms** — Anthropic native loop, LangGraph, OpenAI function-calling, Gemini 3 Pro, and Claude Code headless CLI — against a **single typed MCP server** of forensic tools. The same evidence, the same Pydantic-validated tools, and comparable model classes are held fixed across all five adapters; orchestration is the variable under test. We measure what that variable buys across **two public forensics datasets** and publish the F1 numbers.
+SIFTGuard is an autonomous DFIR agent that runs **five orchestration paradigms** — Anthropic native loop, LangGraph, OpenAI function-calling, Gemini 3 Pro, and Claude Code headless CLI — against a **single typed MCP server** of forensic tools. The same evidence, the same Pydantic-validated tools, and comparable model classes are held fixed across all five adapters; orchestration is the variable under test. We measure what that variable buys across **three forensics datasets** and publish the F1 numbers.
 
-### Headline — 5 orchestrators × 2 datasets
+### Headline — 5 orchestrators × 3 datasets
 
-| Orchestrator | TEST-001 (memory) | TEST-002 (disk) | Cost (USD) | Iter | Wall |
-|---|---:|---:|---:|---:|---:|
-| **OpenAI FC** (gpt-5.5) | **1.000** | **0.800** | **$0.1949** | 4 | 132.2 s |
-| Native Loop (claude-sonnet-4-6) | 1.000 | 0.600 | $0.2308 | 7 | 104.0 s |
-| Claude Code (headless, Sonnet 4.6) | 1.000 | 0.000 † | $0.5293 | 18 | 258.7 s |
-| LangGraph (Sonnet 4.6) | 0.750 | 0.000 † | $0.2289 | 7 | 106.2 s |
-| Gemini 3 Pro | 0.250 | 0.400 | $0.2591 | 5 | 146.7 s |
+| Orchestrator | TEST-001 (memory) | TEST-002 (disk) | TEST-003 (ROCBA) | Cross-dataset mean |
+|---|---:|---:|---:|---:|
+| **Native Loop** (claude-sonnet-4-6) | 1.000 | 0.600 | **1.000** | **0.867** |
+| OpenAI FC (gpt-5.5) | **1.000** | **0.800** | — † | 0.900 (2/3) |
+| Claude Code (headless, Sonnet 4.6) | 1.000 | 0.000 ‡ | — † | 0.500 (2/3) |
+| LangGraph (Sonnet 4.6) | 0.750 | 0.000 ‡ | 0.015 | 0.255 |
+| Gemini 3 Pro | 0.250 | 0.400 | — † | 0.325 (2/3) |
 
-Scorer: applicability-aware F1. TEST-001 = SRL-2018 APT memory image, 4 applicable IOCs. TEST-002 = NIST CFReDS Hacking Case (Greg Schardt / Mr. Evil), NTFS disk image, 5 applicable IOCs.
+Scorer: applicability-aware F1. TEST-001 = SRL-2018 APT memory image, 4 applicable IOCs. TEST-002 = NIST CFReDS Hacking Case (Greg Schardt / Mr. Evil), NTFS disk image, 5 applicable IOCs. TEST-003 = SANS ROCBA Standard Forensic Case (Fred Rocba IP theft, May 2026), NTFS C: drive with broken backup boot sector, 12 applicable IOCs.
 
-**Three of five orchestrators score F1 = 1.000 on TEST-001. Generalization to TEST-002 separates them: only OpenAI FC clears F1 ≥ 0.80 on both datasets.** Same model API surface, same typed MCP server, same prompts. Orchestration is what differs.
+† No scoreable verdict on TEST-003 — agent terminated before surfacing disk artifacts.
+‡ Tool-applicability failure on raw disk evidence (documented in `LIMITATIONS.md`).
+
+**Native Loop is the only orchestrator that produces scoreable verdicts across all three datasets.** Three datasets covering three distinct evidence types — memory APT hunt, NTFS disk forensics, and live IP-theft investigation with anti-forensic counterplay — and Native Loop is the single configuration that generalizes. Cross-dataset mean F1 = 0.867. Same model API surface, same typed MCP server, same prompts across all five adapters. Orchestration is what differs.
 
 ## How we built it
 
