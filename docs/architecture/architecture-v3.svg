@@ -85,7 +85,7 @@
 
   <line x1="950" y1="155" x2="950" y2="595" stroke="#1a73e8" stroke-width="3"/>
   <text x="950" y="675" font-size="11" font-weight="600" fill="#1a73e8" text-anchor="middle">function boundary</text>
-  <text x="950" y="690" font-size="11" fill="#5f6368" text-anchor="middle">12 mutation paths blocked</text>
+  <text x="950" y="690" font-size="11" fill="#5f6368" text-anchor="middle">15 mutation paths blocked</text>
 
   <g>
     <rect x="970" y="155" width="370" height="190" rx="8" fill="#ffffff" stroke="#dadce0"/>
