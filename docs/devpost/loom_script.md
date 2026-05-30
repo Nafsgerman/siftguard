@@ -65,7 +65,7 @@ Expected: `v1.40.1-task25-loom-script` in the list.
 **Show:** Cmd-Tab to dashboard. Click Native Loop. Cmd-Tab back to terminal. Press Enter on the pre-staged `siftguard run` command. Cmd-Tab to dashboard. IOC graph populates, audit trail streams, hypothesis panel updates.
 
 **Voiceover:**
-> "Live Native Loop run against TEST-001 — the SRL-2018 APT memory image, 5 gigabytes. The agent forms a hypothesis, sequences tools, updates its theory as findings come in. Watch the IOC graph populate — process tree shows lsass.exe handling, that's credential access. Network panel surfaces a connection to 23.194.110.27 — external exfiltration. The audit trail streams every tool call, every argument, every return — append-only by construction. Two iterations, three tools, eight IOCs, full incident report. F1 against ground truth: one-point-zero."
+> "Live Native Loop run against TEST-001 — the SRL-2018 APT memory image, 5 gigabytes. The agent forms a hypothesis, sequences tools, updates its theory as findings come in. Watch the IOC graph populate — process tree shows lsass.exe handling, that's credential access. Network panel surfaces a connection to 23.194.110.27 — external exfiltration. And here — iteration two — a tool call fails. The agent does not crash; it recovers, re-sequences, and continues. That is the self-correction loop, logged to the audit trail, not prompted. Every tool call, every argument, every return — append-only by construction. Two iterations, three tools, eight IOCs, full incident report. F1 against ground truth: one-point-zero."
 
 ### 2:00–2:45 — Results mode, Panel 7 (45s)
 
