@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import contextlib
 import json
+import os
 from pathlib import Path
 
 from siftguard.mcp_server.safe_exec import SafeExecError, safe_exec
