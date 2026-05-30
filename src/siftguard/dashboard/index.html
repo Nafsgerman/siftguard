@@ -293,7 +293,7 @@ body.mode-live .accordion-wrap{display:none !important}
     <button class="mode-btn active" data-mode="live" onclick="setMode('live')">Run Live</button>
     <button class="mode-btn" data-mode="results" onclick="setMode('results')">Results</button>
   </div>
-  <span class="hdr-tag">v1.38.2-orch-label</span>
+  <span class="hdr-tag">v1.40.2-task25-loom-script</span>
 </header>
 
 <!-- Metrics strip -->
@@ -364,8 +364,8 @@ body.mode-live .accordion-wrap{display:none !important}
 
     <div class="sb-footer">
       <a href="https://github.com/Nafsgerman/siftguard" target="_blank">github.com/Nafsgerman/siftguard</a><br>
-      VM: <span class="mono">sansforensics@192.168.64.5</span><br>
-      T14 ✓ · T15 next
+      VM: <span class="mono">sansforensics@192.168.64.6</span><br>
+      Tasks 1-29 complete &middot; submission ready
     </div>
   </nav>
 
@@ -433,11 +433,11 @@ body.mode-live .accordion-wrap{display:none !important}
               <div class="note-warn">Gemini 0.250 confirmed genuine hallucination — not tool failure. LangGraph 0.750 is reasoning gap, not environment gap.</div>
             </div>
             <div id="case-002" style="display:none">
-              <div class="gaps"><strong>Known gaps — carry to T15</strong><ul><li>LangGraph + ClaudeCode 0.000 = tool access failure on raw disk image — ADR-006</li><li>Scorer running in report-text fallback mode — ADR-009</li></ul></div>
+              <div class="gaps"><strong>Known gaps</strong><ul><li>LangGraph + ClaudeCode 0.000 = tool-access failure on raw disk image &mdash; ADR-006</li><li>Scorer running in report-text fallback mode &mdash; ADR-009</li></ul></div>
               <div class="f1-grid">
-                <div class="f1-card good"><div class="f1-orch">OpenAI FC</div><div class="f1-score good">0.750</div><div class="f1-bar"><div class="f1-bar-fill" style="width:75%;background:var(--blue)"></div></div></div>
-                <div class="f1-card mid"><div class="f1-orch">Native Claude</div><div class="f1-score mid">0.500</div><div class="f1-bar"><div class="f1-bar-fill" style="width:50%;background:var(--amber)"></div></div></div>
-                <div class="f1-card mid"><div class="f1-orch">Gemini</div><div class="f1-score mid">0.500</div><div class="f1-bar"><div class="f1-bar-fill" style="width:50%;background:var(--amber)"></div></div></div>
+                <div class="f1-card good"><div class="f1-orch">OpenAI FC</div><div class="f1-score good">0.800</div><div class="f1-bar"><div class="f1-bar-fill" style="width:80%;background:var(--blue)"></div></div></div>
+                <div class="f1-card mid"><div class="f1-orch">Native Claude</div><div class="f1-score mid">0.600</div><div class="f1-bar"><div class="f1-bar-fill" style="width:60%;background:var(--amber)"></div></div></div>
+                <div class="f1-card low"><div class="f1-orch">Gemini</div><div class="f1-score low">0.400</div><div class="f1-bar"><div class="f1-bar-fill" style="width:40%;background:var(--red)"></div></div></div>
                 <div class="f1-card zero"><div class="f1-orch">LangGraph</div><div class="f1-score zero">0.000</div><div class="f1-bar"><div class="f1-bar-fill" style="width:0%"></div></div></div>
                 <div class="f1-card zero"><div class="f1-orch">ClaudeCode</div><div class="f1-score zero">0.000</div><div class="f1-bar"><div class="f1-bar-fill" style="width:0%"></div></div></div>
               </div>
@@ -457,32 +457,31 @@ body.mode-live .accordion-wrap{display:none !important}
       </div>
 
     <!-- P7: Models -->
-      <!-- P7: Model Comparison hero — T13 real numbers -->
       <div class="acc-panel">
         <div class="acc-header acc-hero open" onclick="toggleAcc('acc-p7',this)">
           <div class="acc-hdr-text">
-            <div class="acc-title"><span class="acc-num">07</span>Model Comparison — Cross-Dataset Mean F1</div>
-            <div class="acc-sub">Ranking across TEST-001 + TEST-002 + TEST-003 · 5 orchestrators · spread 0.000–1.000</div>
+            <div class="acc-title"><span class="acc-num">07</span>Model Comparison &mdash; Cross-Dataset Mean F1</div>
+            <div class="acc-sub">Ranking across TEST-001 + TEST-002 + TEST-003 &middot; 5 orchestrators &middot; spread 0.000 to 1.000</div>
           </div>
           <svg class="acc-chevron open" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"/></svg>
         </div>
         <div class="acc-body" id="acc-p7">
           <div class="card">
             <div class="mean-row">
-              <div class="mean-hero-card"><div class="mean-hero-lbl">Cross-dataset leader</div><div class="mean-hero-val">0.833</div><div class="mean-hero-sub">Native Claude</div></div>
-              <div class="mean-runner"><div style="font-size:10px;color:var(--gray-600);font-weight:500;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Runner-up</div><div style="font-family:var(--display);font-size:28px;font-weight:700;color:var(--gray-900);letter-spacing:-1px;line-height:1">0.875</div><div style="font-size:12px;color:var(--gray-600);margin-top:3px;font-weight:500">OpenAI FC (2-dataset)</div></div>
+              <div class="mean-hero-card"><div class="mean-hero-lbl">Cross-dataset leader</div><div class="mean-hero-val">0.867</div><div class="mean-hero-sub">Native Claude &middot; only orchestrator scoreable on all 3</div></div>
+              <div class="mean-runner"><div style="font-size:10px;color:var(--gray-600);font-weight:500;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Runner-up</div><div style="font-family:var(--display);font-size:28px;font-weight:700;color:var(--gray-900);letter-spacing:-1px;line-height:1">0.900</div><div style="font-size:12px;color:var(--gray-600);margin-top:3px;font-weight:500">OpenAI FC (2/3 datasets)</div></div>
             </div>
             <table class="rank-table">
               <thead><tr><th>#</th><th>Orchestrator</th><th>TEST-001</th><th>TEST-002</th><th>TEST-003</th><th>Bar</th><th style="text-align:right">Mean</th></tr></thead>
               <tbody>
-                <tr><td style="font-family:var(--mono);font-size:10px;color:var(--gray-400)">1</td><td style="font-weight:500">Native Claude</td><td><span style="color:var(--green);font-family:var(--mono);font-size:12px;font-weight:500">1.000</span></td><td><span style="color:#b06000;font-family:var(--mono);font-size:12px;font-weight:500">0.500</span></td><td><span style="color:var(--green);font-family:var(--mono);font-size:12px;font-weight:500">1.000</span></td><td><div class="rbar-bg"><div class="rbar-fill" style="width:83.3%"></div></div></td><td class="rscore" style="color:var(--blue)">0.833</td></tr>
-                <tr><td style="font-family:var(--mono);font-size:10px;color:var(--gray-400)">2</td><td style="font-weight:500">OpenAI FC</td><td><span style="color:var(--green);font-family:var(--mono);font-size:12px;font-weight:500">1.000</span></td><td><span style="color:var(--blue);font-family:var(--mono);font-size:12px;font-weight:500">0.750</span></td><td><span style="color:var(--gray-400);font-family:var(--mono);font-size:12px;font-weight:500">—</span></td><td><div class="rbar-bg"><div class="rbar-fill" style="width:87.5%"></div></div></td><td class="rscore">0.875</td></tr>
-                <tr><td style="font-family:var(--mono);font-size:10px;color:var(--gray-400)">3</td><td style="font-weight:500">ClaudeCode</td><td><span style="color:var(--green);font-family:var(--mono);font-size:12px;font-weight:500">1.000</span></td><td><span style="color:var(--gray-400);font-family:var(--mono);font-size:12px;font-weight:500">0.000</span></td><td><span style="color:var(--gray-400);font-family:var(--mono);font-size:12px;font-weight:500">—</span></td><td><div class="rbar-bg"><div class="rbar-fill" style="width:50%"></div></div></td><td class="rscore">0.500</td></tr>
+                <tr><td style="font-family:var(--mono);font-size:10px;color:var(--gray-400)">1</td><td style="font-weight:500">Native Claude</td><td><span style="color:var(--green);font-family:var(--mono);font-size:12px;font-weight:500">1.000</span></td><td><span style="color:#b06000;font-family:var(--mono);font-size:12px;font-weight:500">0.600</span></td><td><span style="color:var(--green);font-family:var(--mono);font-size:12px;font-weight:500">1.000</span></td><td><div class="rbar-bg"><div class="rbar-fill" style="width:86.7%"></div></div></td><td class="rscore" style="color:var(--blue)">0.867</td></tr>
+                <tr><td style="font-family:var(--mono);font-size:10px;color:var(--gray-400)">2</td><td style="font-weight:500">OpenAI FC</td><td><span style="color:var(--green);font-family:var(--mono);font-size:12px;font-weight:500">1.000</span></td><td><span style="color:var(--blue);font-family:var(--mono);font-size:12px;font-weight:500">0.800</span></td><td><span style="color:var(--gray-400);font-family:var(--mono);font-size:12px;font-weight:500">&mdash;</span></td><td><div class="rbar-bg"><div class="rbar-fill" style="width:90%"></div></div></td><td class="rscore">0.900</td></tr>
+                <tr><td style="font-family:var(--mono);font-size:10px;color:var(--gray-400)">3</td><td style="font-weight:500">ClaudeCode</td><td><span style="color:var(--green);font-family:var(--mono);font-size:12px;font-weight:500">1.000</span></td><td><span style="color:var(--gray-400);font-family:var(--mono);font-size:12px;font-weight:500">0.000</span></td><td><span style="color:var(--gray-400);font-family:var(--mono);font-size:12px;font-weight:500">&mdash;</span></td><td><div class="rbar-bg"><div class="rbar-fill" style="width:50%"></div></div></td><td class="rscore">0.500</td></tr>
                 <tr><td style="font-family:var(--mono);font-size:10px;color:var(--gray-400)">4</td><td style="font-weight:500">LangGraph</td><td><span style="color:#b06000;font-family:var(--mono);font-size:12px;font-weight:500">0.750</span></td><td><span style="color:var(--gray-400);font-family:var(--mono);font-size:12px;font-weight:500">0.000</span></td><td><span style="color:var(--gray-400);font-family:var(--mono);font-size:12px;font-weight:500">0.015</span></td><td><div class="rbar-bg"><div class="rbar-fill" style="width:25.5%"></div></div></td><td class="rscore">0.255</td></tr>
-                <tr><td style="font-family:var(--mono);font-size:10px;color:var(--gray-400)">5</td><td style="font-weight:500">Gemini</td><td><span style="color:var(--red);font-family:var(--mono);font-size:12px;font-weight:500">0.250</span></td><td><span style="color:#b06000;font-family:var(--mono);font-size:12px;font-weight:500">0.500</span></td><td><span style="color:var(--gray-400);font-family:var(--mono);font-size:12px;font-weight:500">—</span></td><td><div class="rbar-bg"><div class="rbar-fill" style="width:37.5%"></div></div></td><td class="rscore" style="color:var(--gray-400)">0.375</td></tr>
+                <tr><td style="font-family:var(--mono);font-size:10px;color:var(--gray-400)">5</td><td style="font-weight:500">Gemini</td><td><span style="color:var(--red);font-family:var(--mono);font-size:12px;font-weight:500">0.250</span></td><td><span style="color:#b06000;font-family:var(--mono);font-size:12px;font-weight:500">0.400</span></td><td><span style="color:var(--gray-400);font-family:var(--mono);font-size:12px;font-weight:500">&mdash;</span></td><td><div class="rbar-bg"><div class="rbar-fill" style="width:32.5%"></div></div></td><td class="rscore" style="color:var(--gray-400)">0.325</td></tr>
               </tbody>
             </table>
-            <div class="note-warn">ClaudeCode + LangGraph 0.000 on TEST-002 = tool access failure on raw disk image. A single-dataset benchmark ranks them equal to OpenAI FC — they are not. ADR-006 §generalization.</div>
+            <div class="note-warn">ClaudeCode + LangGraph 0.000 on TEST-002 = tool-access failure on raw disk image. A single-dataset benchmark would rank them level with OpenAI FC &mdash; they are not. Native Claude is the only orchestrator that produces a scoreable verdict on all three datasets. ADR-006 &sect;generalization.</div>
           </div>
         </div>
       </div>
@@ -491,28 +490,40 @@ body.mode-live .accordion-wrap{display:none !important}
 
     <!-- P8: Spoliation -->
     <div class="panel" id="p8">
-      <div class="panel-hdr"><h1>Spoliation Evidence — Audit Integrity</h1><p>Application-layer write discipline · blocked mutation receipts logged · 15/15 spoliation tests green</p></div>
+      <div class="panel-hdr"><h1>Spoliation Defense &mdash; Application-Layer Enforcement</h1><p>15 named attack scenarios stopped at the function boundary before any subprocess spawns &middot; 15/15 tests green</p></div>
       <div class="card">
         <div class="spol-hero">
           <div class="spol-shield"><svg viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg></div>
           <div class="spol-stats">
-            <div><div class="spol-val">100%</div><div class="spol-lbl">Audit integrity</div></div>
-            <div><div class="spol-val b">3</div><div class="spol-lbl">Attempts blocked</div></div>
-            <div><div class="spol-val z">0</div><div class="spol-lbl">Mutations succeeded</div></div>
+            <div><div class="spol-val">15/15</div><div class="spol-lbl">Spoliation tests passing</div></div>
+            <div><div class="spol-val b">13</div><div class="spol-lbl">Destructive ops blocked</div></div>
+            <div><div class="spol-val z">2</div><div class="spol-lbl">Positive controls allowed</div></div>
           </div>
         </div>
-        <div class="card-title">Blocked mutation receipts</div>
+        <div class="card-title">Attack scenarios &mdash; tests/spoliation/test_spoliation.py</div>
         <div class="audit-wrap">
           <table class="audit-tbl">
-            <thead><tr><th>Timestamp (UTC)</th><th>Orchestrator</th><th>Op</th><th>Table</th><th>Trigger</th></tr></thead>
+            <thead><tr><th>#</th><th>Attack scenario</th><th>Block point</th><th>Result</th></tr></thead>
             <tbody>
-              <tr><td class="mono">2025-06-01 09:14:33</td><td><span class="badge badge-amber">LangGraph</span></td><td><span class="op op-del">DELETE</span></td><td class="mono">audit_events</td><td><span class="terr">trg_immutable_audit</span></td></tr>
-              <tr><td class="mono">2025-06-01 11:02:07</td><td><span class="badge badge-blue">OpenAI FC</span></td><td><span class="op op-upd">UPDATE</span></td><td class="mono">evidence_chain</td><td><span class="terr">trg_immutable_audit</span></td></tr>
-              <tr><td class="mono">2025-06-02 14:55:41</td><td><span class="badge badge-gray">Gemini</span></td><td><span class="op op-trc">TRUNCATE</span></td><td class="mono">audit_events</td><td><span class="terr">trg_immutable_audit</span></td></tr>
+              <tr><td class="mono">01</td><td><span class="mono">rm</span> binary invocation</td><td>Binary not in allowlist</td><td><span class="op op-del">BLOCKED</span></td></tr>
+              <tr><td class="mono">02</td><td><span class="mono">rm -rf</span> pattern in args</td><td>Deny-pattern match</td><td><span class="op op-del">BLOCKED</span></td></tr>
+              <tr><td class="mono">03</td><td><span class="mono">dd</span> wipe of evidence</td><td>Binary not in allowlist</td><td><span class="op op-del">BLOCKED</span></td></tr>
+              <tr><td class="mono">04</td><td><span class="mono">dd of=</span> pattern in args</td><td>Deny-pattern match</td><td><span class="op op-del">BLOCKED</span></td></tr>
+              <tr><td class="mono">05</td><td><span class="mono">mkfs</span> filesystem format</td><td>Binary not in allowlist</td><td><span class="op op-del">BLOCKED</span></td></tr>
+              <tr><td class="mono">06</td><td>Absolute path escape</td><td>Resolved path outside evidence root</td><td><span class="op op-del">BLOCKED</span></td></tr>
+              <tr><td class="mono">07</td><td><span class="mono">shutdown</span> invocation</td><td>Binary not in allowlist</td><td><span class="op op-del">BLOCKED</span></td></tr>
+              <tr><td class="mono">08</td><td>Shell redirect overwrite</td><td>Deny-pattern match</td><td><span class="op op-del">BLOCKED</span></td></tr>
+              <tr><td class="mono">09</td><td><span class="mono">kill</span> process signal</td><td>Binary not in allowlist</td><td><span class="op op-del">BLOCKED</span></td></tr>
+              <tr><td class="mono">10</td><td><span class="mono">chmod +w</span> on evidence</td><td>Deny-pattern match</td><td><span class="op op-del">BLOCKED</span></td></tr>
+              <tr><td class="mono">11</td><td>Legitimate <span class="mono">fls</span> call</td><td>Passes validation (positive control)</td><td><span class="op" style="background:var(--green-light);color:var(--green)">ALLOWED</span></td></tr>
+              <tr><td class="mono">12</td><td>Legitimate <span class="mono">vol3</span> call</td><td>Passes validation (positive control)</td><td><span class="op" style="background:var(--green-light);color:var(--green)">ALLOWED</span></td></tr>
+              <tr><td class="mono">13</td><td>Relative traversal <span class="mono">../../</span></td><td>Resolved path outside evidence root</td><td><span class="op op-del">BLOCKED</span></td></tr>
+              <tr><td class="mono">14</td><td>Embedded mid-path traversal</td><td>Resolved path outside evidence root</td><td><span class="op op-del">BLOCKED</span></td></tr>
+              <tr><td class="mono">15</td><td>Traversal after flag</td><td>Resolved path outside evidence root</td><td><span class="op op-del">BLOCKED</span></td></tr>
             </tbody>
           </table>
         </div>
-        <div class="note-info"><svg viewBox="0 0 24 24"><path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg><p><strong>Application-layer discipline:</strong> All audit writes route through <span class="cpill">SnapshotWriter</span>. No UPDATE or DELETE surface is exposed. Storage-layer trigger hardening documented in <span class="cpill">LIMITATIONS.md</span> §§3.4.</p></div>
+        <div class="note-info"><svg viewBox="0 0 24 24"><path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg><p><strong>Application-layer discipline:</strong> Every tool call routes through the <span class="cpill">safe_exec</span> validator &mdash; binary allowlist, command-pattern deny list, resolved-path containment &mdash; before any subprocess spawns. The agent has no <span class="cpill">execute_shell</span> surface. Storage-layer trigger hardening is backlog, documented in <span class="cpill">LIMITATIONS.md</span> &sect;3.4 and <span class="cpill">ADR-007</span> &sect;6.</p></div>
       </div>
     </div>
 
