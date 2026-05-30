@@ -120,15 +120,15 @@ Build Phase B around a single orchestrator and add the others post-hackathon. **
 
 Trace contract: ADR-002. Same evidence file (`/cases/TEST-001/base-hunt-memory.img`, `sha256` recorded in each `TraceMeta`). Typed MCP server only.
 
-| Orchestrator | Reasoning model | IOC F1 | Cost (USD) | Iterations | Wall time | Status |
+| Orchestrator | Reasoning model | IOC F1 (TEST-001) | Cost (USD) | Iterations | Wall time | Status |
 |---|---|---|---|---|---|---|
-| Native Loop | claude-sonnet-4-6 | pending re-score | $0.2308 | 7 | 104.0 s | VERIFIED |
-| LangGraph | claude-sonnet-4-6 | pending re-score | $0.2289 | 7 | 106.2 s | VERIFIED |
-| OpenAI FC | gpt-5.5 | pending re-score | $0.1949 | 4 | 132.2 s | VERIFIED |
-| Gemini 3 Pro | gemini-3-pro | pending re-score | $0.2591 | 5 | 146.7 s | VERIFIED |
-| Claude Code | claude-sonnet-4-6 (headless CLI) | pending re-score | $0.5293 | 18 | 258.7 s | VERIFIED |
+| Native Loop | claude-sonnet-4-6 | 1.000 | $0.2308 | 7 | 104.0 s | VERIFIED |
+| LangGraph | claude-sonnet-4-6 | 0.750 | $0.2289 | 7 | 106.2 s | VERIFIED |
+| OpenAI FC | gpt-5.5 | 1.000 | $0.1949 | 4 | 132.2 s | VERIFIED |
+| Gemini 3 Pro | gemini-3-pro | 0.250 | $0.2591 | 5 | 146.7 s | VERIFIED |
+| Claude Code | claude-sonnet-4-6 (headless CLI) | 1.000 | $0.5293 | 18 | 258.7 s | VERIFIED |
 
-IOC F1 values appear `—` in the current dashboard render because of a known analytics path-resolution bug (`panel_7.data.baseline.mean`). It is a presentation defect, not a measurement defect — the underlying `Trace` artifacts contain the canonical findings, and `siftguard.eval.score` reproduces F1 on demand. Re-scoring is a Phase B closeout task, not a precondition for this ADR.
+IOC F1 is the TEST-001 (memory) score per orchestrator, from `siftguard.eval.score` against ground truth, rendered live in Panel 7. Cross-dataset means (TEST-001 + TEST-002 + TEST-003) are reported in §generalization-gap; Native Loop leads at 0.867 — the only orchestrator scoreable on all three datasets.
 
 ### 5.2 Cost-per-verdict spread
 
@@ -226,5 +226,10 @@ tool call arguments. The fix is present in all five adapters as of the tag follo
 The 2.72× cost spread documented in §5.2 was measured on TEST-001 (memory image).
 The spread is expected to hold across datasets because it reflects orchestration overhead
 (LangGraph graph traversal, Claude Code subprocess invocation), not evidence-type
-sensitivity. This will be confirmed once TEST-002 produces valid F1 scores from all
-five orchestrators.
+sensitivity. TEST-002 F1 scores have since been measured for all five orchestrators
+(Native 0.600, OpenAI FC 0.800, Gemini 0.400, LangGraph and Claude Code 0.000 on the
+tool-applicability failures noted above). Cross-dataset cost-per-verdict was not logged
+for TEST-002 — the audit DB carries cost only for the TEST-001 Panel 7 run — so the
+cost-spread figure remains a TEST-001 measurement. Re-measuring cost across all three
+datasets is the remaining step before the cross-dataset cost claim can be stated as
+confirmed rather than expected.
